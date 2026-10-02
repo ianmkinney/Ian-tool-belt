@@ -4,7 +4,7 @@
 
 ## Copy this prompt into your agent
 
-Replace the two bracketed values with real paths and a concrete task:
+Replace the bracketed values with the two real paths and a concrete task:
 
 > Use the Tool Belt repository at [BELT_PATH] for this task in [PROJECT_PATH]: [TASK]. First read AGENTS.md and belt.json, then read every referenced rules file. Inspect the listed skill descriptions and load only the skill relevant to this task. Check which tools your host actually provides; do not assume declared MCP connections are active. Follow the project's own instructions, keep credentials out of Git and chat, and report any missing capabilities. For code changes, use one session PR, test changed behavior, and check CI on its latest head. Use sub-agents for independent work if supported. Begin by reporting the selected skill and which tools are available, then carry out the authorized task.
 
