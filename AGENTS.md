@@ -1,5 +1,9 @@
 # Tool Belt project context
 
+## Start here, agent
+
+Before using this belt, read `belt.json` and every file in its `rules` array, beginning with `rules/agent-start.md`. Use `docs/agent-guide.md` for access routes, a worked example and setup troubleshooting. Inspect the manifest-listed skill descriptions, then read only the skill relevant to the task. Verify the host's actual tools before invoking them; declarations are not active connections. Apply the belt to the user's target project without overriding that project's instructions or host policies.
+
 ## Durable project decision
 
 Ian designated `ianmkinney/Ian-tool-belt` as **our tool belt** on 2026-10-01 (America/New_York). In this repository, “our belt” refers to the root `belt.json` and its referenced rules, skills and connections. Preserve this identity unless Ian changes it.

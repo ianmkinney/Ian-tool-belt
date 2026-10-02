@@ -18,6 +18,16 @@
 
 **Status:** working manifest validator and configuration exporter; documented connection profiles; four original skills. No running gateway, authenticated services, marketplace or live cross-assistant proof yet.
 
+## Give this belt to another agent
+
+**Start with [How an agent uses Tool Belt](docs/agent-guide.md).** The agent needs access to the actual files; the repository URL alone does not install tools or load instructions.
+
+Copy this prompt, replacing the bracketed values:
+
+> Use the belt at [BELT_PATH] for [TASK] in [PROJECT_PATH]. Read AGENTS.md and belt.json, then all referenced rules. Inspect skill descriptions and read the matching SKILL.md. Check your actual available tools; do not assume MCP declarations are connected. Follow the target project's instructions, test changed behavior, and use one session PR with latest-head CI checks. Use sub-agents for independent work if available. Report missing setup, then carry out the authorized task.
+
+Already exported? Ask the agent to read `INSTRUCTIONS.md`, `compatibility.json`, and the relevant copied skill. Rules are packaged; native skill discovery and live connections still require explicit setup. [Source and exported-bundle walkthroughs →](docs/agent-guide.md)
+
 ## What's in the pouches?
 
 | Tools | Skills | Rules |

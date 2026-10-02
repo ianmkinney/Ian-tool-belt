@@ -1,5 +1,7 @@
 # Our workflow skills
 
+Agents: start with the [agent guide](../docs/agent-guide.md), inspect each manifest-listed skill's description, and read the full body only when it matches the task.
+
 These are original, repository-contained instruction packages, not copies of system or plugin skills. They are not installed into your ChatGPT account by being committed here.
 
 | Skill | Example task |
