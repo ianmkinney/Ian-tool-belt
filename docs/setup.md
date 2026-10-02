@@ -1,5 +1,7 @@
 # Setup and compatibility
 
+First read [How another agent uses Tool Belt](agent-guide.md) for loading order, source versus export routes, and copyable prompts.
+
 ## Generate, inspect, then merge
 
 Run the commands in README.md. The exporter writes only to a new directory and never installs into an assistant automatically. It emits configuration, `INSTRUCTIONS.md`, skill copies, and `compatibility.json`.

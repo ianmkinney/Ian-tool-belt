@@ -12,6 +12,6 @@ A repository administrator or maintainer should open **Settings → Pages**:
 
 The source-file commit does not activate Pages by itself. The assistant's current GitHub connector can publish files but does not expose Pages settings changes. No live URL should be claimed until GitHub reports a successful deployment and the page is fetched.
 
-Future changes to docs on main will publish through this branch source. The template branch is for new belts, not the Pages source. The personalized belt remains under review in PR #1 until merged.
+Future changes to docs on main will publish through this branch source. The template branch is for new belts, not the Pages source. The personalized belt is on main after PR #1 was merged. The template branch remains a separate blank starting point.
 
 Official reference: https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site

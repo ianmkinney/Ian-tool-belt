@@ -4,6 +4,7 @@
   "version": "0.2.0",
   "description": "Our portable workshop for APIs, data and browser-tested applications.",
   "rules": [
+    "rules/agent-start.md",
     "rules/working-agreement.md",
     "rules/engineering.md"
   ],

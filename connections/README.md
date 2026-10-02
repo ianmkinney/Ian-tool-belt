@@ -1,5 +1,7 @@
 # Connection catalog
 
+Agents: follow the [startup guide](../docs/agent-guide.md) before using these profiles. Discover the host's actual tools; these declarations do not activate services.
+
 Configured here means declared in the manifest. No credentials have been supplied and no live MCP session has been tested by this project.
 
 | Connection | Why it belongs | Setup | Current evidence |
