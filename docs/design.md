@@ -1,29 +1,23 @@
-# Draft design
+# Draft 0.2 design
 
-## Belt package
+The root belt.json is our working profile. The original examples/personal/belt.json remains a valid minimal 0.1-draft example.
 
-A belt contains a versioned manifest, relative instruction files, skill references, connection declarations, and adapter declarations. The example intentionally contains no live server or credential. The initial validator accepts only this minimal subset; populated integration arrays require a later schema revision.
+## Manifest fields
 
-Credentials belong in a local or hosted secret store, never the belt repository. A future secret reference names a required credential without embedding its value. Installing a belt must not automatically execute downloaded code.
+`formatVersion`, `name`, `version`, `description`, `rules`, `skills`, `servers`, `adapters`, and `secretRefs` are required. Rules and skills are relative file paths within the belt directory; skills point to SKILL.md files. HTTP servers declare an HTTPS URL and optional headersFromEnv mapping header names to an environment variable and prefix. Stdio servers declare an executable and argument list. The validator never executes them.
+
+Statuses are declarations: needs-credentials, needs-local-setup or untested. They are not inferred authentication state. Secret references contain environment variable names only. Arbitrary literal authentication headers are not part of this format.
 
 ## Adapters
 
-An adapter targets a specific client and supported version range. It produces that client's configuration, an instruction delivery mechanism, and a compatibility report. Reports distinguish supported, degraded, unsupported, and untested features. Unsupported required capabilities must fail compilation. Adapters do not bypass provider rules or imply all clients accept remote MCP or native skills.
+The exporter translates connection declarations for Claude Code and VS Code, keeps secret references symbolic, copies portable skills, and emits a compatibility report. Unsupported targets fail. Instruction loading is manual and explicitly reported. Output directories must not already exist; the exporter never merges client configuration automatically.
 
-Start with two clients selected after verifying their current official integration documentation. Keep generated outputs separate from manually maintained client settings. Do not overwrite existing configuration without a reviewed merge.
+## Future runtime
 
-## Runtime
+A later gateway may expose multiple servers through one endpoint. It must independently enforce authorization and credential isolation. Prose rules and skill instructions are not access controls. Composed belts need conflict reporting and restrictions that child belts cannot widen. None of this runtime behavior is implemented yet.
 
-A later gateway may present selected downstream MCP tools through one endpoint. Instructions, executable scripts, and tool calls are separate capabilities. Scripts need a controlled execution environment. OAuth connections remain per-user and per-service; never forward arbitrary caller tokens to upstream services.
+## Reproducibility and trust
 
-## Composition and permissions
+A fixed executable package version reduces drift but is not a complete dependency lock. Future lockfiles must capture dependency hashes and client versions. Hosted services can change independently. Reproducible configuration does not imply identical model outputs.
 
-Personal, company, and project belts are a future design target. Explicitly report rule conflicts. Enforce company restrictions in the runtime authorization layer; prose instructions alone cannot enforce them. A child belt cannot expand permissions granted by its parent. Keep credential namespaces isolated between clients and organizations.
-
-## Reproducibility
-
-Future lockfiles pin dependency versions and content hashes. This reproduces configuration and dependency bytes, not model outputs or remote service behavior. Changes should be reviewable through Git diffs and reversible by version rollback.
-
-## Marketplace verification
-
-Defer marketplace implementation. Future verification must state what was checked, against which version, when, and by whom. Separate publisher identity, dependency inspection, execution tests, and client compatibility. A verification badge must not imply universal safety.
+Verification records must distinguish official provenance, local validation, authentication, live tool invocation and client behavior. A future marketplace must publish precisely what was checked and when.

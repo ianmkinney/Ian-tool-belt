@@ -1,32 +1,27 @@
 # Roadmap
 
-## Milestone 0 — Repository foundation
+## Complete
 
-- [x] Project goals and explicit status
-- [x] Draft manifest example and minimal validator
-- [x] Design boundaries and contribution guide
+- [x] Open-source repository, MIT license and contribution guide
+- [x] ASCII branding and documented identity
+- [x] Our working belt with three documented MCP profiles
+- [x] Four original workflow skills and durable project context
+- [x] Draft 0.1/0.2 validator and two configuration exporters
 
-## Milestone 1 — Cross-assistant proof
+## Next: live cross-assistant proof
 
-- [ ] Select two clients and verify official integration contracts
-- [ ] Define the connection and adapter schemas
-- [ ] Build a local sample MCP server with a deterministic, read-only tool
-- [ ] Generate configuration and compatibility reports for both clients
-- [ ] Demonstrate discovery and invocation from both clients
-- [ ] Change one shared instruction and verify delivery in both clients
-- [ ] Record setup steps, limitations, and observed results
+- [ ] Authenticate integrations in two supported clients
+- [ ] Verify discovery and a harmless call in both
+- [ ] Change one shared rule, export again, and verify delivery in both
+- [ ] Record client versions and observed differences
+- [ ] Validate package installation and capture dependency integrity
 
-## Milestone 2 — Reproducible packages
+## Later
 
-- [ ] Dependency lockfile, checksums, and explicit update command
-- [ ] Secret references and per-client configuration merge
-- [ ] Regression tests for supported adapters
-- [ ] Multiple belts with explicit conflict and permission handling
-
-## Milestone 3 — Community and sustainability
-
-- [ ] Public tutorials based on working examples
-- [ ] Pilot with individual developers and small agencies
-- [ ] Validate demand for workshops, courses, or implementation services
-- [ ] Consider hosted execution and private catalogs only after feedback
-- [ ] Define verification criteria before adding a marketplace
+- [ ] Gateway with scoped credentials and access enforcement
+- [ ] Full dependency lockfile and rollback
+- [ ] Personal/company/project belt composition
+- [ ] Skill discovery adapters instead of manual loading
+- [ ] AI Vault intake once its source is identified
+- [ ] Public tutorials, workshops and courses grounded in working examples
+- [ ] Marketplace only after verification criteria and user demand are clear

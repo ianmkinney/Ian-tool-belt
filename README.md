@@ -1,31 +1,58 @@
-# Tool Belt
+```text
+             T O O L   B E L T
+           Pack once. Build anywhere.
 
-Portable AI workspaces, defined as code.
-
-Tool Belt is an early open-source project for packaging MCP connections, instructions, skills, and assistant adapters into reproducible, versioned repositories. Bring your configuration to compatible assistants without maintaining each integration separately.
-
-**Status: specification starter.** This repository does not yet provide a gateway, working assistant adapters, a marketplace, or a demonstrated cross-assistant runtime.
-
-## Starting point
-
-- `examples/personal/belt.json`: proposed manifest format
-- `examples/personal/rules.md`: example portable instructions
-- `docs/design.md`: boundaries, adapters, permissions, and reproducibility
-- `docs/roadmap.md`: first proof and subsequent milestones
-- `scripts/validate.py`: dependency-free structural validator for this draft
-
-Requires Python 3.10 or newer. From the repository root:
-
-```sh
-python3 scripts/validate.py examples/personal/belt.json
+   o==o==o==o==[  TB  ]==o==o==o==o
+      |  _____  |  _____  |  _____  |
+      | | </> | | | {*} | | | [=] | |
+      | |TOOLS| | |SKILL| | |RULES| |
+      | |_____| | |_____| | |_____| |
+       \_______/ \_______/ \_______/
 ```
 
-## First proof
+# Our Tool Belt
 
-Use one belt with two explicitly supported AI clients. Update its shared instructions and regenerate both configurations. Verify that both clients can discover the same sample tool and retrieve the updated instructions. Document differences; configuration portability is not a guarantee of identical model behavior.
+**A portable workshop for building useful software.**
 
-## Open development
+[MCP](https://modelcontextprotocol.io/) connections, original workflow skills and shared rules, versioned together. This is Ian's and ChatGPT's working belt: open source first, designed for API development, data pipelines and browser-tested applications.
 
-The local format and runner are intended to remain free and open source. Education, implementation services, hosted execution, and organization features are possible future ways to sustain development. No paid service is implemented or promised.
+**Status:** working manifest validator and configuration exporter; documented connection profiles; four original skills. No running gateway, authenticated services, marketplace or live cross-assistant proof yet.
 
-Licensed under MIT. Contributions and design feedback are welcome; see CONTRIBUTING.md.
+## What's in the pouches?
+
+| Tools | Skills | Rules |
+| --- | --- | --- |
+| GitHub MCP — read-only repository access | Build an API slice | Small, reviewable changes |
+| Context7 — library documentation | Reconcile data | Keep credentials outside Git |
+| Playwright — isolated browser testing | Verify a browser flow | Verify outcomes before claiming success |
+| [Connection catalog](connections/README.md) | Evaluate an MCP candidate | [Working agreement](rules/working-agreement.md) |
+
+## Try the belt locally
+
+Python 3.10+ is enough to validate and export. These commands do not start servers, install packages, read credentials or contact services.
+
+```sh
+python3 scripts/validate.py belt.json
+python3 scripts/export.py belt.json --target claude-code --out dist/claude-code
+python3 scripts/export.py belt.json --target vscode --out dist/vscode
+python3 -m unittest discover -s tests -v
+```
+
+Use a new output directory each time. Inspect generated files before merging them into any existing assistant setup. See [setup and compatibility](docs/setup.md) for authentication, skill loading and limitations.
+
+## One source of truth
+
+`belt.json` declares our connections, skills, rules and target adapters. `AGENTS.md` records the decision to treat this repository as **our tool belt**. It is durable project context, not automatic account-wide memory.
+
+- [Clean code, tests and session PR contract](rules/engineering.md)
+- [Skills and examples](skills/README.md)
+- [Design and format](docs/design.md)
+- [Roadmap](docs/roadmap.md)
+- [Brand guide](branding/README.md)
+- [Contributing](CONTRIBUTING.md)
+
+## Open by design
+
+Keep the local format and tools useful without a paywall. Share working examples and teach reproducible workflows. Courses, workshops and implementation services are possible future ways to sustain the project; they are not launched offerings.
+
+MIT licensed. Third-party tools retain their own licenses and terms. “Pack once. Build anywhere.” is our direction, not a claim that every assistant supports every capability.
