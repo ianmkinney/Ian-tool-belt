@@ -1,0 +1,16 @@
+{
+  "formatVersion": "0.2-draft",
+  "name": "my-tool-belt",
+  "version": "0.1.0",
+  "description": "A new belt. Add only the tools and skills your project needs.",
+  "rules": [
+    "rules/engineering.md"
+  ],
+  "skills": [],
+  "servers": [],
+  "adapters": [
+    "claude-code",
+    "vscode"
+  ],
+  "secretRefs": []
+}
