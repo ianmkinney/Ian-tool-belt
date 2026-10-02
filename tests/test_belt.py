@@ -59,6 +59,7 @@ class BeltTests(unittest.TestCase):
                         self.assertNotIn('SECRET_SENTINEL',p.read_text())
                         self.assertNotIn('OTHER_SECRET',p.read_text())
                 self.assertIn('One pull request per work session',(out/'INSTRUCTIONS.md').read_text())
+                self.assertIn('Delegate independent work',(out/'INSTRUCTIONS.md').read_text())
                 for skill in self.data['skills']:
                     self.assertEqual((out/skill).read_text(),(self.source/skill).read_text())
 

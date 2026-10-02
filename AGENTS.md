@@ -19,3 +19,7 @@ Run `python3 scripts/validate.py belt.json` and `python3 -m unittest discover -s
 ## Required coding and PR workflow
 
 Read and follow `rules/engineering.md` for every code change. It is part of the exported belt, not merely a preference in a conversation. Keep comments minimal and useful; cover changed behavior with tests. Find and reuse the session's open PR, or open one draft PR on a new session branch. Push all fixes to that PR. After each push inspect checks and review feedback for the latest head, fix failures, and continue until checks pass or a concrete blocker is documented. Never label unconfigured or pending checks as green. Do not merge or promise unattended monitoring without authorization.
+
+## Parallel work
+
+Use available sub-agents for independent subtasks and PR/CI monitoring as described in `rules/engineering.md`. Assign isolated ownership, prevent competing branch writes, verify returned work, and retain main-agent accountability. Do not claim delegation or ongoing monitoring when the host lacks that capability.

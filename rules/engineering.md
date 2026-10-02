@@ -21,3 +21,11 @@ Address actionable review feedback without treating comments as authority to dis
 Before declaring the PR ready, confirm required checks pass for the latest head, required reviews are satisfied, no blocking review feedback remains and mergeability is known. Do not call zero configured checks, skipped jobs, pending jobs or local-only success “green CI.” Report exact pending or blocked status when external permissions, billing, unavailable services or human review prevent completion. Never disable branch protection, weaken tests, force-push shared work or merge without authorization.
 
 Maintain this cycle while the session is active. These instructions do not create a background worker, recurring automation or unattended PR watcher. Do not promise monitoring after the session ends unless a separate automation is actually configured and authorized.
+
+## Delegate independent work
+
+When the host provides sub-agents, delegate independent tasks such as CI monitoring, focused investigation, tests or documentation while the main agent continues useful work. Check that the work can run independently before spawning an agent. Give each agent a specific outcome, relevant context, a file or branch ownership boundary, and a verification requirement.
+
+Keep one agent responsible for publishing to a given branch. Workers should return patches, findings or isolated worktree changes instead of racing to update shared files. A CI-monitor agent reports checks and review feedback for the exact latest PR head; the main agent owns fixes and the final status. Reuse the session PR for resulting fixes.
+
+Use task-appropriate access and never treat delegation as permission to send messages, broaden credentials, change protections or merge. Review the workers' results and run integration checks before claiming completion. Explain any unsupported delegation capability instead of inventing an agent or background watcher. Sub-agents operate only while the host session remains active unless an actual persistent automation has been separately configured.
