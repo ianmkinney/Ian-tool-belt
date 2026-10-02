@@ -1,0 +1,62 @@
+{
+  "formatVersion": "0.2-draft",
+  "name": "our-tool-belt",
+  "version": "0.2.0",
+  "description": "Our portable workshop for APIs, data and browser-tested applications.",
+  "rules": [
+    "rules/working-agreement.md",
+    "rules/engineering.md"
+  ],
+  "skills": [
+    "skills/build-api-slice/SKILL.md",
+    "skills/reconcile-data/SKILL.md",
+    "skills/verify-browser-flow/SKILL.md",
+    "skills/evaluate-mcp/SKILL.md"
+  ],
+  "servers": [
+    {
+      "id": "github",
+      "transport": "http",
+      "url": "https://api.githubcopilot.com/mcp/readonly",
+      "headersFromEnv": {
+        "Authorization": {
+          "env": "GITHUB_MCP_TOKEN",
+          "prefix": "Bearer "
+        }
+      },
+      "status": "needs-credentials"
+    },
+    {
+      "id": "context7",
+      "transport": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headersFromEnv": {
+        "CONTEXT7_API_KEY": {
+          "env": "CONTEXT7_API_KEY",
+          "prefix": ""
+        }
+      },
+      "status": "needs-credentials"
+    },
+    {
+      "id": "playwright",
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.83",
+        "--isolated",
+        "--headless"
+      ],
+      "status": "needs-local-setup"
+    }
+  ],
+  "adapters": [
+    "claude-code",
+    "vscode"
+  ],
+  "secretRefs": [
+    "GITHUB_MCP_TOKEN",
+    "CONTEXT7_API_KEY"
+  ]
+}
