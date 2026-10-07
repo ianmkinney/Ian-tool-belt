@@ -14,7 +14,9 @@ Open source and configuration as code come first. Keep the core useful without a
 
 Read README.md and docs/design.md before changing the format. Keep secrets outside the repository. Use synthetic examples; do not publish personal history or client details. Add original reusable skills rather than copying private or platform-provided instructions.
 
-Run `python3 scripts/validate.py belt.json` and `python3 -m unittest discover -s tests -v` when changing validation or export behavior. Regenerate both client exports into a fresh ignored output directory. Never auto-overwrite a user's assistant configuration.
+Run `python3 scripts/validate.py belt.json` and `python3 -m unittest discover -s tests -v` when changing validation or export behavior. Regenerate every client export (claude-code, vscode, cursor, opencode) into a fresh ignored output directory. Never auto-overwrite a user's assistant configuration. Add skills and packages with `scripts/new.py`. Change belt variables with `scripts/belt_set.py` so validation guards the edit.
+
+The local AI connection (Ollama by default) is optional. Nothing may require it to be running; only `scripts/local_ai_check.py` contacts it. Personal (outside-work) connections belong in `personalServers` and stay out of exports unless explicitly included.
 
 ## Required coding and PR workflow
 

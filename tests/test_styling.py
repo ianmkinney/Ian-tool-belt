@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import re
 import unittest
@@ -11,7 +13,8 @@ TOKENS = json.loads((ROOT / 'styling/tokens.json').read_text())
 class StylingTests(unittest.TestCase):
     def test_css_is_generated_from_json(self):
         self.assertEqual((ROOT / 'styling/tokens.css').read_text(), build.render(TOKENS))
-        self.assertEqual(build.main(['--check']), 0)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(build.main(['--check']), 0)
 
     def test_brand_palette_matches_branding_guide(self):
         guide = (ROOT / 'branding/README.md').read_text()

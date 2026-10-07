@@ -81,7 +81,7 @@
         "vllm": {
           "baseUrl": "http://localhost:8000/v1",
           "model": "",
-          "docs": "https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html"
+          "docs": "https://docs.vllm.ai/en/latest/serving/openai_compatible_server/"
         }
       },
       "status": "needs-local-setup"

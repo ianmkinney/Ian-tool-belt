@@ -11,4 +11,14 @@ These are original, repository-contained instruction packages, not copies of sys
 
 Each folder contains a portable SKILL.md with name and trigger description. Read only the skill needed for the current task. The exporter includes copies under `skills/`; import them through your client's documented skill mechanism or explicitly attach the relevant file. Automatic discovery is not configured by this prototype.
 
+The Cursor and OpenCode exports place skills in `.cursor/skills/` and `.opencode/skills/`, where those clients discover them natively. That discovery has not yet been confirmed in a live client.
+
+## Add a skill
+
+```sh
+python3 scripts/new.py skill review-sql --description "Review SQL changes. Use when a migration or query changes."
+```
+
+This creates `skills/review-sql/SKILL.md` from a template, registers it in `belt.json` and validates the belt. Then replace the template steps with your own, add a row to the table above, and add supporting files under `scripts/`, `references/` or `assets/` in the skill folder if needed; exports copy them. Write original instructions with synthetic examples.
+
 Skills guide behavior; they do not grant permissions or enforce runtime policy. Their metadata is validated, but their effectiveness has not been benchmarked across assistants.
