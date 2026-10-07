@@ -2,18 +2,18 @@
 import argparse
 import json
 import os
-import shutil
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from export import cursor_rule
 from validate import ADOPTION_MARKER, BELT_REPO, validate_adoption
 
 MARKER = 'managed by Ian-tool-belt'
 MARKER_LINES = 10
-MANAGED = ['AGENTS.md', '.cursor/rules/tool-belt.mdc',
-           '.github/workflows/belt.yml', '.github/workflows/belt-sync.yml']
+MARKER_COMMENT = f'<!-- {MARKER}: belt-sync updates this file. Delete this line to own it. -->\n'
 TEMPLATES = Path('templates/app-adoption')
+TEMPLATE_FILES = ['AGENTS.md', '.github/workflows/belt.yml', '.github/workflows/belt-sync.yml']
 
 
 def parse_version(text):
@@ -35,44 +35,63 @@ def is_workflow(relative):
     return relative.startswith('.github/workflows/')
 
 
-def plan(belt_dir, app_dir, allow_workflow_files):
+def managed_cursor_rule(text):
+    """Render a belt rule exactly as `export.py --target cursor` does, plus the marker."""
+    rendered = cursor_rule(text)
+    end = rendered.index('\n---\n', 3) + len('\n---\n')
+    return rendered[:end] + MARKER_COMMENT + rendered[end:]
+
+
+def managed_files(belt_dir):
+    """Return {app-relative path: content} for every file the belt manages."""
+    belt_dir = Path(belt_dir)
+    files = {relative: (belt_dir / TEMPLATES / relative).read_text() for relative in TEMPLATE_FILES}
+    for entry in json.loads((belt_dir / 'belt.json').read_text())['rules']:
+        files[f'.cursor/rules/{Path(entry).stem}.mdc'] = managed_cursor_rule((belt_dir / entry).read_text())
+    return files
+
+
+def plan(belt_dir, app_dir, allow_workflow_files, adopt=False):
     """Return the sync plan without writing anything."""
     belt_dir, app_dir = Path(belt_dir), Path(app_dir)
-    current = validate_adoption(app_dir)['beltVersion']
     latest = json.loads((belt_dir / 'belt.json').read_text())['version']
-    result = {'current': current, 'latest': latest,
-              'behind': is_behind(current, latest), 'files': []}
-    if not result['behind']:
+    if adopt and not (app_dir / ADOPTION_MARKER).exists():
+        current = None
+    else:
+        current = validate_adoption(app_dir)['beltVersion']
+    behind = current is None or is_behind(current, latest)
+    result = {'current': current, 'latest': latest, 'sync': behind or adopt, 'files': []}
+    if not result['sync']:
         return result
-    for relative in MANAGED:
-        source = (belt_dir / TEMPLATES / relative).read_text()
+    for relative, content in managed_files(belt_dir).items():
         target = app_dir / relative
         if not target.exists():
             status = 'added'
         elif not has_marker(target.read_text()):
             status = 'skipped: marker removed, owned by this repo'
-        elif target.read_text() == source:
+        elif target.read_text() == content:
             status = 'unchanged'
         else:
             status = 'updated'
         if status in ('added', 'updated') and is_workflow(relative) and not allow_workflow_files:
             status = 'skipped: workflow files need a token with Workflows write permission'
-        result['files'].append((relative, status))
-    result['files'].append((ADOPTION_MARKER, f'version {current} -> {latest}'))
+        result['files'].append((relative, status, content))
+    if current != latest:
+        result['files'].append((ADOPTION_MARKER, f'version {current or "none"} -> {latest}', None))
     return result
 
 
-def apply(belt_dir, app_dir, result):
+def apply(app_dir, result):
     """Write planned changes and return the paths that changed."""
-    belt_dir, app_dir = Path(belt_dir), Path(app_dir)
+    app_dir = Path(app_dir)
     changed = []
-    for relative, status in result['files']:
+    for relative, status, content in result['files']:
         if status in ('added', 'updated'):
             target = app_dir / relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(belt_dir / TEMPLATES / relative, target)
+            target.write_text(content)
             changed.append(relative)
-    if result['behind']:
+    if result['sync'] and result['current'] != result['latest']:
         marker = {'belt': BELT_REPO, 'beltVersion': result['latest']}
         (app_dir / ADOPTION_MARKER).write_text(json.dumps(marker, indent=2) + '\n')
         changed.append(ADOPTION_MARKER)
@@ -84,7 +103,7 @@ def pr_body(result, allow_workflow_files):
     repo = f'https://github.com/{BELT_REPO}'
     lines = [f"Syncs the managed tool belt files from v{result['current']} to v{latest}.", '',
              '| File | Change |', '| --- | --- |']
-    lines += [f'| `{path}` | {status} |' for path, status in result['files']]
+    lines += [f'| `{path}` | {status} |' for path, status, _ in result['files']]
     lines += ['', f'- Release: {repo}/releases/tag/v{latest}',
               f'- Changelog: {repo}/blob/main/CHANGELOG.md', '',
               f'Files whose `{MARKER}` header was removed belong to this repo and are never '
@@ -104,15 +123,19 @@ def write_outputs(path, outputs):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--belt', required=True, help='Tool belt checkout')
+    parser.add_argument('--belt', default=str(Path(__file__).resolve().parents[1]),
+                        help='Tool belt checkout (default: this checkout)')
     parser.add_argument('--app', default='.', help='Adopted app repository')
-    parser.add_argument('--body', required=True, help='Where to write the PR body')
+    parser.add_argument('--body', help='Where to write the PR body')
     parser.add_argument('--allow-workflow-files', action='store_true')
+    parser.add_argument('--adopt', action='store_true',
+                        help='First-time setup: write every managed file and the marker, at any version')
     args = parser.parse_args(argv)
-    result = plan(args.belt, args.app, args.allow_workflow_files)
-    changed = apply(args.belt, args.app, result)
-    if changed:
-        Path(args.body).write_text(pr_body(result, args.allow_workflow_files))
+    allow_workflow_files = args.allow_workflow_files or args.adopt
+    result = plan(args.belt, args.app, allow_workflow_files, args.adopt)
+    changed = apply(args.app, result)
+    if changed and args.body:
+        Path(args.body).write_text(pr_body(result, allow_workflow_files))
     outputs = {'changed': str(bool(changed)).lower(), 'version': result['latest'],
                'paths': '\n'.join(changed)}
     if os.environ.get('GITHUB_OUTPUT'):
