@@ -1,3 +1,4 @@
+<!-- managed by Ian-tool-belt: belt-sync updates this file. Delete this line to own it. -->
 # Agent instructions
 
 This repository follows Ian's tool belt: https://github.com/ianmkinney/Ian-tool-belt

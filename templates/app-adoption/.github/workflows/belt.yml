@@ -1,3 +1,4 @@
+# managed by Ian-tool-belt: belt-sync updates this file. Delete this line to own it.
 name: belt
 on:
   pull_request:
