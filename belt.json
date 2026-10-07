@@ -1,7 +1,7 @@
 {
-  "formatVersion": "0.2-draft",
+  "formatVersion": "0.3-draft",
   "name": "our-tool-belt",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Our portable workshop for APIs, data and browser-tested applications.",
   "rules": [
     "rules/working-agreement.md",
@@ -51,12 +51,67 @@
       "status": "needs-local-setup"
     }
   ],
+  "personalServers": [],
+  "models": [
+    {
+      "id": "local-ai",
+      "api": "openai-compatible",
+      "env": {
+        "baseUrl": "LOCAL_AI_BASE_URL",
+        "model": "LOCAL_AI_MODEL",
+        "apiKey": "LOCAL_AI_API_KEY"
+      },
+      "defaultPreset": "ollama",
+      "presets": {
+        "ollama": {
+          "baseUrl": "http://localhost:11434/v1",
+          "model": "gemma4:e2b",
+          "docs": "https://docs.ollama.com/api/openai-compatibility"
+        },
+        "lm-studio": {
+          "baseUrl": "http://localhost:1234/v1",
+          "model": "",
+          "docs": "https://lmstudio.ai/docs/developer/openai-compat"
+        },
+        "llama-cpp": {
+          "baseUrl": "http://localhost:8080/v1",
+          "model": "",
+          "docs": "https://github.com/ggml-org/llama.cpp/tree/master/tools/server"
+        },
+        "vllm": {
+          "baseUrl": "http://localhost:8000/v1",
+          "model": "",
+          "docs": "https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html"
+        }
+      },
+      "status": "needs-local-setup"
+    }
+  ],
+  "packages": [
+    {
+      "id": "playwright-mcp",
+      "kind": "npm",
+      "name": "@playwright/mcp",
+      "version": "0.0.83",
+      "description": "Microsoft's Playwright MCP server used by the playwright connection."
+    },
+    {
+      "id": "styling",
+      "kind": "files",
+      "path": "styling",
+      "version": "0.1.0",
+      "description": "Tool Belt design tokens as CSS variables and JSON."
+    }
+  ],
   "adapters": [
     "claude-code",
-    "vscode"
+    "vscode",
+    "cursor",
+    "opencode"
   ],
   "secretRefs": [
     "GITHUB_MCP_TOKEN",
-    "CONTEXT7_API_KEY"
+    "CONTEXT7_API_KEY",
+    "LOCAL_AI_API_KEY"
   ]
 }

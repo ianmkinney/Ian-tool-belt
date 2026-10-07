@@ -11,12 +11,17 @@ jobs:
       matrix:
         python: ['3.10', '3.12']
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python }}
       - run: python scripts/validate.py belt.json
       - run: python scripts/validate.py examples/personal/belt.json
       - run: python -m unittest discover -s tests -v
+      - run: python scripts/build_tokens.py --check
       - run: python scripts/export.py belt.json --target claude-code --out dist/claude-code
       - run: python scripts/export.py belt.json --target vscode --out dist/vscode
+      - run: python scripts/export.py belt.json --target cursor --out dist/cursor
+      - run: python scripts/export.py belt.json --target opencode --out dist/opencode
