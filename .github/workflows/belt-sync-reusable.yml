@@ -1,0 +1,50 @@
+name: belt sync (reusable)
+on:
+  workflow_call:
+    secrets:
+      BELT_SYNC_TOKEN:
+        description: Optional fine-grained PAT (Contents, Pull requests, Workflows write) so sync PRs run CI and can update workflow files.
+        required: false
+      RELEASE_PLEASE_TOKEN:
+        description: Used when BELT_SYNC_TOKEN is not set.
+        required: false
+permissions: {}
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ianmkinney/Ian-tool-belt
+          ref: main
+          path: .tool-belt-upstream
+          persist-credentials: false
+          sparse-checkout: |
+            templates/app-adoption
+            rules
+            scripts
+      - id: sync
+        env:
+          HAS_SYNC_TOKEN: ${{ secrets.BELT_SYNC_TOKEN != '' || secrets.RELEASE_PLEASE_TOKEN != '' }}
+        run: |
+          flags=()
+          if [ "$HAS_SYNC_TOKEN" = "true" ]; then flags+=(--allow-workflow-files); fi
+          python3 .tool-belt-upstream/scripts/belt_sync.py --belt .tool-belt-upstream --app . \
+            --body "$RUNNER_TEMP/belt-sync-body.md" "${flags[@]}"
+      # create-pull-request authenticates its own push with the token input.
+      - if: steps.sync.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7.0.11
+        with:
+          token: ${{ secrets.BELT_SYNC_TOKEN || secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          branch: tool-belt/sync
+          draft: true
+          title: 'chore: sync tool belt to v${{ steps.sync.outputs.version }}'
+          commit-message: 'chore: sync tool belt to v${{ steps.sync.outputs.version }}'
+          body-path: ${{ runner.temp }}/belt-sync-body.md
+          add-paths: ${{ steps.sync.outputs.paths }}

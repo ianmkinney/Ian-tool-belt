@@ -1,0 +1,11 @@
+name: pr-title
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+permissions: {}
+jobs:
+  lint:
+    permissions:
+      pull-requests: read
+    # Tracks the tool belt's main on purpose; switch to a tag such as @v1 once one is published.
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/pr-title-reusable.yml@main # zizmor: ignore[unpinned-uses]

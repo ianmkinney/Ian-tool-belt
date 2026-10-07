@@ -12,6 +12,10 @@ Cover every changed behavior with meaningful automated tests, including relevant
 
 Before changing files, inspect the current branch and open pull requests. Reuse the open PR for this session's branch and task; push follow-up fixes to that same branch. Do not append work to an unrelated PR merely because one exists. If no matching PR exists, create a descriptive session branch and open one draft PR after the first coherent commit. Keep further changes in that PR. If it was merged or closed, create a new branch and PR rather than resurrecting it.
 
+## PR titles and releases
+
+PR titles must be Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `perf:`, `build:` or `revert:`, with `!` or a `BREAKING CHANGE` footer for breaking changes. PRs are squash-merged, so the title becomes the commit on `main`. Releases happen only by merging the release-please PR; do not bump versions, create tags or edit `CHANGELOG.md` by hand.
+
 ## Keep the PR green
 
 After every push, record the new head SHA and inspect CI checks, workflow jobs, review submissions and relevant comments. Wait for pending checks during the active session. Investigate failures using logs, fix the root cause, rerun meaningful local checks and push the fix to the same PR. Recheck the newest head; a successful older commit is not proof that the current PR is green.

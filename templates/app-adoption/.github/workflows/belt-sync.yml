@@ -1,0 +1,17 @@
+# managed by Ian-tool-belt: belt-sync updates this file. Delete this line to own it.
+name: belt-sync
+on:
+  schedule:
+    - cron: '17 13 * * 1'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  sync:
+    permissions:
+      contents: write
+      pull-requests: write
+    # Tracks the tool belt's main on purpose; the sync itself always reads the latest belt.
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/belt-sync-reusable.yml@main # zizmor: ignore[unpinned-uses]
+    secrets:
+      BELT_SYNC_TOKEN: ${{ secrets.BELT_SYNC_TOKEN }}
+      RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}

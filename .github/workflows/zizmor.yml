@@ -19,6 +19,10 @@ jobs:
       - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
         with:
           version: ${{ steps.pin.outputs.version }}
-          inputs: .github/workflows
+          inputs: >-
+            .github/workflows
+            templates/app-adoption
+            templates/versioning/release.yml
+            templates/versioning/pr-title.yml
           advanced-security: false
           annotations: true

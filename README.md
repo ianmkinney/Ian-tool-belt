@@ -83,6 +83,16 @@ Each command validates the result and leaves `belt.json` unchanged if it is inva
 - [Brand guide](branding/README.md) and [styling tokens](styling/README.md)
 - [Contributing](CONTRIBUTING.md)
 
+## Use the belt in an app repo
+
+App repos opt in explicitly; nothing is installed or overwritten automatically.
+
+- **Adoption kit** — [`templates/app-adoption/`](templates/app-adoption/) holds `AGENTS.md`, `.github/workflows/belt.yml`, `.github/workflows/belt-sync.yml` and the `.tool-belt.json` marker. Cursor rules are not duplicated there: the kit installs `.cursor/rules/engineering.mdc` and `working-agreement.mdc` rendered by the same code as `export.py --target cursor`, plus a sync marker line. From a checkout of this repo, run `python3 scripts/belt_sync.py --adopt --app path/to/app` to write all of them (existing files without the marker are left alone), then commit in the app. `belt.yml` runs the shared PR-title check and release-please. Check the marker with `python3 scripts/validate.py path/to/app`.
+- **Weekly sync** — `.github/workflows/belt-sync.yml` in the kit runs every Monday at 13:17 UTC, and on demand, through [`belt-sync-reusable.yml`](.github/workflows/belt-sync-reusable.yml). When the app's `.tool-belt.json` is behind `belt.json` on our `main`, [`scripts/belt_sync.py`](scripts/belt_sync.py) re-copies the managed files and opens or updates one draft PR on `tool-belt/sync` titled `chore: sync tool belt to vX.Y.Z`. Up-to-date apps get no PR. Managed files start with a `managed by Ian-tool-belt` header; delete that line and the sync never touches the file again. It needs the same setting as releases (allow Actions to create pull requests). The default `GITHUB_TOKEN` cannot change workflow files and its PRs don't trigger CI, so without a token the sync skips workflow files and you close and reopen the PR to run CI. See [tokens](templates/versioning/README.md#optional-token).
+- **Versioning** — [`templates/versioning/`](templates/versioning/README.md): release-please config, manifest, standalone callers, the per-repo GitHub settings and a Next.js `/api/version` example. `belt.yml` needs the config and manifest from here.
+
+The callers use the reusable workflows `pr-title-reusable.yml`, `release-please-reusable.yml` and `belt-sync-reusable.yml` at `ianmkinney/Ian-tool-belt@main`, so this repo stays public; zizmor lints them along with our own workflows. This repo uses the same workflows; its version in `belt.json` and the marker template is bumped by release-please.
+
 ## Open by design
 
 Keep the local format and tools useful without a paywall. Share working examples and teach reproducible workflows. Courses, workshops and implementation services are possible future ways to sustain the project; they are not launched offerings.

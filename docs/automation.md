@@ -8,7 +8,9 @@ Five workflows live in `.github/workflows`. Every action is pinned to a full com
 | **Update a belt variable** (`update-variable.yml`) | manual | Sets one allowlisted value in `belt.json`, validates, tests, opens a draft PR | contents and PRs: write |
 | **Check pinned package versions** (`bump-pins.yml`) | Mondays 13:17 UTC, or manual | Looks up the latest stable release of each npm/PyPI package pin; if newer, bumps it (and matching server args), validates, tests, opens a draft PR | contents and PRs: write |
 | **Run belt task** (`run-task.yml`) | manual | Runs one allowlisted task and uploads its log and outputs as an artifact for 14 days | read |
-| **Workflow security lint** (`zizmor.yml`) | push, pull request | Runs zizmor on `.github/workflows` and fails on findings, shown as annotations | read |
+| **Workflow security lint** (`zizmor.yml`) | push, pull request | Runs zizmor on `.github/workflows` and the app workflow templates, and fails on findings, shown as annotations | read |
+| **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
+| **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
 
 ## Update a belt variable
 
@@ -45,6 +47,8 @@ pipx run zizmor==1.30.1 .github/workflows
 Set `GH_TOKEN` (for example `GH_TOKEN=$(gh auth token)`) to enable the online audits CI runs, or add `--offline` to skip them. `--persona pedantic` shows the stricter style findings that the default persona hides.
 
 Two findings are ignored inline with `# zizmor: ignore[artipacked]`, each with a comment. They are in `bump-pins.yml` and `update-variable.yml`, where the checkout keeps its credential because `git push` relies on it. Neither job uploads artifacts. The same token is also in the job-wide `GH_TOKEN` for `gh`. Removing both would mean scoping `GH_TOKEN` to the PR step and pushing through `gh auth setup-git`. That is possible later but has not been exercised on GitHub.
+
+The app templates call the shared workflows at `@main` on purpose, so each of those `uses:` lines carries `# zizmor: ignore[unpinned-uses]`. Pin them to a tag such as `@v1` once one is published.
 
 ## One-time repository setting
 

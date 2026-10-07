@@ -56,6 +56,7 @@ class BeltTests(BeltCase):
                     instructions = (out / 'INSTRUCTIONS.md').read_text()
                     self.assertIn('One pull request per work session', instructions)
                     self.assertIn('Delegate independent work', instructions)
+                    self.assertIn('PR titles and releases', instructions)
                     for skill in self.data['skills']:
                         name = skill.split('/')[1]
                         exported = out / SKILL_ROOTS[target] / name / 'SKILL.md'
