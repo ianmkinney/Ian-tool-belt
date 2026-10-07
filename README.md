@@ -28,7 +28,7 @@
 | Local AI — your own model via Ollama (optional) | Evaluate an MCP candidate | [Working agreement](rules/working-agreement.md) |
 | [Connection catalog](connections/README.md) | [Add your own](skills/README.md#add-a-skill) | [Engineering contract](rules/engineering.md) |
 
-Also in the belt: [packages](docs/design.md#packages) (pinned tools such as [zizmor](docs/automation.md#workflow-security-lint), and reusable files) and [styling tokens](styling/README.md).
+Also in the belt: [packages](docs/design.md#packages) (pinned tools such as [zizmor](docs/automation.md#workflow-security-lint) and the [MCP Inspector](connections/README.md#smoke-test-a-connection), and reusable files) and [styling tokens](styling/README.md).
 
 ## Try the belt locally
 
@@ -54,6 +54,10 @@ python3 scripts/local_ai_check.py --chat
 ```
 
 The same guide shows how to hand the belt to a local model through OpenCode or Claude Code.
+
+## Smoke-test a connection
+
+With Node.js 22.19+, `python3 scripts/mcp_smoke.py playwright` starts the server through the pinned MCP Inspector and lists its tools. See [smoke-test a connection](connections/README.md#smoke-test-a-connection).
 
 ## Grow the belt
 

@@ -12,6 +12,7 @@
 - [x] Local AI connection profile (Ollama default; LM Studio, llama.cpp, vLLM presets) with a dependency-free health check
 - [x] Scaffold command for new skills and packages
 - [x] Styling tokens as CSS variables and JSON
+- [x] MCP Inspector smoke test for connections; Playwright discovery and a harmless call verified outside any client
 - [x] Workflows to update a belt variable, propose pin bumps weekly and run allowlisted tasks
 
 ## Next: local AI and live cross-assistant proof
