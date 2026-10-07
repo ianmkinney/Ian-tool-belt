@@ -1,0 +1,24 @@
+name: Workflow security lint
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  zizmor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read the zizmor pin from belt.json
+        id: pin
+        run: |
+          python3 -c "import json; print('version=' + next(p['version'] for p in json.load(open('belt.json'))['packages'] if p['id'] == 'zizmor'))" >> "$GITHUB_OUTPUT"
+      # The action only accepts zizmor versions listed at its pinned commit; bump both together.
+      - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          version: ${{ steps.pin.outputs.version }}
+          inputs: .github/workflows
+          advanced-security: false
+          annotations: true

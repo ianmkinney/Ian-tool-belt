@@ -294,6 +294,14 @@ class BeltTests(BeltCase):
         self.data['packages'][0]['version'] = '0.0.84'
         self.invalid()
 
+    def test_zizmor_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'zizmor')
+        self.assertEqual((pin['kind'], pin['name']), ('pypi', 'zizmor'))
+        workflow = (ROOT / '.github/workflows/zizmor.yml').read_text()
+        self.assertRegex(workflow, r'uses: zizmorcore/zizmor-action@[0-9a-f]{40} # v')
+        self.assertIn('version: ${{ steps.pin.outputs.version }}', workflow)
+        self.assertNotIn(pin['version'], workflow)
+
     def test_rule_edit_reaches_every_client(self):
         p = self.source / self.data['rules'][0]
         p.write_text(p.read_text() + '\nUpdated shared rule.\n')

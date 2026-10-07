@@ -108,6 +108,13 @@
       "path": "styling",
       "version": "0.1.0",
       "description": "Tool Belt design tokens as CSS variables and JSON."
+    },
+    {
+      "id": "zizmor",
+      "kind": "pypi",
+      "name": "zizmor",
+      "version": "1.30.1",
+      "description": "zizmor GitHub Actions security linter, run on .github/workflows by the Workflow security lint workflow."
     }
   ],
   "adapters": [

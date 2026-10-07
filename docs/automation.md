@@ -1,6 +1,6 @@
 # GitHub Actions
 
-Four workflows live in `.github/workflows`. Every action is pinned to a full commit SHA (with the release tag in a comment). Each workflow defaults to `contents: read` and grants write access only to the job that needs it.
+Five workflows live in `.github/workflows`. Every action is pinned to a full commit SHA (with the release tag in a comment). Each workflow defaults to `contents: read` and grants write access only to the job that needs it.
 
 | Workflow | Trigger | What it does | Permissions |
 | --- | --- | --- | --- |
@@ -8,6 +8,7 @@ Four workflows live in `.github/workflows`. Every action is pinned to a full com
 | **Update a belt variable** (`update-variable.yml`) | manual | Sets one allowlisted value in `belt.json`, validates, tests, opens a draft PR | contents and PRs: write |
 | **Check pinned package versions** (`bump-pins.yml`) | Mondays 13:17 UTC, or manual | Looks up the latest stable release of each npm/PyPI package pin; if newer, bumps it (and matching server args), validates, tests, opens a draft PR | contents and PRs: write |
 | **Run belt task** (`run-task.yml`) | manual | Runs one allowlisted task and uploads its log and outputs as an artifact for 14 days | read |
+| **Workflow security lint** (`zizmor.yml`) | push, pull request | Runs zizmor on `.github/workflows` and fails on findings, shown as annotations | read |
 
 ## Update a belt variable
 
@@ -28,10 +29,27 @@ The pin check runs `python3 scripts/check_pins.py belt.json --apply`. Pre-releas
 
 Choose a task from the list: `validate`, `unit-tests`, `check-styling`, `check-pins` (report only), `export-all` or `export-<target>`. Export tasks accept a local model preset. Tasks are fixed argument lists in `scripts/tasks.py`, run without a shell. The workflow input is a fixed choice list, and the script rejects any other name. The local AI health check is deliberately absent: a GitHub runner cannot reach a model on Ian's computer. `python3 scripts/tasks.py list` shows the same tasks locally.
 
+## Workflow security lint
+
+[zizmor](https://github.com/zizmorcore/zizmor) (MIT) is a static security linter for GitHub Actions. It flags template injection from `${{ }}` expressions in `run:` blocks, overly broad `permissions`, actions not pinned by SHA, impostor commits, known-vulnerable actions and credentials left in the checkout. These workflows accept free-text input and push branches with a token, so the lint keeps that surface checked on every change.
+
+The version comes from the `zizmor` pypi package in `belt.json`, so the weekly pin check covers it. The job uses the official [zizmor-action](https://github.com/zizmorcore/zizmor-action), pinned by SHA. It runs a digest-pinned container image, prints results as annotations, and needs no GitHub Advanced Security or code-scanning upload. The action only accepts zizmor versions listed at its pinned commit. When a pin-bump PR raises zizmor, bump the action SHA in `zizmor.yml` to a release that lists that version; otherwise the lint job fails with `Unknown version`.
+
+Run it locally with either command:
+
+```sh
+uvx zizmor@1.30.1 .github/workflows
+pipx run zizmor==1.30.1 .github/workflows
+```
+
+Set `GH_TOKEN` (for example `GH_TOKEN=$(gh auth token)`) to enable the online audits CI runs, or add `--offline` to skip them. `--persona pedantic` shows the stricter style findings that the default persona hides.
+
+Two findings are ignored inline with `# zizmor: ignore[artipacked]`, each with a comment. They are in `bump-pins.yml` and `update-variable.yml`, where the checkout keeps its credential because `git push` relies on it. Neither job uploads artifacts. The same token is also in the job-wide `GH_TOKEN` for `gh`. Removing both would mean scoping `GH_TOKEN` to the PR step and pushing through `gh auth setup-git`. That is possible later but has not been exercised on GitHub.
+
 ## One-time repository setting
 
 The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, with no third-party action. GitHub only lets them open pull requests if a maintainer enables **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**. Without it, the run validates and pushes the branch, then fails at the PR step.
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-None of these workflows has run on GitHub from this branch yet, except **Belt checks** on push. `actionlint` passes locally.
+None of these workflows has run on GitHub from this branch yet, except **Belt checks** and **Workflow security lint** on push. `actionlint` and zizmor 1.30.1 pass locally.
