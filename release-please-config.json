@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "bump-minor-pre-major": true,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "belt.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "templates/app-adoption/.tool-belt.json",
+          "jsonpath": "$.beltVersion"
+        }
+      ]
+    }
+  }
+}
