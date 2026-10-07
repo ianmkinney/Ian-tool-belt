@@ -159,7 +159,7 @@ class CheckPinsTests(BeltCase):
     def test_files_packages_are_not_looked_up(self):
         seen = []
         check_pins.check(self.reload(), lambda kind, name: seen.append(name) or '0.0.83')
-        self.assertEqual(seen, ['@playwright/mcp'])
+        self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector'])
 
     def test_registry_urls(self):
         captured = []

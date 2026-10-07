@@ -96,6 +96,13 @@
       "description": "Microsoft's Playwright MCP server used by the playwright connection."
     },
     {
+      "id": "mcp-inspector",
+      "kind": "npm",
+      "name": "@modelcontextprotocol/inspector",
+      "version": "2.9.0",
+      "description": "The MCP project's Inspector; its CLI mode runs scripts/mcp_smoke.py connection smoke tests."
+    },
+    {
       "id": "styling",
       "kind": "files",
       "path": "styling",
