@@ -1,0 +1,9 @@
+name: pr-title
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+permissions:
+  pull-requests: read
+jobs:
+  lint:
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/pr-title-reusable.yml@main
