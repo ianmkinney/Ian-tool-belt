@@ -72,6 +72,7 @@ class VersioningTests(unittest.TestCase):
             VERSIONING / 'pr-title.yml': {REMOTE + 'pr-title-reusable.yml@main'},
             ADOPTION / '.github/workflows/belt.yml': {REMOTE + 'release-please-reusable.yml@main',
                                                       REMOTE + 'pr-title-reusable.yml@main'},
+            ADOPTION / '.github/workflows/belt-sync.yml': {REMOTE + 'belt-sync-reusable.yml@main'},
         }
         for path, uses in expected.items():
             with self.subTest(path=path.name):
