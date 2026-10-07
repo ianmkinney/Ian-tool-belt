@@ -2,8 +2,9 @@ name: pr-title
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
-permissions:
-  pull-requests: read
+permissions: {}
 jobs:
   lint:
-    uses: ./.github/workflows/pr-title-reusable.yml
+    permissions:
+      pull-requests: read
+    uses: $/.github/workflows/pr-title-reusable.yml

@@ -28,7 +28,7 @@ These are settings, not files, so a PR cannot make them:
 PRs opened with the default `GITHUB_TOKEN` (the release-please PR and the weekly `tool-belt/sync` PR) do not trigger CI on their own. That token also cannot change `.github/workflows/*`, so without a token the sync skips workflow files.
 
 - **Workaround with no secret:** close and reopen the PR. Your own `pull_request` event then runs CI.
-- **Token:** create a fine-grained PAT scoped to the app repo with **Contents**, **Pull requests** and **Workflows** set to read and write. Store it as the `BELT_SYNC_TOKEN` or `RELEASE_PLEASE_TOKEN` repository secret. Release uses `RELEASE_PLEASE_TOKEN`; the sync prefers `BELT_SYNC_TOKEN` and falls back to `RELEASE_PLEASE_TOKEN`. `secrets: inherit` passes them through. Never commit the token.
+- **Token:** create a fine-grained PAT scoped to the app repo with **Contents**, **Pull requests** and **Workflows** set to read and write. Store it as the `BELT_SYNC_TOKEN` or `RELEASE_PLEASE_TOKEN` repository secret. Release uses `RELEASE_PLEASE_TOKEN`; the sync prefers `BELT_SYNC_TOKEN` and falls back to `RELEASE_PLEASE_TOKEN`. The callers pass them by name. Never commit the token.
 
 After setup, merge a `feat:` or `fix:` PR so release-please opens its first release PR.
 

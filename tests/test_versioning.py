@@ -14,6 +14,10 @@ WORKFLOWS = ROOT / '.github/workflows'
 VERSIONING = ROOT / 'templates/versioning'
 ADOPTION = ROOT / 'templates/app-adoption'
 REMOTE = 'ianmkinney/Ian-tool-belt/.github/workflows/'
+NEW_WORKFLOWS = [WORKFLOWS / name for name in ['release-please-reusable.yml', 'pr-title-reusable.yml',
+                                              'belt-sync-reusable.yml', 'release.yml', 'pr-title.yml']]
+TEMPLATE_WORKFLOWS = [VERSIONING / 'release.yml', VERSIONING / 'pr-title.yml',
+                      *(ADOPTION / '.github/workflows').glob('*.yml')]
 TYPES = {'feat', 'fix', 'chore', 'docs', 'refactor', 'test', 'ci', 'perf', 'build', 'revert'}
 
 
@@ -51,20 +55,34 @@ class VersioningTests(unittest.TestCase):
         self.assertIn('manifest-file', inputs)
         job = workflow['jobs']['release-please']
         self.assertEqual(job['permissions'], {'contents': 'write', 'pull-requests': 'write'})
-        self.assertEqual(job['steps'][0]['uses'], 'googleapis/release-please-action@v4')
+        self.assertRegex(job['steps'][0]['uses'], r'^googleapis/release-please-action@[0-9a-f]{40}$')
 
     def test_pr_title_reusable_workflow(self):
         workflow = load_yaml(WORKFLOWS / 'pr-title-reusable.yml')
         self.assertIn('workflow_call', workflow['on'])
         step = workflow['jobs']['conventional-title']['steps'][0]
-        self.assertEqual(step['uses'], 'amannn/action-semantic-pull-request@v5')
+        self.assertRegex(step['uses'], r'^amannn/action-semantic-pull-request@[0-9a-f]{40}$')
         self.assertEqual(set(step['with']['types'].split()), TYPES)
 
     def test_repo_callers_use_local_reusable_workflows(self):
         self.assertEqual(called_workflows(load_yaml(WORKFLOWS / 'release.yml')),
-                         {'./.github/workflows/release-please-reusable.yml'})
+                         {'$/.github/workflows/release-please-reusable.yml'})
         self.assertEqual(called_workflows(load_yaml(WORKFLOWS / 'pr-title.yml')),
-                         {'./.github/workflows/pr-title-reusable.yml'})
+                         {'$/.github/workflows/pr-title-reusable.yml'})
+
+    def test_new_workflows_are_least_privilege_and_pinned(self):
+        for path in [*NEW_WORKFLOWS, *TEMPLATE_WORKFLOWS]:
+            with self.subTest(path=path.name):
+                workflow = load_yaml(path)
+                self.assertEqual(workflow['permissions'], {})
+                self.assertNotIn('secrets: inherit', path.read_text())
+                for job in workflow['jobs'].values():
+                    self.assertTrue(job['permissions'])
+                    for step in job.get('steps', []):
+                        if 'uses' in step:
+                            self.assertRegex(step['uses'], r'@[0-9a-f]{40}$')
+                        if step.get('uses', '').startswith('actions/checkout@'):
+                            self.assertIs(step['with']['persist-credentials'], False)
 
     def test_template_callers_reference_published_workflows(self):
         expected = {
@@ -106,16 +124,15 @@ class VersioningTests(unittest.TestCase):
                        'squash', 'VERCEL_GIT_COMMIT_SHA', 'SOURCE_COMMIT', 'GIT_SHA']:
             self.assertIn(phrase, readme)
 
-    def test_adoption_agent_files_point_to_belt_rules(self):
-        rule = (ADOPTION / '.cursor/rules/tool-belt.mdc').read_text()
-        front = yaml.safe_load(rule.split('---')[1])
-        self.assertIs(front['alwaysApply'], True)
-        self.assertTrue(front['description'])
-        for text in [(ADOPTION / 'AGENTS.md').read_text(), rule]:
-            for phrase in ['https://github.com/ianmkinney/Ian-tool-belt', 'rules/engineering.md',
-                           'rules/working-agreement.md', 'draft PR', 'Conventional Commit',
-                           'release-please', 'Secrets', 'CI green', 'Tests for every change']:
-                self.assertIn(phrase.lower(), text.lower())
+    def test_adoption_agents_file_points_to_belt_rules(self):
+        text = (ADOPTION / 'AGENTS.md').read_text()
+        self.assertFalse((ADOPTION / '.cursor').exists())
+        for phrase in ['.cursor/rules/engineering.mdc', '.cursor/rules/working-agreement.mdc']:
+            self.assertIn(phrase, text)
+        for phrase in ['https://github.com/ianmkinney/Ian-tool-belt', 'rules/engineering.md',
+                       'rules/working-agreement.md', 'draft PR', 'Conventional Commit',
+                       'release-please', 'Secrets', 'CI green', 'Tests for every change']:
+            self.assertIn(phrase.lower(), text.lower())
 
     def test_adoption_marker_rejects_bad_markers(self):
         with tempfile.TemporaryDirectory() as temp:

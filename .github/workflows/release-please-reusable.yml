@@ -18,9 +18,7 @@ on:
       RELEASE_PLEASE_TOKEN:
         description: Optional PAT or app token so release PRs trigger other workflows.
         required: false
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 jobs:
   release-please:
     runs-on: ubuntu-latest
@@ -28,7 +26,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           # release-please ignores the config when release-type is set, so pass only one.
