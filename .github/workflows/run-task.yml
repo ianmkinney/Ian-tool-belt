@@ -1,0 +1,59 @@
+name: Run belt task
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Allowlisted task (see scripts/tasks.py)
+        required: true
+        type: choice
+        options:
+          - validate
+          - unit-tests
+          - check-styling
+          - check-pins
+          - export-all
+          - export-claude-code
+          - export-vscode
+          - export-cursor
+          - export-opencode
+      preset:
+        description: Local model preset for export tasks (default is the belt's defaultPreset, Ollama)
+        required: false
+        type: choice
+        default: default
+        options:
+          - default
+          - ollama
+          - lm-studio
+          - llama-cpp
+          - vllm
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      TASK: ${{ inputs.task }}
+      PRESET: ${{ inputs.preset }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Run task
+        run: |
+          if [ "$PRESET" = default ]; then
+            python scripts/tasks.py run "$TASK" --out task-output
+          else
+            python scripts/tasks.py run "$TASK" --out task-output --preset "$PRESET"
+          fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: belt-task-${{ inputs.task }}-${{ github.run_id }}
+          path: task-output/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
