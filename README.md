@@ -55,6 +55,10 @@ python3 scripts/local_ai_check.py --chat
 
 The same guide shows how to hand the belt to a local model through OpenCode or Claude Code.
 
+## Smoke-test a connection
+
+With Node.js 22.19+, `python3 scripts/mcp_smoke.py playwright` starts the server through the pinned MCP Inspector and lists its tools. See [smoke-test a connection](connections/README.md#smoke-test-a-connection).
+
 ## Grow the belt
 
 ```sh

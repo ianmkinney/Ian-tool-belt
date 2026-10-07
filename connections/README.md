@@ -1,12 +1,26 @@
 # Connection catalog
 
-Configured here means declared in the manifest. No credentials have been supplied and no live MCP session has been tested by this project.
+Configured here means declared in the manifest. No credentials have been supplied. Only the [smoke test](#smoke-test-a-connection) below has opened live MCP sessions, outside any assistant client; client sessions remain untested.
 
 | Connection | Why it belongs | Setup | Current evidence |
 | --- | --- | --- | --- |
 | GitHub official MCP | Repository inspection and PR context | Set GITHUB_MCP_TOKEN in the launching client's environment with minimum required repo access | Official endpoint documented; read-only URL selected; authentication untested |
-| Context7 by Upstash | Documentation for the actual libraries in a project | Set CONTEXT7_API_KEY in the launching client's environment | Official endpoint/header documented; authentication untested |
-| Playwright by Microsoft | UI regression checks and browser workflows | Install Node.js and required browser/runtime dependencies | Package version 0.0.83 appears in upstream package.json; registry installation and execution untested |
+| Context7 by Upstash | Documentation for the actual libraries in a project | Set CONTEXT7_API_KEY in the launching client's environment | Official endpoint/header documented; smoke-test `tools/list` over HTTP answered (2 tools) with a placeholder key on 2026-10-07, so reachability is shown but authentication is untested |
+| Playwright by Microsoft | UI regression checks and browser workflows | Install Node.js and required browser/runtime dependencies | Smoke test on 2026-10-07 (Linux, Node 22.23): 0.0.83 installed from npm, listed 25 tools, `browser_tabs` `{"action":"list"}` returned `about:blank`; untested in an assistant client |
+
+## Smoke-test a connection
+
+`scripts/mcp_smoke.py` runs the pinned [MCP Inspector](https://github.com/modelcontextprotocol/inspector) (`mcp-inspector` in `packages`) in CLI mode against one server from `belt.json`. It lists the server's tools and, with `--call`, makes one named call. Choose only read-only, repeatable tools. It needs Node.js 22.19 or newer; `npx` downloads the pinned Inspector and the server package on first use.
+
+```sh
+python3 scripts/mcp_smoke.py playwright
+python3 scripts/mcp_smoke.py playwright --call browser_tabs --args '{"action":"list"}'
+GITHUB_MCP_TOKEN=... python3 scripts/mcp_smoke.py github
+```
+
+Credentials come only from the variables named in `headersFromEnv`. A server whose variables are unset is skipped with a message and exit code 0. Values are never printed and are redacted from relayed output, but a header is passed to the Inspector as a command-line argument, so it is visible in the local process list while the run lasts. Each run uses a temporary Inspector storage directory, a memory-only secret store and `--stored-auth-only`, so it neither reads your stored OAuth tokens nor waits on a browser login.
+
+A passing run shows that the server starts and answers MCP. It does not show that a given assistant client loads the server, and a pass with a credential that the server never checks is not evidence of authentication. Record the date, versions and observed result in the table above.
 
 ## Local AI model
 
@@ -47,6 +61,8 @@ To add one: evaluate it with the `evaluate-mcp` skill, add an entry to `personal
 - https://github.com/upstash/context7/blob/master/packages/mcp/README.md
 - https://github.com/microsoft/playwright-mcp/blob/main/README.md
 - https://github.com/microsoft/playwright-mcp/blob/main/package.json
+
+Smoke-test tool sources, checked 2026-10-07 UTC: https://github.com/modelcontextprotocol/inspector (README, `clients/cli/README.md`, `docs/cli-smoke-testing.md`, `docs/secret-storage.md`, LICENSE), https://registry.npmjs.org/@modelcontextprotocol/inspector
 
 Local AI sources, checked 2026-10-07 UTC: https://docs.ollama.com/quickstart, https://docs.ollama.com/api/openai-compatibility, https://lmstudio.ai/docs/developer/openai-compat, https://github.com/ggml-org/llama.cpp/tree/master/tools/server
 

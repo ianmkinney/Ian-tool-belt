@@ -32,6 +32,8 @@ Provide `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY` through the environment used t
 
 After reviewing configuration, use the target client's own trust and MCP setup flow. Confirm tool discovery, then perform a harmless read-only call. For GitHub, inspect only a repository authorized by the credential. For Context7, request public library documentation. For Playwright, use a local test page with synthetic data. Record actual results; do not infer compatibility from successful export.
 
+To check a server itself before involving a client, run `python3 scripts/mcp_smoke.py <server-id>` (see [smoke-test a connection](../connections/README.md#smoke-test-a-connection)). It drives the pinned MCP Inspector, not your assistant, so a pass proves the server answers MCP but not that a client loads it.
+
 ## Skills and rules
 
 For Claude Code and VS Code, the generated instruction file combines the rules and lists relative paths to copied SKILL.md files. The exporter does not enable native skill discovery for these clients or inject system instructions; ask the assistant to read INSTRUCTIONS.md and the relevant skill explicitly. Cursor and OpenCode exports place rules and skills where those clients document automatic loading; confirm they appear before relying on them. Host policies always retain precedence.
