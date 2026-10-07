@@ -83,6 +83,15 @@ Each command validates the result and leaves `belt.json` unchanged if it is inva
 - [Brand guide](branding/README.md) and [styling tokens](styling/README.md)
 - [Contributing](CONTRIBUTING.md)
 
+## Use the belt in an app repo
+
+App repos opt in by copying files; nothing is installed or overwritten automatically.
+
+- **Adoption kit** — [`templates/app-adoption/`](templates/app-adoption/): copy `AGENTS.md`, `.cursor/rules/tool-belt.mdc`, `.github/workflows/belt.yml` and `.tool-belt.json` to the app repo root. The agent files point to our [engineering](rules/engineering.md) and [working agreement](rules/working-agreement.md) rules. `belt.yml` runs the shared PR-title check and release-please. `.tool-belt.json` records the adopted belt version; check it with `python3 scripts/validate.py path/to/app`.
+- **Versioning** — [`templates/versioning/`](templates/versioning/README.md): release-please config, manifest, standalone callers, the per-repo GitHub settings and a Next.js `/api/version` example. `belt.yml` needs the config and manifest from here.
+
+Both call the reusable workflows `.github/workflows/pr-title-reusable.yml` and `release-please-reusable.yml` at `ianmkinney/Ian-tool-belt@main`, so this repo stays public. This repo uses the same workflows; its version in `belt.json` and the marker template is bumped by release-please.
+
 ## Open by design
 
 Keep the local format and tools useful without a paywall. Share working examples and teach reproducible workflows. Courses, workshops and implementation services are possible future ways to sustain the project; they are not launched offerings.

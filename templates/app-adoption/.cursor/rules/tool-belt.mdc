@@ -1,0 +1,15 @@
+---
+description: Ian's tool belt engineering and PR rules
+alwaysApply: true
+---
+
+This repository follows Ian's tool belt: https://github.com/ianmkinney/Ian-tool-belt
+
+Follow its [engineering.md](https://github.com/ianmkinney/Ian-tool-belt/blob/main/rules/engineering.md) and [working-agreement.md](https://github.com/ianmkinney/Ian-tool-belt/blob/main/rules/working-agreement.md).
+
+- One draft PR per session: reuse the session's open PR or open one draft PR on a new branch. Never merge without authorization.
+- Tests for every change: cover changed behavior and run the project's checks.
+- Secrets stay out of Git: never commit `.env` values, tokens or credentials.
+- CI green: after each push, inspect checks for the latest head, fix failures and report pending or blocked checks honestly.
+- Conventional Commit PR titles (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `perf:`, `build:`, `revert:`; `!` for breaking). The squash commit uses the title.
+- Releases via release-please: do not bump versions or edit `CHANGELOG.md` by hand; merge the release-please PR to release.

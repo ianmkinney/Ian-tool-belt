@@ -1,0 +1,24 @@
+name: belt
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  pr-title:
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: read
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/pr-title-reusable.yml@main
+  release:
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/release-please-reusable.yml@main
+    with:
+      config-file: release-please-config.json
+      manifest-file: .release-please-manifest.json
+    secrets: inherit

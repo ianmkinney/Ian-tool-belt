@@ -172,11 +172,34 @@ def validate(path):
     return data
 
 
+ADOPTION_MARKER = '.tool-belt.json'
+BELT_REPO = 'ianmkinney/Ian-tool-belt'
+
+
+def validate_adoption(path):
+    """Validate an app repo's .tool-belt.json adoption marker."""
+    path = Path(path)
+    if path.is_dir():
+        path = path / ADOPTION_MARKER
+    data = json.loads(path.read_text())
+    require(isinstance(data, dict) and set(data) == {'belt', 'beltVersion'},
+            'Unexpected or missing marker fields')
+    require(data['belt'] == BELT_REPO, f'Marker must reference {BELT_REPO}')
+    require(isinstance(data['beltVersion'], str)
+            and re.fullmatch(r'\d+\.\d+\.\d+', data['beltVersion']), 'Invalid beltVersion')
+    return data
+
+
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        sys.exit('Usage: python3 scripts/validate.py BELT_JSON')
+        sys.exit('Usage: python3 scripts/validate.py BELT_JSON|.tool-belt.json|APP_DIR')
+    target = Path(sys.argv[1])
     try:
-        belt = validate(sys.argv[1])
+        if target.is_dir() or target.name == ADOPTION_MARKER:
+            marker = validate_adoption(target)
+            print(f"Adopts belt: {marker['belt']}@{marker['beltVersion']}")
+        else:
+            belt = validate(target)
+            print(f"Valid belt: {belt['name']}@{belt['version']}")
     except (OSError, ValueError, TypeError, KeyError) as error:
         sys.exit(f'Invalid belt: {error}')
-    print(f"Valid belt: {belt['name']}@{belt['version']}")
