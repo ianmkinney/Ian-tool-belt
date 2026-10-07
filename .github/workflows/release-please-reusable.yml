@@ -1,0 +1,37 @@
+name: release-please (reusable)
+on:
+  workflow_call:
+    inputs:
+      release-type:
+        description: Release strategy used when no config-file is given (node, python, simple, ...).
+        type: string
+        default: node
+      config-file:
+        description: Path to release-please-config.json. When set, release-type comes from the config.
+        type: string
+        default: ''
+      manifest-file:
+        description: Path to .release-please-manifest.json, used with config-file.
+        type: string
+        default: .release-please-manifest.json
+    secrets:
+      RELEASE_PLEASE_TOKEN:
+        description: Optional PAT or app token so release PRs trigger other workflows.
+        required: false
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          # release-please ignores the config when release-type is set, so pass only one.
+          release-type: ${{ inputs.config-file == '' && inputs.release-type || '' }}
+          config-file: ${{ inputs.config-file }}
+          manifest-file: ${{ inputs.config-file != '' && inputs.manifest-file || '' }}
