@@ -115,7 +115,8 @@ class BeltTests(BeltCase):
     def test_personal_connections_are_opt_in(self):
         self.data['personalServers'] = [{'id': 'home-notes', 'transport': 'http',
                                          'url': 'https://notes.example.com/mcp', 'headersFromEnv': {},
-                                         'status': 'untested'}]
+                                         'status': 'untested',
+                                         'description': 'Personal notes MCP. Export only with --include-personal.'}]
         self.write()
         work = self.root / 'work'
         report = exporter.export_belt(self.manifest, 'claude-code', work)
@@ -241,6 +242,9 @@ class BeltTests(BeltCase):
         self.data = json.loads(json.dumps(baseline))
         self.data['servers'][2]['args'] = 'shell'
         self.invalid()
+        self.data = json.loads(json.dumps(baseline))
+        self.data['servers'][0].pop('description')
+        self.invalid()
 
     def test_invalid_model_variants(self):
         baseline = json.loads(json.dumps(self.data))
@@ -255,6 +259,8 @@ class BeltTests(BeltCase):
             lambda m: m['presets']['ollama'].update(docs='http://example.com'),
             lambda m: m['presets']['ollama'].update(token='x'),
             lambda m: m.update(status='connected'),
+            lambda m: m.pop('description'),
+            lambda m: m['presets']['ollama'].pop('description'),
         ]
         for index, mutate in enumerate(cases):
             with self.subTest(case=index):

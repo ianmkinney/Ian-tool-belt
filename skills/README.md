@@ -16,7 +16,7 @@ The Cursor and OpenCode exports place skills in `.cursor/skills/` and `.opencode
 ## Add a skill
 
 ```sh
-python3 scripts/new.py skill review-sql --description "Review SQL changes. Use when a migration or query changes."
+python3 belt.py add skill review-sql --description "Review SQL changes. Use when a migration or query changes."
 ```
 
 This creates `skills/review-sql/SKILL.md` from a template, registers it in `belt.json` and validates the belt. Then replace the template steps with your own, add a row to the table above, and add supporting files under `scripts/`, `references/` or `assets/` in the skill folder if needed; exports copy them. Write original instructions with synthetic examples.

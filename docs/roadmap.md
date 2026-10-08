@@ -14,6 +14,7 @@
 - [x] Styling tokens as CSS variables and JSON
 - [x] MCP Inspector smoke test for connections; Playwright discovery and a harmless call verified outside any client
 - [x] Workflows to update a belt variable, propose pin bumps weekly and run allowlisted tasks
+- [x] `python3 belt.py` entry point, generated `belt.index.json`, and one-command `use` into a project
 
 ## Next: local AI and live cross-assistant proof
 

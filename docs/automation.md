@@ -22,7 +22,7 @@ Open **Actions → Update a belt variable → Run workflow**, then enter a path 
 - `packages.<id>.version` (stdio server args that install the package are updated too)
 - `models.<id>.status`, `models.<id>.defaultPreset`, `models.<id>.presets.<preset>.baseUrl` or `.model`
 
-Anything else is rejected. A value that fails validation (for example a plain-HTTP server URL) is rolled back, and no PR is opened. Credentials and header mappings are deliberately not settable. Run the same thing locally with `python3 scripts/belt_set.py belt.json <path> <value>`.
+Anything else is rejected. A value that fails validation (for example a plain-HTTP server URL) is rolled back, and no PR is opened. Credentials and header mappings are deliberately not settable. Run the same thing locally with `python3 belt.py set <path> <value>`.
 
 ## Weekly pin check
 
@@ -30,7 +30,7 @@ The pin check runs `python3 scripts/check_pins.py belt.json --apply`. Pre-releas
 
 ## Run belt task
 
-Choose a task from the list: `validate`, `unit-tests`, `check-styling`, `check-pins` (report only), `export-all` or `export-<target>`. Export tasks accept a local model preset. Tasks are fixed argument lists in `scripts/tasks.py`, run without a shell. The workflow input is a fixed choice list, and the script rejects any other name. The local AI health check is deliberately absent: a GitHub runner cannot reach a model on Ian's computer. `python3 scripts/tasks.py list` shows the same tasks locally.
+Choose a task from the list: `validate`, `unit-tests`, `check-styling`, `check-pins` (report only), `export-all` or `export-<target>`. Export tasks accept a local model preset. Tasks are fixed argument lists in `scripts/tasks.py`, run without a shell. The workflow input is a fixed choice list, and the script rejects any other name. The local AI health check is deliberately absent: a GitHub runner cannot reach a model on Ian's computer. `python3 belt.py run` plus `python3 scripts/tasks.py list` show and run the same tasks locally. CI also runs `python3 belt.py index --check` so `belt.index.json` and the AGENTS.md map cannot drift from `belt.json`.
 
 ## Workflow security lint
 
@@ -82,4 +82,4 @@ The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, w
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-None of these workflows has run on GitHub from this branch yet, except **Belt checks** and **Workflow security lint** on push. After this change, actionlint and zizmor both run in CI.
+Belt checks, zizmor and actionlint run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.

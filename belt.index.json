@@ -1,0 +1,436 @@
+{
+  "name": "our-tool-belt",
+  "version": "0.3.0",
+  "formatVersion": "0.3-draft",
+  "description": "Portable MCP connections, skills and rules for APIs, data and browser-tested apps. Run python3 belt.py use to drop it into a project.",
+  "commands": [
+    {
+      "id": "use",
+      "run": "python3 belt.py use",
+      "description": "Write this belt into the current project for Cursor, OpenCode, Claude Code or VS Code."
+    },
+    {
+      "id": "doctor",
+      "run": "python3 belt.py doctor",
+      "description": "Validate the belt, report missing env vars, and check local AI if it is running."
+    },
+    {
+      "id": "list",
+      "run": "python3 belt.py list",
+      "description": "Print every item in the belt with its one-line description."
+    },
+    {
+      "id": "add",
+      "run": "python3 belt.py add skill|package ...",
+      "description": "Scaffold a skill or package and register it in belt.json."
+    },
+    {
+      "id": "set",
+      "run": "python3 belt.py set PATH VALUE",
+      "description": "Change one allowlisted belt.json field and validate."
+    },
+    {
+      "id": "run",
+      "run": "python3 belt.py run TASK",
+      "description": "Run one allowlisted task (validate, tests, export, pins)."
+    },
+    {
+      "id": "index",
+      "run": "python3 belt.py index",
+      "description": "Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check."
+    }
+  ],
+  "servers": [
+    {
+      "id": "github",
+      "transport": "http",
+      "status": "needs-credentials",
+      "description": "Read-only GitHub repos and PRs over MCP. Use when inspecting code or PRs; needs GITHUB_MCP_TOKEN."
+    },
+    {
+      "id": "context7",
+      "transport": "http",
+      "status": "needs-credentials",
+      "description": "Library docs for the installed version. Use when writing against a dependency; needs CONTEXT7_API_KEY. Never send secrets or private source."
+    },
+    {
+      "id": "playwright",
+      "transport": "stdio",
+      "status": "needs-local-setup",
+      "description": "Headless isolated browser via MCP. Use to verify a UI flow; needs Node.js. Does not attach to your real browser profile."
+    }
+  ],
+  "personalServers": {
+    "count": 0,
+    "exportedByDefault": false,
+    "note": "Outside-work connections. Details omitted here. Pass --include-personal to list or export them."
+  },
+  "models": [
+    {
+      "id": "local-ai",
+      "api": "openai-compatible",
+      "status": "needs-local-setup",
+      "description": "Optional OpenAI-compatible local model for agent clients. Not an MCP server; nothing in the belt requires it to be running.",
+      "defaultPreset": "ollama",
+      "env": {
+        "baseUrl": "LOCAL_AI_BASE_URL",
+        "model": "LOCAL_AI_MODEL",
+        "apiKey": "LOCAL_AI_API_KEY"
+      },
+      "presets": [
+        {
+          "id": "ollama",
+          "baseUrl": "http://localhost:11434/v1",
+          "model": "gemma4:e2b",
+          "docs": "https://docs.ollama.com/api/openai-compatibility",
+          "description": "Default local runtime at http://localhost:11434/v1. Use after ollama pull of the preset model tag."
+        },
+        {
+          "id": "lm-studio",
+          "baseUrl": "http://localhost:1234/v1",
+          "model": "",
+          "docs": "https://lmstudio.ai/docs/developer/openai-compat",
+          "description": "LM Studio OpenAI-compatible server on port 1234. Set the model name before exporting to OpenCode."
+        },
+        {
+          "id": "llama-cpp",
+          "baseUrl": "http://localhost:8080/v1",
+          "model": "",
+          "docs": "https://github.com/ggml-org/llama.cpp/tree/master/tools/server",
+          "description": "llama.cpp server on port 8080. Set the model name before use."
+        },
+        {
+          "id": "vllm",
+          "baseUrl": "http://localhost:8000/v1",
+          "model": "",
+          "docs": "https://docs.vllm.ai/en/latest/serving/openai_compatible_server/",
+          "description": "vLLM OpenAI-compatible server on port 8000. Set the model name before use."
+        }
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "id": "playwright-mcp",
+      "kind": "npm",
+      "name": "@playwright/mcp",
+      "version": "0.0.83",
+      "description": "Pinned Playwright MCP server. Use via the playwright connection; bump this pin instead of editing server args."
+    },
+    {
+      "id": "mcp-inspector",
+      "kind": "npm",
+      "name": "@modelcontextprotocol/inspector",
+      "version": "2.9.0",
+      "description": "Pinned MCP Inspector CLI. Use with python3 scripts/mcp_smoke.py; not an exported connection."
+    },
+    {
+      "id": "styling",
+      "kind": "files",
+      "name": "styling",
+      "version": "0.1.0",
+      "description": "Design tokens as CSS variables and JSON. Use when theming belt-branded surfaces; not copied by client exports."
+    },
+    {
+      "id": "zizmor",
+      "kind": "pypi",
+      "name": "zizmor",
+      "version": "1.30.1",
+      "description": "Pinned GitHub Actions security linter. Use in CI via zizmor.yml; not an MCP server."
+    },
+    {
+      "id": "actionlint",
+      "kind": "pypi",
+      "name": "actionlint-py",
+      "version": "1.7.12.25",
+      "description": "Pinned actionlint (via actionlint-py). Use in CI via actionlint.yml to catch workflow syntax errors."
+    },
+    {
+      "id": "ollmcp",
+      "kind": "pypi",
+      "name": "ollmcp",
+      "version": "0.35.1",
+      "description": "Pinned Ollama-native MCP terminal client. Use with the Claude Code export's .mcp.json; not a fifth adapter."
+    }
+  ],
+  "skills": [
+    {
+      "id": "build-api-slice",
+      "path": "skills/build-api-slice/SKILL.md",
+      "description": "Build a narrow API feature with a usable frontend path. Use for Python, Rails, Spring, React or Next.js feature requests, API contracts and micro-SaaS prototypes."
+    },
+    {
+      "id": "reconcile-data",
+      "path": "skills/reconcile-data/SKILL.md",
+      "description": "Reconcile exports and build repeatable data transformations. Use for Postgres or Snowflake extracts, CSV files, Pandas pipelines and Excel reconciliation reports."
+    },
+    {
+      "id": "verify-browser-flow",
+      "path": "skills/verify-browser-flow/SKILL.md",
+      "description": "Verify a web application user journey using browser evidence. Use for React or Next.js UI checks, regression reproduction and frontend-to-API troubleshooting."
+    },
+    {
+      "id": "evaluate-mcp",
+      "path": "skills/evaluate-mcp/SKILL.md",
+      "description": "Evaluate an MCP server or skill for inclusion in Tool Belt. Use for AI Vault candidates, marketplace submissions, connection changes and assistant compatibility reviews."
+    }
+  ],
+  "rules": [
+    {
+      "id": "working-agreement",
+      "path": "rules/working-agreement.md",
+      "description": "Shared operating rules: small changes, secrets out of Git, honest verification. Always apply."
+    },
+    {
+      "id": "engineering",
+      "path": "rules/engineering.md",
+      "description": "Clean code, tests, one PR per session, Conventional Commit titles, keep CI green. Follow on every code change."
+    }
+  ],
+  "adapters": [
+    {
+      "id": "claude-code",
+      "description": "Claude Code MCP config (.mcp.json). Also the file ollmcp --servers-json reads. Rules and skills need manual attach.",
+      "mcp": ".mcp.json",
+      "rules": "INSTRUCTIONS.md (manual)",
+      "skills": "skills/<name>/",
+      "localModel": "env-example-only"
+    },
+    {
+      "id": "vscode",
+      "description": "VS Code MCP config (.vscode/mcp.json). Rules and skills need manual attach; Copilot uses this file.",
+      "mcp": ".vscode/mcp.json",
+      "rules": "INSTRUCTIONS.md (manual)",
+      "skills": "skills/<name>/",
+      "localModel": "env-example-only"
+    },
+    {
+      "id": "cursor",
+      "description": "Cursor-native MCP, always-on rules and skills. Default target for `belt.py use` in an empty project.",
+      "mcp": ".cursor/mcp.json",
+      "rules": ".cursor/rules/*.mdc",
+      "skills": ".cursor/skills/<name>/",
+      "localModel": "env-example-only"
+    },
+    {
+      "id": "opencode",
+      "description": "OpenCode config with MCP plus a wired local-ai provider. Use when handing the belt to a local Ollama model.",
+      "mcp": "opencode.json",
+      "rules": "INSTRUCTIONS.md via instructions",
+      "skills": ".opencode/skills/<name>/",
+      "localModel": "provider-config-generated"
+    }
+  ],
+  "scripts": [
+    {
+      "id": "belt.py",
+      "description": "One command entry point for the belt. Prefer this over calling scripts/ directly."
+    },
+    {
+      "id": "scripts/belt_index.py",
+      "description": "Build belt.index.json and the AGENTS.md map from belt.json. belt.py index wraps this."
+    },
+    {
+      "id": "scripts/belt_set.py",
+      "description": "Set one allowlisted belt.json value, then validate or roll back. belt.py set wraps this."
+    },
+    {
+      "id": "scripts/belt_sync.py",
+      "description": "Copy managed adoption-kit files into an app repo. Use --adopt for a first install."
+    },
+    {
+      "id": "scripts/beltfile.py",
+      "description": "Shared load/save helpers for belt.json. Import from other scripts; do not run it."
+    },
+    {
+      "id": "scripts/build_tokens.py",
+      "description": "Generate styling/tokens.css from tokens.json. --check confirms they match."
+    },
+    {
+      "id": "scripts/check_pins.py",
+      "description": "Look up newer stable npm/PyPI releases for pinned packages. Report-only unless --apply."
+    },
+    {
+      "id": "scripts/export.py",
+      "description": "Write one client export into a new directory. belt.py use wraps this and copies into a project."
+    },
+    {
+      "id": "scripts/local_ai_check.py",
+      "description": "Contact the local OpenAI-compatible endpoint. Only script that does; belt.py doctor wraps it."
+    },
+    {
+      "id": "scripts/mcp_smoke.py",
+      "description": "Start one MCP server through the pinned Inspector and list (or call) a tool."
+    },
+    {
+      "id": "scripts/new.py",
+      "description": "Scaffold a skill or package and register it. belt.py add wraps this."
+    },
+    {
+      "id": "scripts/tasks.py",
+      "description": "Run one allowlisted belt task without a shell. belt.py run wraps this."
+    },
+    {
+      "id": "scripts/validate.py",
+      "description": "Validate belt.json without running tools or reading secrets. Use before export or commit."
+    }
+  ],
+  "workflows": [
+    {
+      "id": ".github/workflows/actionlint.yml",
+      "description": "Syntax-lint GitHub workflows with the actionlint-py pin from belt.json."
+    },
+    {
+      "id": ".github/workflows/belt-sync-reusable.yml",
+      "description": "Reusable weekly sync of managed files into adopted app repos."
+    },
+    {
+      "id": ".github/workflows/bump-pins.yml",
+      "description": "Weekly lookup of newer npm/PyPI pins; opens a draft PR if a stable release is newer."
+    },
+    {
+      "id": ".github/workflows/checks.yml",
+      "description": "Validate manifests, run tests, check tokens, export all four clients, and verify the generated index."
+    },
+    {
+      "id": ".github/workflows/pr-title-reusable.yml",
+      "description": "Reusable Conventional Commit title check for this repo and adopted apps."
+    },
+    {
+      "id": ".github/workflows/pr-title.yml",
+      "description": "Require a Conventional Commit pull request title."
+    },
+    {
+      "id": ".github/workflows/release-please-reusable.yml",
+      "description": "Reusable release-please job for this repo and adopted apps."
+    },
+    {
+      "id": ".github/workflows/release.yml",
+      "description": "release-please on push to main; merging its PR bumps versions and tags."
+    },
+    {
+      "id": ".github/workflows/run-task.yml",
+      "description": "Manually run one allowlisted belt task and upload its log."
+    },
+    {
+      "id": ".github/workflows/update-variable.yml",
+      "description": "Manually set one allowlisted belt.json value and open a draft PR."
+    },
+    {
+      "id": ".github/workflows/zizmor.yml",
+      "description": "Security-lint GitHub workflows with the zizmor pin from belt.json."
+    }
+  ],
+  "templates": [
+    {
+      "id": "templates/app-adoption/.github/workflows/belt-sync.yml",
+      "description": "App caller for the weekly managed-file sync."
+    },
+    {
+      "id": "templates/app-adoption/.github/workflows/belt.yml",
+      "description": "App caller for PR-title and release-please reusable workflows."
+    },
+    {
+      "id": "templates/app-adoption/.tool-belt.json",
+      "description": "Adoption marker (belt name + version). Validate with python3 scripts/validate.py APP_DIR."
+    },
+    {
+      "id": "templates/app-adoption/AGENTS.md",
+      "description": "App-repo agent instructions pointing at belt rules. Copied by belt_sync --adopt."
+    },
+    {
+      "id": "templates/versioning/.release-please-manifest.json",
+      "description": "release-please manifest template; the app version starts at 0.0.0."
+    },
+    {
+      "id": "templates/versioning/README.md",
+      "description": "How to wire release-please, PR titles and optional tokens in an app repo."
+    },
+    {
+      "id": "templates/versioning/pr-title.yml",
+      "description": "Standalone PR-title caller template for app repos."
+    },
+    {
+      "id": "templates/versioning/release-please-config.json",
+      "description": "release-please config copied into an app repo (release-type, extra-files)."
+    },
+    {
+      "id": "templates/versioning/release.yml",
+      "description": "Standalone release-please caller template for app repos."
+    }
+  ],
+  "skipped": [
+    {
+      "id": "styling",
+      "reason": "files package; copy styling/ yourself. Client exports do not include it."
+    },
+    {
+      "id": "zizmor",
+      "reason": "CI-only pin read by zizmor.yml; not an MCP server or export."
+    },
+    {
+      "id": "actionlint",
+      "reason": "CI-only pin read by actionlint.yml; not an MCP server or export."
+    },
+    {
+      "id": "mcp-inspector",
+      "reason": "Used by scripts/mcp_smoke.py; not declared as a connection."
+    },
+    {
+      "id": "ollmcp",
+      "reason": "Optional client. Load the claude-code export with --servers-json; not a fifth adapter."
+    },
+    {
+      "id": "playwright-mcp",
+      "reason": "Consumed through the playwright server args, not copied as its own export."
+    },
+    {
+      "id": "personalServers",
+      "reason": "Outside-work connections. Omitted from exports and this index unless --include-personal."
+    },
+    {
+      "id": "chatgpt",
+      "reason": "Not an export adapter. Needs a hosted integration this belt does not generate."
+    }
+  ],
+  "secretRefs": [
+    {
+      "name": "GITHUB_MCP_TOKEN",
+      "optional": false,
+      "description": "Set in the client environment before using the matching MCP server."
+    },
+    {
+      "name": "CONTEXT7_API_KEY",
+      "optional": false,
+      "description": "Set in the client environment before using the matching MCP server."
+    },
+    {
+      "name": "LOCAL_AI_API_KEY",
+      "optional": true,
+      "description": "Optional local-runtime key; Ollama ignores it."
+    }
+  ],
+  "localModel": {
+    "id": "local-ai",
+    "defaultPreset": "ollama",
+    "model": "gemma4:e2b",
+    "check": "python3 belt.py doctor",
+    "load": [
+      {
+        "client": "opencode",
+        "run": "python3 belt.py use opencode",
+        "then": "OpenCode reads opencode.json, including the local-ai provider."
+      },
+      {
+        "client": "claude-code",
+        "run": "python3 belt.py use claude-code",
+        "then": "ollama launch claude in that project; attach INSTRUCTIONS.md and skills/."
+      },
+      {
+        "client": "ollmcp",
+        "run": "python3 belt.py use claude-code --out dist/claude-code && uvx ollmcp==0.35.1 --servers-json dist/claude-code/.mcp.json --model gemma4:e2b",
+        "then": "Not an export adapter. HTTP header placeholders are not expanded; see docs/local-ai.md."
+      }
+    ]
+  }
+}

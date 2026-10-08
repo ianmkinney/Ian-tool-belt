@@ -45,7 +45,7 @@ Playwright uses an isolated, headless browser. Isolation here means a temporary 
 Exports leave personal connections out by default, so dropping the belt into a work or client project never carries them along. Include them only where they belong:
 
 ```sh
-python3 scripts/export.py belt.json --target cursor --out dist/cursor-personal --include-personal
+python3 belt.py use cursor --out dist/cursor-personal --include-personal
 ```
 
 To add one: evaluate it with the `evaluate-mcp` skill, add an entry to `personalServers` with an HTTPS URL or pinned stdio command, add any credential variable names to `secretRefs`, add a row to the table below, and validate. Server ids must be unique across work and personal connections. Use separate, minimally scoped credentials for personal services.

@@ -12,89 +12,44 @@
 
 # Our Tool Belt
 
-**A portable workshop for building useful software.**
+Portable MCP connections, skills and rules for APIs, data and browser-tested apps. One command drops them into a project. Python 3.10+, no extra packages.
 
-[MCP](https://modelcontextprotocol.io/) connections, original workflow skills and shared rules, versioned together. This is Ian's and ChatGPT's working belt: open source first, designed for API development, data pipelines and browser-tested applications.
+## Add this belt to a project
 
-**Status:** working manifest validator; configuration exporters for Claude Code, VS Code, Cursor and OpenCode; a local AI profile (Ollama by default) with a health check; scaffolding for skills and packages; styling tokens; and GitHub Actions for variable updates, weekly pin checks, allowlisted tasks, a zizmor security lint of the workflows themselves, and an actionlint syntax check of those workflows. No local model has been installed or exercised yet. There is no running gateway, authenticated service, marketplace or live cross-assistant proof yet.
-
-## What's in the pouches?
-
-| Tools | Skills | Rules |
-| --- | --- | --- |
-| GitHub MCP — read-only repository access | Build an API slice | Small, reviewable changes |
-| Context7 — library documentation | Reconcile data | Keep credentials outside Git |
-| Playwright — isolated browser testing | Verify a browser flow | Verify outcomes before claiming success |
-| Local AI — your own model via Ollama (optional) | Evaluate an MCP candidate | [Working agreement](rules/working-agreement.md) |
-| [Connection catalog](connections/README.md) | [Add your own](skills/README.md#add-a-skill) | [Engineering contract](rules/engineering.md) |
-
-Also in the belt: [packages](docs/design.md#packages) (pinned tools such as [zizmor](docs/automation.md#workflow-security-lint), [actionlint](docs/automation.md#workflow-syntax-lint), the [MCP Inspector](connections/README.md#smoke-test-a-connection) and [ollmcp](docs/local-ai.md#ollmcp-ollama-native-terminal-client), and reusable files) and [styling tokens](styling/README.md).
-
-## Try the belt locally
-
-Python 3.10+ is enough to validate and export. These commands do not start servers, install packages, read credentials or contact services.
+From the project directory:
 
 ```sh
-python3 scripts/validate.py belt.json
-python3 scripts/export.py belt.json --target claude-code --out dist/claude-code
-python3 scripts/export.py belt.json --target vscode --out dist/vscode
-python3 scripts/export.py belt.json --target cursor --out dist/cursor
-python3 scripts/export.py belt.json --target opencode --out dist/opencode
-python3 -m unittest discover -s tests -v
+python3 path/to/Ian-tool-belt/belt.py use
 ```
 
-Use a new output directory each time. Inspect generated files before merging them into any existing assistant setup. See [setup and compatibility](docs/setup.md) for authentication, skill loading and limitations.
+That writes Cursor files by default (`.cursor/mcp.json`, rules, skills). Pass `opencode`, `claude-code` or `vscode` when you want that client. Existing files are left alone; add `--force` only if you mean to overwrite. Personal connections stay out unless you pass `--include-personal`.
 
-## Local AI
+Then set `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY` in the client environment if you need those servers. Playwright needs Node.js. A local model is optional.
 
-No local model? Everything above still works. When you are ready, follow [getting started with Ollama](docs/local-ai.md): install it, run `ollama pull gemma4:e2b`, then check it with:
+## Commands
 
-```sh
-python3 scripts/local_ai_check.py --chat
-```
+| Command | What it does |
+| --- | --- |
+| `python3 belt.py use` | Export the belt into this project |
+| `python3 belt.py doctor` | Validate, report missing env vars, check local AI if it is running |
+| `python3 belt.py list` | Everything in the belt, one line each (`--json` for agents) |
+| `python3 belt.py add skill\|package ...` | Scaffold and register a skill or package |
+| `python3 belt.py set PATH VALUE` | Change one allowlisted `belt.json` field |
+| `python3 belt.py run TASK` | Allowlisted task (validate, tests, export, pins) |
 
-The same guide shows how to hand the belt to a local model through OpenCode, Claude Code, or [ollmcp](docs/local-ai.md#ollmcp-ollama-native-terminal-client).
+`./belt` is the same CLI. The scripts under `scripts/` still work; `belt.py` wraps them.
 
-## Smoke-test a connection
+## Where to look next
 
-With Node.js 22.19+, `python3 scripts/mcp_smoke.py playwright` starts the server through the pinned MCP Inspector and lists its tools. See [smoke-test a connection](connections/README.md#smoke-test-a-connection).
+- **Agents:** [`AGENTS.md`](AGENTS.md) and [`belt.index.json`](belt.index.json) (generated from `belt.json`; CI fails if they drift)
+- **Setup, credentials, what each client gets:** [docs/setup.md](docs/setup.md)
+- **Local Ollama / OpenCode / ollmcp:** [docs/local-ai.md](docs/local-ai.md)
+- **Connections and smoke tests:** [connections/README.md](connections/README.md)
+- **Format:** [docs/design.md](docs/design.md)
+- **GitHub Actions, pin checks, adoption kit:** [docs/automation.md](docs/automation.md)
+- **Skills:** [skills/README.md](skills/README.md)
+- **Engineering contract:** [rules/engineering.md](rules/engineering.md)
 
-## Grow the belt
+`python3 belt.py doctor --offline` and `python3 -m unittest discover -s tests -v` never start servers or read secrets.
 
-```sh
-python3 scripts/new.py skill review-sql --description "Review SQL changes. Use when a migration or query changes."
-python3 scripts/new.py package api-client --kind files --description "Shared HTTP client"
-python3 scripts/belt_set.py belt.json models.local-ai.presets.ollama.model gemma4:e4b
-python3 scripts/check_pins.py belt.json
-```
-
-Each command validates the result and leaves `belt.json` unchanged if it is invalid. The same operations run in [GitHub Actions](docs/automation.md).
-
-## One source of truth
-
-`belt.json` declares our connections (work and personal), local model presets, packages, skills, rules and target adapters. `AGENTS.md` records the decision to treat this repository as **our tool belt**. It is durable project context, not automatic account-wide memory.
-
-- [Clean code, tests and session PR contract](rules/engineering.md)
-- [Skills and examples](skills/README.md)
-- [Design and format](docs/design.md)
-- [Local AI with Ollama](docs/local-ai.md)
-- [GitHub Actions](docs/automation.md)
-- [Roadmap](docs/roadmap.md)
-- [Brand guide](branding/README.md) and [styling tokens](styling/README.md)
-- [Contributing](CONTRIBUTING.md)
-
-## Use the belt in an app repo
-
-App repos opt in explicitly; nothing is installed or overwritten automatically.
-
-- **Adoption kit** — [`templates/app-adoption/`](templates/app-adoption/) holds `AGENTS.md`, `.github/workflows/belt.yml`, `.github/workflows/belt-sync.yml` and the `.tool-belt.json` marker. Cursor rules are not duplicated there: the kit installs `.cursor/rules/engineering.mdc` and `working-agreement.mdc` rendered by the same code as `export.py --target cursor`, plus a sync marker line. From a checkout of this repo, run `python3 scripts/belt_sync.py --adopt --app path/to/app` to write all of them (existing files without the marker are left alone), then commit in the app. `belt.yml` runs the shared PR-title check and release-please. Check the marker with `python3 scripts/validate.py path/to/app`.
-- **Weekly sync** — `.github/workflows/belt-sync.yml` in the kit runs every Monday at 13:17 UTC, and on demand, through [`belt-sync-reusable.yml`](.github/workflows/belt-sync-reusable.yml). When the app's `.tool-belt.json` is behind `belt.json` on our `main`, [`scripts/belt_sync.py`](scripts/belt_sync.py) re-copies the managed files and opens or updates one draft PR on `tool-belt/sync` titled `chore: sync tool belt to vX.Y.Z`. Up-to-date apps get no PR. Managed files start with a `managed by Ian-tool-belt` header; delete that line and the sync never touches the file again. It needs the same setting as releases (allow Actions to create pull requests). The default `GITHUB_TOKEN` cannot change workflow files and its PRs don't trigger CI, so without a token the sync skips workflow files and you close and reopen the PR to run CI. See [tokens](templates/versioning/README.md#optional-token).
-- **Versioning** — [`templates/versioning/`](templates/versioning/README.md): release-please config, manifest, standalone callers, the per-repo GitHub settings and a Next.js `/api/version` example. `belt.yml` needs the config and manifest from here.
-
-The callers use the reusable workflows `pr-title-reusable.yml`, `release-please-reusable.yml` and `belt-sync-reusable.yml` at `ianmkinney/Ian-tool-belt@main`, so this repo stays public; zizmor and actionlint lint them along with our own workflows. This repo uses the same workflows; its version in `belt.json` and the marker template is bumped by release-please.
-
-## Open by design
-
-Keep the local format and tools useful without a paywall. Share working examples and teach reproducible workflows. Courses, workshops and implementation services are possible future ways to sustain the project; they are not launched offerings.
-
-MIT licensed. Third-party tools retain their own licenses and terms. “Pack once. Build anywhere.” is our direction, not a claim that every assistant supports every capability.
+MIT licensed. Third-party tools keep their own licenses. “Pack once. Build anywhere.” is the direction, not a claim that every assistant supports every capability.

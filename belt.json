@@ -2,7 +2,7 @@
   "formatVersion": "0.3-draft",
   "name": "our-tool-belt",
   "version": "0.3.0",
-  "description": "Our portable workshop for APIs, data and browser-tested applications.",
+  "description": "Portable MCP connections, skills and rules for APIs, data and browser-tested apps. Run python3 belt.py use to drop it into a project.",
   "rules": [
     "rules/working-agreement.md",
     "rules/engineering.md"
@@ -24,7 +24,8 @@
           "prefix": "Bearer "
         }
       },
-      "status": "needs-credentials"
+      "status": "needs-credentials",
+      "description": "Read-only GitHub repos and PRs over MCP. Use when inspecting code or PRs; needs GITHUB_MCP_TOKEN."
     },
     {
       "id": "context7",
@@ -36,7 +37,8 @@
           "prefix": ""
         }
       },
-      "status": "needs-credentials"
+      "status": "needs-credentials",
+      "description": "Library docs for the installed version. Use when writing against a dependency; needs CONTEXT7_API_KEY. Never send secrets or private source."
     },
     {
       "id": "playwright",
@@ -48,7 +50,8 @@
         "--isolated",
         "--headless"
       ],
-      "status": "needs-local-setup"
+      "status": "needs-local-setup",
+      "description": "Headless isolated browser via MCP. Use to verify a UI flow; needs Node.js. Does not attach to your real browser profile."
     }
   ],
   "personalServers": [],
@@ -66,25 +69,30 @@
         "ollama": {
           "baseUrl": "http://localhost:11434/v1",
           "model": "gemma4:e2b",
-          "docs": "https://docs.ollama.com/api/openai-compatibility"
+          "docs": "https://docs.ollama.com/api/openai-compatibility",
+          "description": "Default local runtime at http://localhost:11434/v1. Use after ollama pull of the preset model tag."
         },
         "lm-studio": {
           "baseUrl": "http://localhost:1234/v1",
           "model": "",
-          "docs": "https://lmstudio.ai/docs/developer/openai-compat"
+          "docs": "https://lmstudio.ai/docs/developer/openai-compat",
+          "description": "LM Studio OpenAI-compatible server on port 1234. Set the model name before exporting to OpenCode."
         },
         "llama-cpp": {
           "baseUrl": "http://localhost:8080/v1",
           "model": "",
-          "docs": "https://github.com/ggml-org/llama.cpp/tree/master/tools/server"
+          "docs": "https://github.com/ggml-org/llama.cpp/tree/master/tools/server",
+          "description": "llama.cpp server on port 8080. Set the model name before use."
         },
         "vllm": {
           "baseUrl": "http://localhost:8000/v1",
           "model": "",
-          "docs": "https://docs.vllm.ai/en/latest/serving/openai_compatible_server/"
+          "docs": "https://docs.vllm.ai/en/latest/serving/openai_compatible_server/",
+          "description": "vLLM OpenAI-compatible server on port 8000. Set the model name before use."
         }
       },
-      "status": "needs-local-setup"
+      "status": "needs-local-setup",
+      "description": "Optional OpenAI-compatible local model for agent clients. Not an MCP server; nothing in the belt requires it to be running."
     }
   ],
   "packages": [
@@ -93,42 +101,42 @@
       "kind": "npm",
       "name": "@playwright/mcp",
       "version": "0.0.83",
-      "description": "Microsoft's Playwright MCP server used by the playwright connection."
+      "description": "Pinned Playwright MCP server. Use via the playwright connection; bump this pin instead of editing server args."
     },
     {
       "id": "mcp-inspector",
       "kind": "npm",
       "name": "@modelcontextprotocol/inspector",
       "version": "2.9.0",
-      "description": "The MCP project's Inspector; its CLI mode runs scripts/mcp_smoke.py connection smoke tests."
+      "description": "Pinned MCP Inspector CLI. Use with python3 scripts/mcp_smoke.py; not an exported connection."
     },
     {
       "id": "styling",
       "kind": "files",
       "path": "styling",
       "version": "0.1.0",
-      "description": "Tool Belt design tokens as CSS variables and JSON."
+      "description": "Design tokens as CSS variables and JSON. Use when theming belt-branded surfaces; not copied by client exports."
     },
     {
       "id": "zizmor",
       "kind": "pypi",
       "name": "zizmor",
       "version": "1.30.1",
-      "description": "zizmor GitHub Actions security linter, run on .github/workflows by the Workflow security lint workflow."
+      "description": "Pinned GitHub Actions security linter. Use in CI via zizmor.yml; not an MCP server."
     },
     {
       "id": "actionlint",
       "kind": "pypi",
       "name": "actionlint-py",
       "version": "1.7.12.25",
-      "description": "rhysd/actionlint via the actionlint-py wrapper; CI lints workflow files for syntax and structural mistakes."
+      "description": "Pinned actionlint (via actionlint-py). Use in CI via actionlint.yml to catch workflow syntax errors."
     },
     {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
       "version": "0.35.1",
-      "description": "Terminal MCP client that connects a local Ollama model to the belt's MCP servers."
+      "description": "Pinned Ollama-native MCP terminal client. Use with the Claude Code export's .mcp.json; not a fifth adapter."
     }
   ],
   "adapters": [
