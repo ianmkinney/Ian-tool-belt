@@ -28,7 +28,7 @@
 | Local AI — your own model via Ollama (optional) | Evaluate an MCP candidate | [Working agreement](rules/working-agreement.md) |
 | [Connection catalog](connections/README.md) | [Add your own](skills/README.md#add-a-skill) | [Engineering contract](rules/engineering.md) |
 
-Also in the belt: [packages](docs/design.md#packages) (pinned tools such as [zizmor](docs/automation.md#workflow-security-lint) and the [MCP Inspector](connections/README.md#smoke-test-a-connection), and reusable files) and [styling tokens](styling/README.md).
+Also in the belt: [packages](docs/design.md#packages) (pinned tools such as [zizmor](docs/automation.md#workflow-security-lint), the [MCP Inspector](connections/README.md#smoke-test-a-connection) and [ollmcp](docs/local-ai.md#ollmcp-ollama-native-terminal-client), and reusable files) and [styling tokens](styling/README.md).
 
 ## Try the belt locally
 
@@ -53,7 +53,7 @@ No local model? Everything above still works. When you are ready, follow [gettin
 python3 scripts/local_ai_check.py --chat
 ```
 
-The same guide shows how to hand the belt to a local model through OpenCode or Claude Code.
+The same guide shows how to hand the belt to a local model through OpenCode, Claude Code, or [ollmcp](docs/local-ai.md#ollmcp-ollama-native-terminal-client).
 
 ## Smoke-test a connection
 

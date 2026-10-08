@@ -303,6 +303,27 @@ class BeltTests(BeltCase):
         self.assertIn('version: ${{ steps.pin.outputs.version }}', workflow)
         self.assertNotIn(pin['version'], workflow)
 
+    def test_ollmcp_is_a_pinned_pypi_package(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ollmcp')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'ollmcp', '0.35.1'))
+
+    def test_claude_code_mcp_json_is_ollmcp_servers_json(self):
+        """ollmcp --servers-json reads mcpServers; reuse the Claude Code export instead of a fifth adapter."""
+        out = self.root / 'claude-code'
+        report = exporter.export_belt(self.manifest, 'claude-code', out)
+        config = json.loads((out / '.mcp.json').read_text())
+        self.assertEqual(set(config), {'mcpServers'})
+        servers = config['mcpServers']
+        playwright = servers['playwright']
+        self.assertEqual(playwright['command'], 'npx')
+        self.assertEqual(playwright['args'], ['-y', '@playwright/mcp@0.0.83', '--isolated', '--headless'])
+        github = servers['github']
+        self.assertEqual(github['type'], 'http')
+        self.assertTrue(github['url'].endswith('/readonly'))
+        self.assertEqual(github['headers']['Authorization'], 'Bearer ${GITHUB_MCP_TOKEN}')
+        self.assertEqual(servers['context7']['headers']['CONTEXT7_API_KEY'], '${CONTEXT7_API_KEY}')
+        self.assertIn('ollmcp@0.35.1', report['packages'])
+
     def test_rule_edit_reaches_every_client(self):
         p = self.source / self.data['rules'][0]
         p.write_text(p.read_text() + '\nUpdated shared rule.\n')

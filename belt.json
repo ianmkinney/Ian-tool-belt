@@ -115,6 +115,13 @@
       "name": "zizmor",
       "version": "1.30.1",
       "description": "zizmor GitHub Actions security linter, run on .github/workflows by the Workflow security lint workflow."
+    },
+    {
+      "id": "ollmcp",
+      "kind": "pypi",
+      "name": "ollmcp",
+      "version": "0.35.1",
+      "description": "Terminal MCP client that connects a local Ollama model to the belt's MCP servers."
     }
   ],
   "adapters": [

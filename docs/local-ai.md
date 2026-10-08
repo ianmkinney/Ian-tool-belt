@@ -106,7 +106,7 @@ print(reply.choices[0].message.content)
 
 ## Hand the belt to the local model
 
-A model alone cannot read files or call MCP tools. An **agent client** does that and uses the local model as its brain. The belt is loaded into the client, which then gives the model the belt's rules, skills and MCP connections. Ollama documents two such clients, and the belt exports for both.
+A model alone cannot read files or call MCP tools. An **agent client** does that and uses the local model as its brain. The belt is loaded into the client, which then gives the model the belt's rules, skills and MCP connections. Ollama documents OpenCode and Claude Code, and the belt exports for both. [ollmcp](https://github.com/jonigl/mcp-client-for-ollama) is an additional Ollama-native terminal client that can load the belt's MCP servers.
 
 ### OpenCode (recommended for a fully local setup)
 
@@ -125,6 +125,34 @@ Review the files, then copy them into the target project's root. If the project 
 ### Claude Code through Ollama
 
 `ollama launch claude` runs Claude Code against a local model via Ollama's Anthropic-compatible API ([guide](https://docs.ollama.com/integrations/claude-code)). Use the belt's existing `claude-code` export (`.mcp.json`, `INSTRUCTIONS.md`, `skills/`) in that project and ask the assistant to read `INSTRUCTIONS.md`.
+
+### ollmcp (Ollama-native terminal client)
+
+[ollmcp](https://github.com/jonigl/mcp-client-for-ollama) (MIT, PyPI packages `ollmcp` and `mcp-client-for-ollama`) is a TUI that connects a local Ollama model to MCP servers over stdio and HTTP, with tool calling. The belt pins `ollmcp` 0.35.1 (checked 2026-10-08 UTC against the v0.35.1 README, MIT LICENSE, and both PyPI names). Python 3.11+ is required; the belt's own scripts still run on 3.10. Installing ollmcp is optional and is not part of CI.
+
+No fifth export target was added. ollmcp's `--servers-json` / `-j` flag reads a JSON file whose top-level key is `mcpServers`, and it treats `"type": "http"` as Streamable HTTP so it can load Claude Code configs. The existing `claude-code` export already writes that file:
+
+```sh
+python3 scripts/export.py belt.json --target claude-code --out dist/claude-code
+uvx ollmcp==0.35.1 --servers-json dist/claude-code/.mcp.json --model gemma4:e2b
+```
+
+`--host` defaults to `http://localhost:11434` (Ollama's native API, not the `/v1` OpenAI-compatible URL in `LOCAL_AI_BASE_URL`). Use `/help` once the TUI starts. ollmcp lists `gemma4` among models that work with tool use; small tags still follow multi-step skills less reliably.
+
+**Which belt servers work without credentials.** Playwright is stdio and needs only Node.js plus the pinned `@playwright/mcp` package (`npx` downloads it). GitHub and Context7 still need `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY`. The Claude Code export writes those as `${VAR}` placeholders. ollmcp 0.35.1 does not expand that syntax in JSON headers (it sends the string as-is), so do not point `--servers-json` at GitHub or Context7 expecting the environment to fill in. Register them with the shell expanding the variable instead:
+
+```sh
+ollmcp mcp add --transport http github https://api.githubcopilot.com/mcp/readonly --header "Authorization: Bearer $GITHUB_MCP_TOKEN"
+ollmcp mcp add --transport http context7 https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: $CONTEXT7_API_KEY"
+```
+
+Or add only Playwright, which needs no header:
+
+```sh
+ollmcp mcp add playwright -- npx -y @playwright/mcp@0.0.83 --isolated --headless
+```
+
+Use the pin from `packages.playwright-mcp` in `belt.json`, not `@latest`. This path has not been run against a live Ollama model in this repository.
 
 ### What to expect
 
