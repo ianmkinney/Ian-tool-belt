@@ -8,6 +8,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    # GitHub self-repository syntax; actionlint 1.7.12 does not know `$/` yet.
     uses: $/.github/workflows/release-please-reusable.yml
     with:
       config-file: release-please-config.json

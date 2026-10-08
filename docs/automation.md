@@ -1,6 +1,6 @@
 # GitHub Actions
 
-Five workflows live in `.github/workflows`. Every action is pinned to a full commit SHA (with the release tag in a comment). Each workflow defaults to `contents: read` and grants write access only to the job that needs it.
+Workflows live in `.github/workflows`. Every action is pinned to a full commit SHA (with the release tag in a comment). Each workflow defaults to `contents: read` and grants write access only to the job that needs it.
 
 | Workflow | Trigger | What it does | Permissions |
 | --- | --- | --- | --- |
@@ -9,6 +9,7 @@ Five workflows live in `.github/workflows`. Every action is pinned to a full com
 | **Check pinned package versions** (`bump-pins.yml`) | Mondays 13:17 UTC, or manual | Looks up the latest stable release of each npm/PyPI package pin; if newer, bumps it (and matching server args), validates, tests, opens a draft PR | contents and PRs: write |
 | **Run belt task** (`run-task.yml`) | manual | Runs one allowlisted task and uploads its log and outputs as an artifact for 14 days | read |
 | **Workflow security lint** (`zizmor.yml`) | push, pull request | Runs zizmor on `.github/workflows` and the app workflow templates, and fails on findings, shown as annotations | read |
+| **Workflow syntax lint** (`actionlint.yml`) | push, pull request | Runs actionlint on `.github/workflows`, the app workflow templates, and the versioning caller templates, and fails on findings | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
 
@@ -50,10 +51,35 @@ Two findings are ignored inline with `# zizmor: ignore[artipacked]`, each with a
 
 The app templates call the shared workflows at `@main` on purpose, so each of those `uses:` lines carries `# zizmor: ignore[unpinned-uses]`. Pin them to a tag such as `@v1` once one is published.
 
+## Workflow syntax lint
+
+[actionlint](https://github.com/rhysd/actionlint) (MIT) is a static checker for GitHub Actions workflow files. It catches workflow syntax and unknown keys, typed mistakes in `${{ }}` expressions, action inputs/outputs, reusable-workflow inputs/secrets, `needs:` dependencies, runner labels, cron syntax, and shellcheck/pyflakes issues in `run:` scripts. zizmor is the security scanner; actionlint is the structural baseline. Both run on every push and pull request.
+
+The version comes from the `actionlint` pypi package in `belt.json` (`actionlint-py`, a third-party MIT wrapper that vendors the official binary). The weekly pin check covers it. actionlint-py versions are four-part (`1.7.12.25`): the first three match upstream actionlint, and the last is the wrapper build. `scripts/check_pins.py` treats extra numeric segments as part of a stable pin so those bumps are proposed automatically. The official GitHub release binary and `rhysd/actionlint` Docker image have stronger provenance (checksums, attestations), but they are not a kind the pin check already understands.
+
+The job installs that pin with pip and runs actionlint on `.github/workflows`, `templates/app-adoption/.github/workflows`, and the versioning caller templates. `shellcheck` is already on `ubuntu-latest`; `pyflakes` is not, so Python `run:` scripts skip that extra check until it is installed.
+
+Run it locally with either command (paths match CI):
+
+```sh
+uvx --from actionlint-py==1.7.12.25 actionlint -color \
+  .github/workflows/*.yml \
+  templates/app-adoption/.github/workflows/*.yml \
+  templates/versioning/release.yml \
+  templates/versioning/pr-title.yml
+pipx run --spec actionlint-py==1.7.12.25 actionlint -color \
+  .github/workflows/*.yml \
+  templates/app-adoption/.github/workflows/*.yml \
+  templates/versioning/release.yml \
+  templates/versioning/pr-title.yml
+```
+
+`pr-title.yml` and `release.yml` use GitHub's `$/` self-repository syntax for same-repo reusable workflows. That syntax shipped after actionlint v1.7.12, so `.github/actionlint.yaml` ignores only the matching "invalid reusable workflow call" errors on those two files. Do not broaden the ignore: a real bad `uses:` elsewhere should still fail.
+
 ## One-time repository setting
 
 The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, with no third-party action. GitHub only lets them open pull requests if a maintainer enables **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**. Without it, the run validates and pushes the branch, then fails at the PR step.
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-None of these workflows has run on GitHub from this branch yet, except **Belt checks** and **Workflow security lint** on push. `actionlint` and zizmor 1.30.1 pass locally.
+None of these workflows has run on GitHub from this branch yet, except **Belt checks** and **Workflow security lint** on push. After this change, actionlint and zizmor both run in CI.

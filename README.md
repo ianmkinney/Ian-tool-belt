@@ -16,7 +16,7 @@
 
 [MCP](https://modelcontextprotocol.io/) connections, original workflow skills and shared rules, versioned together. This is Ian's and ChatGPT's working belt: open source first, designed for API development, data pipelines and browser-tested applications.
 
-**Status:** working manifest validator; configuration exporters for Claude Code, VS Code, Cursor and OpenCode; a local AI profile (Ollama by default) with a health check; scaffolding for skills and packages; styling tokens; and GitHub Actions for variable updates, weekly pin checks, allowlisted tasks and a zizmor security lint of the workflows themselves. No local model has been installed or exercised yet. There is no running gateway, authenticated service, marketplace or live cross-assistant proof yet.
+**Status:** working manifest validator; configuration exporters for Claude Code, VS Code, Cursor and OpenCode; a local AI profile (Ollama by default) with a health check; scaffolding for skills and packages; styling tokens; and GitHub Actions for variable updates, weekly pin checks, allowlisted tasks, a zizmor security lint of the workflows themselves, and an actionlint syntax check of those workflows. No local model has been installed or exercised yet. There is no running gateway, authenticated service, marketplace or live cross-assistant proof yet.
 
 ## What's in the pouches?
 
@@ -28,7 +28,7 @@
 | Local AI — your own model via Ollama (optional) | Evaluate an MCP candidate | [Working agreement](rules/working-agreement.md) |
 | [Connection catalog](connections/README.md) | [Add your own](skills/README.md#add-a-skill) | [Engineering contract](rules/engineering.md) |
 
-Also in the belt: [packages](docs/design.md#packages) (pinned tools such as [zizmor](docs/automation.md#workflow-security-lint), the [MCP Inspector](connections/README.md#smoke-test-a-connection) and [ollmcp](docs/local-ai.md#ollmcp-ollama-native-terminal-client), and reusable files) and [styling tokens](styling/README.md).
+Also in the belt: [packages](docs/design.md#packages) (pinned tools such as [zizmor](docs/automation.md#workflow-security-lint), [actionlint](docs/automation.md#workflow-syntax-lint), the [MCP Inspector](connections/README.md#smoke-test-a-connection) and [ollmcp](docs/local-ai.md#ollmcp-ollama-native-terminal-client), and reusable files) and [styling tokens](styling/README.md).
 
 ## Try the belt locally
 
@@ -91,7 +91,7 @@ App repos opt in explicitly; nothing is installed or overwritten automatically.
 - **Weekly sync** — `.github/workflows/belt-sync.yml` in the kit runs every Monday at 13:17 UTC, and on demand, through [`belt-sync-reusable.yml`](.github/workflows/belt-sync-reusable.yml). When the app's `.tool-belt.json` is behind `belt.json` on our `main`, [`scripts/belt_sync.py`](scripts/belt_sync.py) re-copies the managed files and opens or updates one draft PR on `tool-belt/sync` titled `chore: sync tool belt to vX.Y.Z`. Up-to-date apps get no PR. Managed files start with a `managed by Ian-tool-belt` header; delete that line and the sync never touches the file again. It needs the same setting as releases (allow Actions to create pull requests). The default `GITHUB_TOKEN` cannot change workflow files and its PRs don't trigger CI, so without a token the sync skips workflow files and you close and reopen the PR to run CI. See [tokens](templates/versioning/README.md#optional-token).
 - **Versioning** — [`templates/versioning/`](templates/versioning/README.md): release-please config, manifest, standalone callers, the per-repo GitHub settings and a Next.js `/api/version` example. `belt.yml` needs the config and manifest from here.
 
-The callers use the reusable workflows `pr-title-reusable.yml`, `release-please-reusable.yml` and `belt-sync-reusable.yml` at `ianmkinney/Ian-tool-belt@main`, so this repo stays public; zizmor lints them along with our own workflows. This repo uses the same workflows; its version in `belt.json` and the marker template is bumped by release-please.
+The callers use the reusable workflows `pr-title-reusable.yml`, `release-please-reusable.yml` and `belt-sync-reusable.yml` at `ianmkinney/Ian-tool-belt@main`, so this repo stays public; zizmor and actionlint lint them along with our own workflows. This repo uses the same workflows; its version in `belt.json` and the marker template is bumped by release-please.
 
 ## Open by design
 

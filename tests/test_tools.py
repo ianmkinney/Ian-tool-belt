@@ -127,6 +127,11 @@ class CheckPinsTests(BeltCase):
         self.assertFalse(check_pins.is_newer('0.0.83', '0.0.83'))
         self.assertFalse(check_pins.is_newer('0.0.82', '0.0.83'))
         self.assertFalse(check_pins.is_newer('0.0.90-alpha', '0.0.83'))
+        self.assertTrue(check_pins.is_newer('1.7.12.25', '1.7.12.24'))
+        self.assertTrue(check_pins.is_newer('1.7.13', '1.7.12.25'))
+        self.assertFalse(check_pins.is_newer('1.7.12.25', '1.7.12.25'))
+        self.assertFalse(check_pins.is_newer('1.7.12', '1.7.12.25'))
+        self.assertFalse(check_pins.is_newer('1.7.12.25-rc1', '1.7.12.24'))
 
     def test_report_only_does_not_modify(self):
         before = self.manifest.read_text()
@@ -159,7 +164,8 @@ class CheckPinsTests(BeltCase):
     def test_files_packages_are_not_looked_up(self):
         seen = []
         check_pins.check(self.reload(), lambda kind, name: seen.append(name) or '0.0.83')
-        self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector', 'zizmor', 'ollmcp'])
+        self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector', 'zizmor',
+                                 'actionlint-py', 'ollmcp'])
 
     def test_registry_urls(self):
         captured = []
