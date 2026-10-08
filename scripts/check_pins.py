@@ -11,7 +11,8 @@ REGISTRIES = {
     'npm': ('https://registry.npmjs.org/{name}/latest', lambda body: body['version']),
     'pypi': ('https://pypi.org/pypi/{name}/json', lambda body: body['info']['version']),
 }
-STABLE = r'(\d+)\.(\d+)\.(\d+)'
+# At least X.Y.Z; extra numeric segments are allowed (for example actionlint-py 1.7.12.25).
+STABLE = r'\d+\.\d+\.\d+(?:\.\d+)*'
 
 
 def fetch_latest(kind, name, timeout=15):
@@ -21,10 +22,21 @@ def fetch_latest(kind, name, timeout=15):
         return pick(json.load(response))
 
 
+def parse_stable(version):
+    if not re.fullmatch(STABLE, version):
+        return None
+    return tuple(int(part) for part in version.split('.'))
+
+
 def is_newer(latest, pinned):
-    """Only stable X.Y.Z releases count; pre-releases and odd formats are never auto-bumped."""
-    new, old = re.fullmatch(STABLE, latest), re.fullmatch(STABLE, pinned)
-    return bool(new) and (not old or tuple(map(int, new.groups())) > tuple(map(int, old.groups())))
+    """Only dotted numeric releases count; pre-releases and odd formats are never auto-bumped."""
+    new, old = parse_stable(latest), parse_stable(pinned)
+    if new is None:
+        return False
+    if old is None:
+        return True
+    size = max(len(new), len(old))
+    return new + (0,) * (size - len(new)) > old + (0,) * (size - len(old))
 
 
 def check(belt, lookup=fetch_latest, apply=False):

@@ -1,0 +1,9 @@
+# actionlint v1.7.12 predates GitHub's `$/` self-repository syntax (2026-07-30).
+# Ignore only that unknown-syntax error on the two local callers.
+paths:
+  .github/workflows/pr-title.yml:
+    ignore:
+      - 'reusable workflow call "\$/\.github/workflows/.+" at "uses" is not following the format'
+  .github/workflows/release.yml:
+    ignore:
+      - 'reusable workflow call "\$/\.github/workflows/.+" at "uses" is not following the format'

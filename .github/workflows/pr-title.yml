@@ -7,4 +7,5 @@ jobs:
   lint:
     permissions:
       pull-requests: read
+    # GitHub self-repository syntax; actionlint 1.7.12 does not know `$/` yet.
     uses: $/.github/workflows/pr-title-reusable.yml
