@@ -24,7 +24,7 @@ Review `dist/cursor`, then copy `.cursor/` into the project root. If the project
 
 ### Local agent clients
 
-To give the belt to a local model through OpenCode or Claude Code, see [local AI](local-ai.md#hand-the-belt-to-the-local-model).
+To give the belt to a local model through OpenCode, Claude Code or ollmcp, see [local AI](local-ai.md#hand-the-belt-to-the-local-model). ollmcp reads the Claude Code export's `.mcp.json` via `--servers-json`; it is not a fifth export adapter.
 
 ## Credentials
 

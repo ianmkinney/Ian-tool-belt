@@ -28,7 +28,7 @@ A passing run shows that the server starts and answers MCP. It does not show tha
 | --- | --- | --- | --- |
 | `local-ai` (OpenAI-compatible) | A private model on Ian's own computer for agent clients and project code | Install Ollama (default preset) or another runtime; optional `LOCAL_AI_BASE_URL`, `LOCAL_AI_MODEL`, `LOCAL_AI_API_KEY`. See [local AI guide](../docs/local-ai.md) | Presets match runtime documentation; health check unit-tested against a stub server; no local runtime has been exercised by this project |
 
-This is a model endpoint, not an MCP server. It is declared under `models` in `belt.json`. Agent clients such as OpenCode use it as their model and the belt's MCP connections as their tools. No local runtime is installed yet; Ollama is the recommendation.
+This is a model endpoint, not an MCP server. It is declared under `models` in `belt.json`. Agent clients such as OpenCode, Claude Code or [ollmcp](../docs/local-ai.md#ollmcp-ollama-native-terminal-client) use it as their model and the belt's MCP connections as their tools. No local runtime is installed yet; Ollama is the recommendation. ollmcp is pinned in `packages` and is not started by validation, export or CI.
 
 ## Work connections
 
@@ -65,6 +65,8 @@ To add one: evaluate it with the `evaluate-mcp` skill, add an entry to `personal
 Smoke-test tool sources, checked 2026-10-07 UTC: https://github.com/modelcontextprotocol/inspector (README, `clients/cli/README.md`, `docs/cli-smoke-testing.md`, `docs/secret-storage.md`, LICENSE), https://registry.npmjs.org/@modelcontextprotocol/inspector
 
 Local AI sources, checked 2026-10-07 UTC: https://docs.ollama.com/quickstart, https://docs.ollama.com/api/openai-compatibility, https://lmstudio.ai/docs/developer/openai-compat, https://github.com/ggml-org/llama.cpp/tree/master/tools/server
+
+ollmcp sources, checked 2026-10-08 UTC: https://github.com/jonigl/mcp-client-for-ollama (README at v0.35.1, LICENSE MIT, `mcp_client_for_ollama/server/discovery.py` and `connector.py` for `--servers-json` and header handling), https://pypi.org/pypi/ollmcp/0.35.1, https://pypi.org/pypi/mcp-client-for-ollama/0.35.1
 
 ## Candidates, not connected
 
