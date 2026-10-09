@@ -321,6 +321,18 @@ class BeltTests(BeltCase):
         self.assertIn('.github/workflows/release.yml', config)
         self.assertIn(r'\$/\.github/workflows/.+', config)
 
+    def test_gitleaks_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'gitleaks')
+        self.assertEqual((pin['kind'], pin['name']), ('github-release', 'gitleaks/gitleaks'))
+        workflow = (ROOT / '.github/workflows/gitleaks.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertIn('fetch-depth: 0', workflow)
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn("p['id'] == 'gitleaks'", workflow)
+        self.assertIn('GITLEAKS_VERSION', workflow)
+        self.assertIn('gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz', workflow)
+        self.assertNotIn(pin['version'], workflow)
+
     def test_ollmcp_is_a_pinned_pypi_package(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ollmcp')
         self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'ollmcp', '0.35.1'))

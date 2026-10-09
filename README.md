@@ -16,7 +16,7 @@
 
 [MCP](https://modelcontextprotocol.io/) connections, original workflow skills and shared rules, versioned together. This is Ian's and ChatGPT's working belt: open source first, designed for API development, data pipelines and browser-tested applications.
 
-**Status:** working manifest validator; configuration exporters for Claude Code, VS Code, Cursor and OpenCode; a local AI profile (Ollama by default) with a health check; scaffolding for skills and packages; styling tokens; and GitHub Actions for variable updates, weekly pin checks, allowlisted tasks, a zizmor security lint of the workflows themselves, and an actionlint syntax check of those workflows. No local model has been installed or exercised yet. There is no running gateway, authenticated service, marketplace or live cross-assistant proof yet.
+**Status:** working manifest validator; configuration exporters for Claude Code, VS Code, Cursor and OpenCode; a local AI profile (Ollama by default) with a health check; scaffolding for skills and packages; styling tokens; and GitHub Actions for variable updates, weekly pin checks, allowlisted tasks, a zizmor security lint of the workflows themselves, an actionlint syntax check of those workflows, and a gitleaks secret scan of the repository. No local model has been installed or exercised yet. There is no running gateway, authenticated service, marketplace or live cross-assistant proof yet.
 
 ## What's in the pouches?
 
@@ -28,7 +28,7 @@
 | Local AI — your own model via Ollama (optional) | Evaluate an MCP candidate | [Working agreement](rules/working-agreement.md) |
 | [Connection catalog](connections/README.md) | [Add your own](skills/README.md#add-a-skill) | [Engineering contract](rules/engineering.md) |
 
-Also in the belt: [packages](docs/design.md#packages) (pinned tools such as [zizmor](docs/automation.md#workflow-security-lint), [actionlint](docs/automation.md#workflow-syntax-lint), the [MCP Inspector](connections/README.md#smoke-test-a-connection) and [ollmcp](docs/local-ai.md#ollmcp-ollama-native-terminal-client), and reusable files) and [styling tokens](styling/README.md).
+Also in the belt: [packages](docs/design.md#packages) (pinned tools such as [zizmor](docs/automation.md#workflow-security-lint), [actionlint](docs/automation.md#workflow-syntax-lint), [gitleaks](docs/automation.md#secret-scan), the [MCP Inspector](connections/README.md#smoke-test-a-connection) and [ollmcp](docs/local-ai.md#ollmcp-ollama-native-terminal-client), and reusable files) and [styling tokens](styling/README.md).
 
 ## Try the belt locally
 
