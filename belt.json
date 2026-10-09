@@ -124,6 +124,13 @@
       "description": "rhysd/actionlint via the actionlint-py wrapper; CI lints workflow files for syntax and structural mistakes."
     },
     {
+      "id": "shellcheck",
+      "kind": "pypi",
+      "name": "shellcheck-py",
+      "version": "0.11.0.1",
+      "description": "ShellCheck via the shellcheck-py wrapper; CI lints tracked shell scripts and actionlint uses the same pin for workflow run: blocks."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",

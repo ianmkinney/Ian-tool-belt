@@ -18,7 +18,7 @@ A model entry describes an OpenAI-compatible endpoint: `id`, `api` (`openai-comp
 
 ### Packages
 
-A package is something reusable the belt ships or pins. `npm` and `pypi` packages declare a registry `name` and an exact `version` pin; ranges are rejected. If a stdio server argument installs an npm package (`name@version`), it must use the package's pin, so a bump changes one value. Workflows read pins from `belt.json` too: the zizmor lint takes its version from the `zizmor` pypi package, and the actionlint job takes its version from the `actionlint` pypi package (`actionlint-py`). `files` packages point to a folder inside the belt containing a README.md and carry their own version. `scripts/new.py` scaffolds both skills and packages and registers them.
+A package is something reusable the belt ships or pins. `npm` and `pypi` packages declare a registry `name` and an exact `version` pin; ranges are rejected. If a stdio server argument installs an npm package (`name@version`), it must use the package's pin, so a bump changes one value. Workflows read pins from `belt.json` too: the zizmor lint takes its version from the `zizmor` pypi package, the actionlint job takes its version from the `actionlint` pypi package (`actionlint-py`), and the shellcheck job (and actionlint's `run:` checks) take theirs from the `shellcheck` pypi package (`shellcheck-py`). `files` packages point to a folder inside the belt containing a README.md and carry their own version. `scripts/new.py` scaffolds both skills and packages and registers them.
 
 ## Adapters
 
