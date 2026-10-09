@@ -78,25 +78,29 @@ class VersioningTests(unittest.TestCase):
                 self.assertNotIn('secrets: inherit', path.read_text())
                 for job in workflow['jobs'].values():
                     self.assertTrue(job['permissions'])
+                    if 'uses' in job and '__BELT_SHA__' not in job['uses'] and not job['uses'].startswith('$/'):
+                        self.assertRegex(job['uses'], r'@[0-9a-f]{40}$')
                     for step in job.get('steps', []):
                         if 'uses' in step:
+                            if '__BELT_SHA__' in step['uses']:
+                                continue
                             self.assertRegex(step['uses'], r'@[0-9a-f]{40}$')
                         if step.get('uses', '').startswith('actions/checkout@'):
                             self.assertIs(step['with']['persist-credentials'], False)
 
-    def test_template_callers_reference_published_workflows(self):
-        expected = {
-            VERSIONING / 'release.yml': {REMOTE + 'release-please-reusable.yml@main'},
-            VERSIONING / 'pr-title.yml': {REMOTE + 'pr-title-reusable.yml@main'},
-            ADOPTION / '.github/workflows/belt.yml': {REMOTE + 'release-please-reusable.yml@main',
-                                                      REMOTE + 'pr-title-reusable.yml@main'},
-            ADOPTION / '.github/workflows/belt-sync.yml': {REMOTE + 'belt-sync-reusable.yml@main'},
-        }
-        for path, uses in expected.items():
+    def test_template_callers_use_belt_sha_placeholders(self):
+        paths = [
+            VERSIONING / 'release.yml', VERSIONING / 'pr-title.yml',
+            ADOPTION / '.github/workflows/belt.yml', ADOPTION / '.github/workflows/belt-sync.yml',
+        ]
+        for path in paths:
             with self.subTest(path=path.name):
-                self.assertEqual(called_workflows(load_yaml(path)), uses)
-                for target in uses:
-                    self.assertTrue((WORKFLOWS / target.split('/')[-1].split('@')[0]).is_file())
+                text = path.read_text()
+                self.assertIn('@__BELT_SHA__', text)
+                self.assertNotIn('@main', text)
+                self.assertNotIn('zizmor: ignore[unpinned-uses]', text)
+                for workflow_file in WORKFLOWS.glob('*-reusable.yml'):
+                    self.assertTrue(workflow_file.is_file())
 
     def test_manifest_matches_belt_version(self):
         version = load_json(ROOT / 'belt.json')['version']

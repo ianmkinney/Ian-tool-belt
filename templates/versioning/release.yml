@@ -8,8 +8,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    # Tracks the tool belt's main on purpose; switch to a tag such as @v1 once one is published.
-    uses: ianmkinney/Ian-tool-belt/.github/workflows/release-please-reusable.yml@main # zizmor: ignore[unpinned-uses]
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/release-please-reusable.yml@__BELT_SHA__ # v__BELT_VERSION__
     with:
       config-file: release-please-config.json
       manifest-file: .release-please-manifest.json

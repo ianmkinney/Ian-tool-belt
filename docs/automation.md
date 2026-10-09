@@ -8,7 +8,7 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Update a belt variable** (`update-variable.yml`) | manual | Sets one allowlisted value in `belt.json`, validates, tests, opens a draft PR | contents and PRs: write |
 | **Check pinned package versions** (`bump-pins.yml`) | Mondays 13:17 UTC, or manual | Looks up the latest stable release of each npm/PyPI package pin; if newer, bumps it (and matching server args), validates, tests, opens a draft PR | contents and PRs: write |
 | **Run belt task** (`run-task.yml`) | manual | Runs one allowlisted task and uploads its log and outputs as an artifact for 14 days | read |
-| **Workflow security lint** (`zizmor.yml`) | push, pull request | Runs zizmor on `.github/workflows` and the app workflow templates, and fails on findings, shown as annotations | read |
+| **Workflow security lint** (`zizmor.yml`) | push, pull request | Runs zizmor on `.github/workflows` and fails on findings, shown as annotations | read |
 | **Workflow syntax lint** (`actionlint.yml`) | push, pull request | Runs actionlint on `.github/workflows`, the app workflow templates, and the versioning caller templates, and fails on findings | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
@@ -49,7 +49,7 @@ Set `GH_TOKEN` (for example `GH_TOKEN=$(gh auth token)`) to enable the online au
 
 Two findings are ignored inline with `# zizmor: ignore[artipacked]`, each with a comment. They are in `bump-pins.yml` and `update-variable.yml`, where the checkout keeps its credential because `git push` relies on it. Neither job uploads artifacts. The same token is also in the job-wide `GH_TOKEN` for `gh`. Removing both would mean scoping `GH_TOKEN` to the PR step and pushing through `gh auth setup-git`. That is possible later but has not been exercised on GitHub.
 
-The app templates call the shared workflows at `@main` on purpose, so each of those `uses:` lines carries `# zizmor: ignore[unpinned-uses]`. Pin them to a tag such as `@v1` once one is published.
+App workflow templates use `@__BELT_SHA__` placeholders until `belt_sync` substitutes a real commit SHA on adopt or sync. Those templates are not scanned by zizmor (placeholders are not valid pins); **Belt checks** run `scripts/check_belt_workflow_pins.py` instead, which fails if any file under `templates/` or `.github/workflows/` references `ianmkinney/Ian-tool-belt/...@main`. The reusable `belt-sync-reusable.yml` takes a `belt-ref` input matching the caller's pin, checks out the belt at that ref, and `belt_sync.py --fetch-ref main` reads the latest belt while writing the newest SHA into the app's workflows.
 
 ## Workflow syntax lint
 

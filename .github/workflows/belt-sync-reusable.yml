@@ -1,6 +1,11 @@
 name: belt sync (reusable)
 on:
   workflow_call:
+    inputs:
+      belt-ref:
+        description: Commit SHA pinned in the caller's uses line (must match).
+        type: string
+        required: true
     secrets:
       BELT_SYNC_TOKEN:
         description: Optional fine-grained PAT (Contents, Pull requests, Workflows write) so sync PRs run CI and can update workflow files.
@@ -22,18 +27,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ianmkinney/Ian-tool-belt
-          ref: main
+          ref: ${{ inputs.belt-ref }}
+          fetch-depth: 0
           path: .tool-belt-upstream
           persist-credentials: false
           sparse-checkout: |
             templates/app-adoption
             rules
             scripts
+            belt.json
       - id: sync
         env:
           HAS_SYNC_TOKEN: ${{ secrets.BELT_SYNC_TOKEN != '' || secrets.RELEASE_PLEASE_TOKEN != '' }}
         run: |
-          flags=()
+          flags=(--fetch-ref main)
           if [ "$HAS_SYNC_TOKEN" = "true" ]; then flags+=(--allow-workflow-files); fi
           python3 .tool-belt-upstream/scripts/belt_sync.py --belt .tool-belt-upstream --app . \
             --body "$RUNNER_TEMP/belt-sync-body.md" "${flags[@]}"
