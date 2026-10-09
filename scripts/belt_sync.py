@@ -2,6 +2,8 @@
 import argparse
 import json
 import os
+import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,6 +16,12 @@ MARKER_LINES = 10
 MARKER_COMMENT = f'<!-- {MARKER}: belt-sync updates this file. Delete this line to own it. -->\n'
 TEMPLATES = Path('templates/app-adoption')
 TEMPLATE_FILES = ['AGENTS.md', '.github/workflows/belt.yml', '.github/workflows/belt-sync.yml']
+BELT_SHA_PLACEHOLDER = '__BELT_SHA__'
+BELT_VERSION_PLACEHOLDER = '__BELT_VERSION__'
+BELT_USES_AT = re.compile(
+    r'(ianmkinney/Ian-tool-belt/\.github/workflows/[^\s@]+@)([0-9a-f]{40}|\w+)\s*(#\s*v[\d.]+)?',
+    re.IGNORECASE,
+)
 
 
 def parse_version(text):
@@ -35,6 +43,47 @@ def is_workflow(relative):
     return relative.startswith('.github/workflows/')
 
 
+def workflow_pins_differ(app_dir, pin_sha):
+    """True when managed workflow files exist but do not pin the given belt SHA."""
+    app_dir = Path(app_dir)
+    for relative in ('.github/workflows/belt.yml', '.github/workflows/belt-sync.yml'):
+        path = app_dir / relative
+        if not path.exists():
+            continue
+        if not has_marker(path.read_text()):
+            continue
+        if f'@{pin_sha}' not in path.read_text():
+            return True
+    return False
+
+
+def belt_commit_sha(belt_dir):
+    return subprocess.check_output(
+        ['git', '-C', str(belt_dir), 'rev-parse', 'HEAD'], text=True,
+    ).strip()
+
+
+def fetch_belt_source(belt_dir, ref):
+    """Update belt_dir to origin/<ref> so sync reads the latest belt on that branch."""
+    ref = ref.removeprefix('origin/')
+    subprocess.check_call(['git', '-C', str(belt_dir), 'fetch', 'origin', ref, '--depth', '1'])
+    subprocess.check_call(['git', '-C', str(belt_dir), 'checkout', f'origin/{ref}'])
+
+
+def substitute_belt_pins(text, sha, version):
+    """Replace template placeholders and normalize any existing belt workflow pins."""
+    version = version.removeprefix('v')
+    out = text.replace(f'@{BELT_SHA_PLACEHOLDER}', f'@{sha}')
+    out = out.replace(f'v{BELT_VERSION_PLACEHOLDER}', f'v{version}')
+    out = out.replace(BELT_SHA_PLACEHOLDER, sha)
+
+    def repl(match):
+        suffix = f' # v{version}' if match.group(3) else f' # v{version}'
+        return f'{match.group(1)}{sha}{suffix}'
+
+    return BELT_USES_AT.sub(repl, out)
+
+
 def managed_cursor_rule(text):
     """Render a belt rule exactly as `export.py --target cursor` does, plus the marker."""
     rendered = cursor_rule(text)
@@ -42,28 +91,32 @@ def managed_cursor_rule(text):
     return rendered[:end] + MARKER_COMMENT + rendered[end:]
 
 
-def managed_files(belt_dir):
+def managed_files(belt_dir, pin_sha, version):
     """Return {app-relative path: content} for every file the belt manages."""
     belt_dir = Path(belt_dir)
-    files = {relative: (belt_dir / TEMPLATES / relative).read_text() for relative in TEMPLATE_FILES}
+    files = {}
+    for relative in TEMPLATE_FILES:
+        raw = (belt_dir / TEMPLATES / relative).read_text()
+        files[relative] = substitute_belt_pins(raw, pin_sha, version) if is_workflow(relative) else raw
     for entry in json.loads((belt_dir / 'belt.json').read_text())['rules']:
         files[f'.cursor/rules/{Path(entry).stem}.mdc'] = managed_cursor_rule((belt_dir / entry).read_text())
     return files
 
 
-def plan(belt_dir, app_dir, allow_workflow_files, adopt=False):
+def plan(belt_dir, app_dir, pin_sha, version, allow_workflow_files, adopt=False):
     """Return the sync plan without writing anything."""
     belt_dir, app_dir = Path(belt_dir), Path(app_dir)
-    latest = json.loads((belt_dir / 'belt.json').read_text())['version']
+    latest = version
     if adopt and not (app_dir / ADOPTION_MARKER).exists():
         current = None
     else:
         current = validate_adoption(app_dir)['beltVersion']
-    behind = current is None or is_behind(current, latest)
+    pin_stale = workflow_pins_differ(app_dir, pin_sha)
+    behind = current is None or is_behind(current, latest) or pin_stale
     result = {'current': current, 'latest': latest, 'sync': behind or adopt, 'files': []}
     if not result['sync']:
         return result
-    for relative, content in managed_files(belt_dir).items():
+    for relative, content in managed_files(belt_dir, pin_sha, version).items():
         target = app_dir / relative
         if not target.exists():
             status = 'added'
@@ -101,8 +154,11 @@ def apply(app_dir, result):
 def pr_body(result, allow_workflow_files):
     latest = result['latest']
     repo = f'https://github.com/{BELT_REPO}'
-    lines = [f"Syncs the managed tool belt files from v{result['current']} to v{latest}.", '',
-             '| File | Change |', '| --- | --- |']
+    pin = result.get('pin_sha', '')
+    lines = [f"Syncs the managed tool belt files from v{result['current']} to v{latest}.", '']
+    if pin:
+        lines.append(f'Workflow pins updated to belt commit `{pin}` (v{latest}).')
+    lines += ['', '| File | Change |', '| --- | --- |']
     lines += [f'| `{path}` | {status} |' for path, status, _ in result['files']]
     lines += ['', f'- Release: {repo}/releases/tag/v{latest}',
               f'- Changelog: {repo}/blob/main/CHANGELOG.md', '',
@@ -130,9 +186,19 @@ def main(argv=None):
     parser.add_argument('--allow-workflow-files', action='store_true')
     parser.add_argument('--adopt', action='store_true',
                         help='First-time setup: write every managed file and the marker, at any version')
+    parser.add_argument('--pin-sha', help='40-char SHA to pin in workflow uses lines (default: belt HEAD)')
+    parser.add_argument('--fetch-ref', help='Fetch origin/<ref> into --belt before syncing (e.g. main)')
     args = parser.parse_args(argv)
+    belt_dir = Path(args.belt)
+    if args.fetch_ref:
+        fetch_belt_source(belt_dir, args.fetch_ref)
+    version = json.loads((belt_dir / 'belt.json').read_text())['version']
+    pin_sha = args.pin_sha or belt_commit_sha(belt_dir)
+    if len(pin_sha) != 40 or not all(c in '0123456789abcdef' for c in pin_sha.lower()):
+        raise ValueError(f'pin-sha must be a 40-character commit SHA, got: {pin_sha!r}')
     allow_workflow_files = args.allow_workflow_files or args.adopt
-    result = plan(args.belt, args.app, allow_workflow_files, args.adopt)
+    result = plan(belt_dir, args.app, pin_sha, version, allow_workflow_files, args.adopt)
+    result['pin_sha'] = pin_sha
     changed = apply(args.app, result)
     if changed and args.body:
         Path(args.body).write_text(pr_body(result, allow_workflow_files))
