@@ -124,6 +124,13 @@
       "description": "rhysd/actionlint via the actionlint-py wrapper; CI lints workflow files for syntax and structural mistakes."
     },
     {
+      "id": "gitleaks",
+      "kind": "github-release",
+      "name": "gitleaks/gitleaks",
+      "version": "8.30.1",
+      "description": "Gitleaks secret scanner; CI downloads the release binary and scans the repository on every push and pull request."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
