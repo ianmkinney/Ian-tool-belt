@@ -1,4 +1,4 @@
-"""Check pinned npm/PyPI packages for newer stable releases; optionally bump the pins."""
+"""Check pinned npm, PyPI and GitHub-release packages for newer stable releases; optionally bump the pins."""
 import argparse
 import json
 import re
@@ -10,6 +10,8 @@ from beltfile import load, save_validated, set_package_version
 REGISTRIES = {
     'npm': ('https://registry.npmjs.org/{name}/latest', lambda body: body['version']),
     'pypi': ('https://pypi.org/pypi/{name}/json', lambda body: body['info']['version']),
+    'github-release': ('https://api.github.com/repos/{name}/releases/latest',
+                       lambda body: body['tag_name'].removeprefix('v')),
 }
 # At least X.Y.Z; extra numeric segments are allowed (for example actionlint-py 1.7.12.25).
 STABLE = r'\d+\.\d+\.\d+(?:\.\d+)*'

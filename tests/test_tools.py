@@ -165,7 +165,7 @@ class CheckPinsTests(BeltCase):
         seen = []
         check_pins.check(self.reload(), lambda kind, name: seen.append(name) or '0.0.83')
         self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector', 'zizmor',
-                                 'actionlint-py', 'shellcheck-py', 'ollmcp'])
+                                 'actionlint-py', 'shellcheck-py', 'gitleaks/gitleaks', 'ollmcp'])
 
     def test_registry_urls(self):
         captured = []
@@ -179,14 +179,21 @@ class CheckPinsTests(BeltCase):
 
         def fake_urlopen(request, timeout):
             captured.append(request.full_url)
-            body = {'version': '1.2.3'} if 'npmjs' in request.full_url else {'info': {'version': '4.5.6'}}
+            if 'npmjs' in request.full_url:
+                body = {'version': '1.2.3'}
+            elif 'pypi.org' in request.full_url:
+                body = {'info': {'version': '4.5.6'}}
+            else:
+                body = {'tag_name': 'v9.0.0'}
             return Response(json.dumps(body).encode())
 
         with patch.object(check_pins, 'urlopen', fake_urlopen):
             self.assertEqual(check_pins.fetch_latest('npm', '@playwright/mcp'), '1.2.3')
             self.assertEqual(check_pins.fetch_latest('pypi', 'requests'), '4.5.6')
+            self.assertEqual(check_pins.fetch_latest('github-release', 'gitleaks/gitleaks'), '9.0.0')
         self.assertEqual(captured, ['https://registry.npmjs.org/@playwright/mcp/latest',
-                                    'https://pypi.org/pypi/requests/json'])
+                                    'https://pypi.org/pypi/requests/json',
+                                    'https://api.github.com/repos/gitleaks/gitleaks/releases/latest'])
 
 
 class TaskRunnerTests(unittest.TestCase):

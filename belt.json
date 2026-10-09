@@ -131,6 +131,13 @@
       "description": "ShellCheck via the shellcheck-py wrapper; CI lints tracked shell scripts and actionlint uses the same pin for workflow run: blocks."
     },
     {
+      "id": "gitleaks",
+      "kind": "github-release",
+      "name": "gitleaks/gitleaks",
+      "version": "8.30.1",
+      "description": "Gitleaks secret scanner; CI downloads the release binary and scans the repository on every push and pull request."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
