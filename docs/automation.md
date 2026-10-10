@@ -10,6 +10,8 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Run belt task** (`run-task.yml`) | manual | Runs one allowlisted task and uploads its log and outputs as an artifact for 14 days | read |
 | **Workflow security lint** (`zizmor.yml`) | push, pull request | Runs zizmor on `.github/workflows` and the app workflow templates, and fails on findings, shown as annotations | read |
 | **Workflow syntax lint** (`actionlint.yml`) | push, pull request | Runs actionlint on `.github/workflows`, the app workflow templates, and the versioning caller templates, and fails on findings | read |
+| **Shell script lint** (`shellcheck.yml`) | push, pull request | Runs ShellCheck on tracked `*.sh` files and shell shebang scripts via `scripts/check_shell.py`, and fails on findings | read |
+| **Secret scan** (`gitleaks.yml`) | push, pull request | Downloads the pinned gitleaks release binary and scans the repository for leaked secrets | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
 
@@ -57,17 +59,19 @@ The app templates call the shared workflows at `@main` on purpose, so each of th
 
 The version comes from the `actionlint` pypi package in `belt.json` (`actionlint-py`, a third-party MIT wrapper that vendors the official binary). The weekly pin check covers it. actionlint-py versions are four-part (`1.7.12.25`): the first three match upstream actionlint, and the last is the wrapper build. `scripts/check_pins.py` treats extra numeric segments as part of a stable pin so those bumps are proposed automatically. The official GitHub release binary and `rhysd/actionlint` Docker image have stronger provenance (checksums, attestations), but they are not a kind the pin check already understands.
 
-The job installs that pin with pip and runs actionlint on `.github/workflows`, `templates/app-adoption/.github/workflows`, and the versioning caller templates. `shellcheck` is already on `ubuntu-latest`; `pyflakes` is not, so Python `run:` scripts skip that extra check until it is installed.
+The job installs the actionlint and shellcheck pins with pip and runs actionlint on `.github/workflows`, `templates/app-adoption/.github/workflows`, and the versioning caller templates. actionlint is invoked with `-shellcheck` pointing at the belt-pinned `shellcheck-py` binary so `run:` bash scripts use the same version as the shell script lint job. `pyflakes` is not installed, so Python `run:` scripts skip that extra check until it is added.
 
 Run it locally with either command (paths match CI):
 
 ```sh
-uvx --from actionlint-py==1.7.12.25 actionlint -color \
+uvx --from actionlint-py==1.7.12.25 --with shellcheck-py==0.11.0.1 actionlint -color \
+  -shellcheck "$(command -v shellcheck)" \
   .github/workflows/*.yml \
   templates/app-adoption/.github/workflows/*.yml \
   templates/versioning/release.yml \
   templates/versioning/pr-title.yml
-pipx run --spec actionlint-py==1.7.12.25 actionlint -color \
+pipx run --spec 'actionlint-py==1.7.12.25 shellcheck-py==0.11.0.1' actionlint -color \
+  -shellcheck "$(command -v shellcheck)" \
   .github/workflows/*.yml \
   templates/app-adoption/.github/workflows/*.yml \
   templates/versioning/release.yml \
@@ -76,10 +80,45 @@ pipx run --spec actionlint-py==1.7.12.25 actionlint -color \
 
 `pr-title.yml` and `release.yml` use GitHub's `$/` self-repository syntax for same-repo reusable workflows. That syntax shipped after actionlint v1.7.12, so `.github/actionlint.yaml` ignores only the matching "invalid reusable workflow call" errors on those two files. Do not broaden the ignore: a real bad `uses:` elsewhere should still fail.
 
+## Shell script lint
+
+[ShellCheck](https://www.shellcheck.net/) (GPL-3.0) is a static analyzer for shell scripts. It catches quoting mistakes, unreachable code, unsafe patterns and portability issues in bash and POSIX `sh` scripts. The belt ships automation and adoption templates as shell scripts over time; this lint keeps those scripts safe across every project that copies the belt.
+
+The version comes from the `shellcheck` pypi package in `belt.json` (`shellcheck-py`, an MIT wrapper that vendors the official binary). The weekly pin check covers it. shellcheck-py versions are four-part (`0.11.0.1`): the first three match upstream ShellCheck, and the last is the wrapper build. `scripts/check_pins.py` treats extra numeric segments as part of a stable pin so those bumps are proposed automatically.
+
+The job installs that pin with pip and runs `scripts/check_shell.py`, which lints every git-tracked `*.sh` file and any other tracked file whose shebang names a shell. With no such files yet, the job succeeds without invoking ShellCheck.
+
+Run it locally with either command (paths match CI):
+
+```sh
+python3 -m pip install 'shellcheck-py==0.11.0.1'
+python3 scripts/check_shell.py
+uvx --from shellcheck-py==0.11.0.1 shellcheck --version
+```
+
+To remove ShellCheck from the belt, delete the `shellcheck` package from `belt.json`, remove `.github/workflows/shellcheck.yml`, drop the shellcheck pin step and package from `.github/workflows/actionlint.yml`, delete `scripts/check_shell.py`, and revert the documentation and test references in the same commit.
+
+## Secret scan
+
+[gitleaks](https://github.com/gitleaks/gitleaks) (MIT) is a static secret scanner for Git repositories. It flags API keys, tokens, passwords and other high-entropy credentials in tracked files and commit history. zizmor checks workflow security; gitleaks checks application and configuration content before it reaches GitHub.
+
+The version comes from the `gitleaks` `github-release` package in `belt.json` (`gitleaks/gitleaks`). The weekly pin check queries the GitHub releases API for newer stable tags. The job downloads the official `linux_x64` archive for that tag, verifies nothing else from the network, and runs `gitleaks detect` with the upstream default rules (no custom `gitleaks.toml` is required for this repository today).
+
+Run it locally after installing the same release (paths match CI):
+
+```sh
+curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz" | tar -xz
+./gitleaks detect --source . --redact --verbose
+```
+
+On macOS, swap the archive name for `gitleaks_8.30.1_darwin_arm64.tar.gz` or `darwin_x64` as appropriate. The official [gitleaks-action](https://github.com/gitleaks/gitleaks-action) is not used here: it carries a separate end-user license for organization repositories, while the MIT CLI matches the belt's open-source posture.
+
+To remove gitleaks from a project that adopted this belt: delete the `gitleaks` entry from `packages` in `belt.json`, remove `.github/workflows/gitleaks.yml`, and drop the Secret scan section from your automation docs.
+
 ## One-time repository setting
 
 The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, with no third-party action. GitHub only lets them open pull requests if a maintainer enables **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**. Without it, the run validates and pushes the branch, then fails at the PR step.
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-Belt checks, zizmor and actionlint run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
+Belt checks, zizmor, actionlint, shellcheck and gitleaks run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.

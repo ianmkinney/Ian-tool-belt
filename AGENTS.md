@@ -60,6 +60,8 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 - `styling` — files package; copy styling/ yourself. Client exports do not include it.
 - `zizmor` — CI-only pin read by zizmor.yml; not an MCP server or export.
 - `actionlint` — CI-only pin read by actionlint.yml; not an MCP server or export.
+- `shellcheck` — CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.
+- `gitleaks` — CI-only pin read by gitleaks.yml; not an MCP server or export.
 - `mcp-inspector` — Used by scripts/mcp_smoke.py; not declared as a connection.
 - `ollmcp` — Optional client. Load the claude-code export with --servers-json; not a fifth adapter.
 - `playwright-mcp` — Consumed through the playwright server args, not copied as its own export.

@@ -30,7 +30,7 @@ This is not a gateway. Each exported client connects directly to the declared se
 
 `python3 belt.py use cursor --app path/to/app` writes `.cursor/mcp.json`, `.cursor/rules/*.mdc` and `.cursor/skills/`. Cursor resolves `${env:NAME}` from the environment it was launched with. Open **Customize** in Cursor to confirm that the MCP servers, rules and skills appear, then make a harmless call. `INSTRUCTIONS.md` is a combined copy for clients or chats that do not read `.cursor/`.
 
-Packages that are not MCP connections (zizmor, actionlint, mcp-inspector, ollmcp, styling) are listed in `compatibility.json` and [belt.index.json](../belt.index.json) `skipped`; they are not copied into `.cursor/`.
+Packages that are not MCP connections (zizmor, actionlint, shellcheck, gitleaks, mcp-inspector, ollmcp, styling) are listed in `compatibility.json` and [belt.index.json](../belt.index.json) `skipped`; they are not copied into `.cursor/`.
 
 ### Local agent clients
 

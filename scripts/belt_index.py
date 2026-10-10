@@ -48,6 +48,7 @@ SCRIPT_INFO = {
     'scripts/beltfile.py': 'Shared load/save helpers for belt.json. Import from other scripts; do not run it.',
     'scripts/build_tokens.py': 'Generate styling/tokens.css from tokens.json. --check confirms they match.',
     'scripts/belt_index.py': 'Build belt.index.json and the AGENTS.md map from belt.json. belt.py index wraps this.',
+    'scripts/check_shell.py': 'Run shellcheck on git-tracked shell scripts. CI uses the belt shellcheck pin; not part of client export.',
 }
 
 WORKFLOW_INFO = {
@@ -63,6 +64,10 @@ WORKFLOW_INFO = {
         'Security-lint GitHub workflows with the zizmor pin from belt.json.',
     '.github/workflows/actionlint.yml':
         'Syntax-lint GitHub workflows with the actionlint-py pin from belt.json.',
+    '.github/workflows/shellcheck.yml':
+        'Lint tracked shell scripts with the shellcheck-py pin via scripts/check_shell.py.',
+    '.github/workflows/gitleaks.yml':
+        'Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json.',
     '.github/workflows/release.yml':
         'release-please on push to main; merging its PR bumps versions and tags.',
     '.github/workflows/pr-title.yml':
@@ -100,6 +105,8 @@ SKIPPED = [
     {'id': 'styling', 'reason': 'files package; copy styling/ yourself. Client exports do not include it.'},
     {'id': 'zizmor', 'reason': 'CI-only pin read by zizmor.yml; not an MCP server or export.'},
     {'id': 'actionlint', 'reason': 'CI-only pin read by actionlint.yml; not an MCP server or export.'},
+    {'id': 'shellcheck', 'reason': 'CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.'},
+    {'id': 'gitleaks', 'reason': 'CI-only pin read by gitleaks.yml; not an MCP server or export.'},
     {'id': 'mcp-inspector', 'reason': 'Used by scripts/mcp_smoke.py; not declared as a connection.'},
     {'id': 'ollmcp', 'reason': 'Optional client. Load the claude-code export with --servers-json; not a fifth adapter.'},
     {'id': 'playwright-mcp', 'reason': 'Consumed through the playwright server args, not copied as its own export.'},

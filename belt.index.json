@@ -146,6 +146,20 @@
       "description": "Pinned actionlint (via actionlint-py). Use in CI via actionlint.yml to catch workflow syntax errors."
     },
     {
+      "id": "shellcheck",
+      "kind": "pypi",
+      "name": "shellcheck-py",
+      "version": "0.11.0.1",
+      "description": "Pinned ShellCheck (via shellcheck-py). Use in CI via shellcheck.yml and actionlint -shellcheck; not an MCP server."
+    },
+    {
+      "id": "gitleaks",
+      "kind": "github-release",
+      "name": "gitleaks/gitleaks",
+      "version": "8.30.1",
+      "description": "Pinned gitleaks CLI (github-release). Use in CI via gitleaks.yml to scan the repo for secrets; not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
@@ -251,6 +265,10 @@
       "description": "Look up newer stable npm/PyPI releases for pinned packages. Report-only unless --apply."
     },
     {
+      "id": "scripts/check_shell.py",
+      "description": "Run shellcheck on git-tracked shell scripts. CI uses the belt shellcheck pin; not part of client export."
+    },
+    {
       "id": "scripts/export.py",
       "description": "Write one client export into a new directory. belt.py use wraps this and copies into a project."
     },
@@ -293,6 +311,10 @@
       "description": "Validate manifests, run tests, check tokens, export all four clients, and verify the generated index."
     },
     {
+      "id": ".github/workflows/gitleaks.yml",
+      "description": "Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json."
+    },
+    {
       "id": ".github/workflows/pr-title-reusable.yml",
       "description": "Reusable Conventional Commit title check for this repo and adopted apps."
     },
@@ -311,6 +333,10 @@
     {
       "id": ".github/workflows/run-task.yml",
       "description": "Manually run one allowlisted belt task and upload its log."
+    },
+    {
+      "id": ".github/workflows/shellcheck.yml",
+      "description": "Lint tracked shell scripts with the shellcheck-py pin via scripts/check_shell.py."
     },
     {
       "id": ".github/workflows/update-variable.yml",
@@ -371,6 +397,14 @@
     {
       "id": "actionlint",
       "reason": "CI-only pin read by actionlint.yml; not an MCP server or export."
+    },
+    {
+      "id": "shellcheck",
+      "reason": "CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export."
+    },
+    {
+      "id": "gitleaks",
+      "reason": "CI-only pin read by gitleaks.yml; not an MCP server or export."
     },
     {
       "id": "mcp-inspector",

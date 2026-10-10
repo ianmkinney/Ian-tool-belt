@@ -115,7 +115,8 @@ class DoctorListIndexTests(unittest.TestCase):
         self.assertEqual(index['personalServers']['count'], 0)
         self.assertNotIn('servers', index['personalServers'])
         ids = {item['id'] for item in index['packages']}
-        self.assertEqual(ids, {'playwright-mcp', 'mcp-inspector', 'styling', 'zizmor', 'actionlint', 'ollmcp'})
+        self.assertEqual(ids, {'playwright-mcp', 'mcp-inspector', 'styling', 'zizmor', 'actionlint',
+                               'shellcheck', 'gitleaks', 'ollmcp'})
         self.assertTrue(any(item['id'] == 'github' for item in index['servers']))
         self.assertTrue(any(item['id'] == 'cursor' for item in index['adapters']))
 

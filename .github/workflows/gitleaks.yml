@@ -1,0 +1,25 @@
+name: Secret scan
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Read the gitleaks pin from belt.json
+        id: pin
+        run: |
+          python3 -c "import json; print('version=' + next(p['version'] for p in json.load(open('belt.json'))['packages'] if p['id'] == 'gitleaks'))" >> "$GITHUB_OUTPUT"
+      - name: Install and run gitleaks
+        env:
+          GITLEAKS_VERSION: ${{ steps.pin.outputs.version }}
+        run: |
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz
+          chmod +x gitleaks
+          ./gitleaks detect --source . --redact --verbose

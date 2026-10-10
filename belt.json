@@ -132,6 +132,20 @@
       "description": "Pinned actionlint (via actionlint-py). Use in CI via actionlint.yml to catch workflow syntax errors."
     },
     {
+      "id": "shellcheck",
+      "kind": "pypi",
+      "name": "shellcheck-py",
+      "version": "0.11.0.1",
+      "description": "Pinned ShellCheck (via shellcheck-py). Use in CI via shellcheck.yml and actionlint -shellcheck; not an MCP server."
+    },
+    {
+      "id": "gitleaks",
+      "kind": "github-release",
+      "name": "gitleaks/gitleaks",
+      "version": "8.30.1",
+      "description": "Pinned gitleaks CLI (github-release). Use in CI via gitleaks.yml to scan the repo for secrets; not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
