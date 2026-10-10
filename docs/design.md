@@ -8,13 +8,15 @@ The root belt.json is our working profile. The original examples/personal/belt.j
 
 Statuses are declarations: needs-credentials, needs-local-setup or untested. They are not inferred authentication state. Secret references contain environment variable names only. Arbitrary literal authentication headers are not part of this format.
 
+0.3-draft servers, models and model presets require a one-line `description` (what it is and when to use it), matching packages. Skills keep theirs in SKILL.md frontmatter. Adapter, script, workflow and rule descriptions live next to the code that must stay in sync with those files (`ADAPTER_INFO` in `scripts/validate.py`, catalogs in `scripts/belt_index.py`). `python3 belt.py index --check` fails if the generated map is stale.
+
 ### Personal servers
 
 `personalServers` uses the server schema for connections outside work. Ids must be unique across `servers` and `personalServers`. Exporters omit personal servers unless `--include-personal` is passed, and the compatibility report states which happened.
 
 ### Models
 
-A model entry describes an OpenAI-compatible endpoint: `id`, `api` (`openai-compatible`), `env` (the variable names for base URL, model and API key; the key variable must be in `secretRefs`), named `presets` (each with `baseUrl`, `model` and a `docs` HTTPS link), a `defaultPreset` and a `status`. Preset URLs may use plain HTTP only for loopback hosts. An empty preset model means "set one before use". Models are not MCP servers and are never contacted by validation or export. See [local AI](local-ai.md).
+A model entry describes an OpenAI-compatible endpoint: `id`, `api` (`openai-compatible`), `env` (the variable names for base URL, model and API key; the key variable must be in `secretRefs`), named `presets` (each with `baseUrl`, `model`, a `docs` HTTPS link and `description`), a `defaultPreset`, a `status` and a `description`. Preset URLs may use plain HTTP only for loopback hosts. An empty preset model means "set one before use". Models are not MCP servers and are never contacted by validation or export. See [local AI](local-ai.md).
 
 ### Packages
 

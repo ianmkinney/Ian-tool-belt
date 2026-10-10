@@ -123,7 +123,7 @@ def export_belt(manifest, target, output, preset=None, include_personal=False):
         instructions += (f"\n## Local model\n\nAn optional OpenAI-compatible local model (`{model['id']}`, "
                          f"preset `{preset_name}`) may be configured through `{model['env']['baseUrl']}`, "
                          f"`{model['env']['model']}` and `{model['env']['apiKey']}`. It is not assumed to be "
-                         'running. Check it with `python3 scripts/local_ai_check.py` from the belt checkout '
+                         'running. Check it with `python3 belt.py doctor` from the belt checkout '
                          'before relying on it.\n')
         files['local-ai.env.example'] = env_example(model_info)
     files['INSTRUCTIONS.md'] = instructions

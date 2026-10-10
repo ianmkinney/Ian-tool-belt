@@ -2,7 +2,7 @@
 
 The belt declares one local model connection, `local-ai`, in `belt.json` under `models`. It speaks the OpenAI-compatible API, so any runtime with that API works. **Ollama is the recommended default.** LM Studio, llama.cpp and vLLM are alternative presets.
 
-Nothing in this repository needs a local model to be running. Validation, exports, tests and CI never contact it. Only `scripts/local_ai_check.py` does, and only when you run it.
+Nothing in this repository needs a local model to be running. Validation, exports, tests and CI never contact it. Only `scripts/local_ai_check.py` does (also via `python3 belt.py doctor`), and only when you run it.
 
 Install steps and model names below were checked against Ollama's documentation on 2026-10-07 UTC. Ollama changes often; if a step differs, follow [docs.ollama.com](https://docs.ollama.com/quickstart).
 
@@ -44,7 +44,7 @@ ollama run gemma4:e2b    # optional: chat in the terminal, /bye to leave
 To change the belt's default model:
 
 ```sh
-python3 scripts/belt_set.py belt.json models.local-ai.presets.ollama.model gemma4:e4b
+python3 belt.py set models.local-ai.presets.ollama.model gemma4:e4b
 ```
 
 Or override it for one shell session with `LOCAL_AI_MODEL=gemma4:e4b`.
@@ -111,7 +111,8 @@ A model alone cannot read files or call MCP tools. An **agent client** does that
 ### OpenCode (recommended for a fully local setup)
 
 ```sh
-python3 scripts/export.py belt.json --target opencode --out dist/opencode
+python3 belt.py use opencode --app path/to/app
+# or, to inspect first: python3 belt.py use opencode --out dist/opencode
 ```
 
 This produces:
@@ -120,7 +121,7 @@ This produces:
 - `INSTRUCTIONS.md`: the belt's rules and a skill index
 - `.opencode/skills/<name>/SKILL.md`: skills in a location OpenCode discovers natively
 
-Review the files, then copy them into the target project's root. If the project already has an `opencode.json`, merge by hand. Install OpenCode as described in [Ollama's OpenCode guide](https://docs.ollama.com/integrations/opencode), then run `opencode` in the project. `ollama launch opencode` also works: it adds an inline model selection, and the project's `opencode.json` still applies. Use `--preset lm-studio` (after setting that preset's model) to target another runtime.
+`use opencode --app` writes those files into the project (skipping any that already exist). For a staging directory, use `--out` and copy by hand. Install OpenCode as described in [Ollama's OpenCode guide](https://docs.ollama.com/integrations/opencode), then run `opencode` in the project. `ollama launch opencode` also works: it adds an inline model selection, and the project's `opencode.json` still applies. Use `--preset lm-studio` (after setting that preset's model) to target another runtime.
 
 ### Claude Code through Ollama
 
@@ -133,7 +134,7 @@ Review the files, then copy them into the target project's root. If the project 
 No fifth export target was added. ollmcp's `--servers-json` / `-j` flag reads a JSON file whose top-level key is `mcpServers`, and it treats `"type": "http"` as Streamable HTTP so it can load Claude Code configs. The existing `claude-code` export already writes that file:
 
 ```sh
-python3 scripts/export.py belt.json --target claude-code --out dist/claude-code
+python3 belt.py use claude-code --out dist/claude-code
 uvx ollmcp==0.35.1 --servers-json dist/claude-code/.mcp.json --model gemma4:e2b
 ```
 

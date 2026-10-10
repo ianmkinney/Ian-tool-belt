@@ -10,6 +10,30 @@ BASE_FIELDS = {'formatVersion', 'name', 'version', 'description', 'rules',
 FIELDS = {'0.1-draft': BASE_FIELDS, '0.2-draft': BASE_FIELDS,
           '0.3-draft': BASE_FIELDS | {'models', 'packages', 'personalServers'}}
 ADAPTERS = ('claude-code', 'vscode', 'cursor', 'opencode')
+ADAPTER_INFO = {
+    'claude-code': {
+        'description': 'Claude Code MCP config (.mcp.json). Also the file ollmcp --servers-json reads. Rules and skills need manual attach.',
+        'mcp': '.mcp.json', 'rules': 'INSTRUCTIONS.md (manual)', 'skills': 'skills/<name>/',
+        'localModel': 'env-example-only',
+    },
+    'vscode': {
+        'description': 'VS Code MCP config (.vscode/mcp.json). Rules and skills need manual attach; Copilot uses this file.',
+        'mcp': '.vscode/mcp.json', 'rules': 'INSTRUCTIONS.md (manual)', 'skills': 'skills/<name>/',
+        'localModel': 'env-example-only',
+    },
+    'cursor': {
+        'description': 'Cursor-native MCP, always-on rules and skills. Default target for `belt.py use` in an empty project.',
+        'mcp': '.cursor/mcp.json', 'rules': '.cursor/rules/*.mdc', 'skills': '.cursor/skills/<name>/',
+        'localModel': 'env-example-only',
+    },
+    'opencode': {
+        'description': 'OpenCode config with MCP plus a wired local-ai provider. Use when handing the belt to a local Ollama model.',
+        'mcp': 'opencode.json', 'rules': 'INSTRUCTIONS.md via instructions',
+        'skills': '.opencode/skills/<name>/',
+        'localModel': 'provider-config-generated',
+    },
+}
+assert set(ADAPTER_INFO) == set(ADAPTERS)
 STATUSES = ('needs-credentials', 'needs-local-setup', 'untested')
 LOOPBACK = ('localhost', '127.0.0.1', '::1')
 ID = r'[a-z][a-z0-9-]*'
@@ -23,6 +47,12 @@ PACKAGE_NAMES = {'npm': r'(@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*',
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def one_line(value, label='description'):
+    require(isinstance(value, str) and bool(value.strip()) and '\n' not in value,
+            f'{label} must be one non-empty line')
+    return value.strip()
 
 
 def inside(root, entry):
@@ -64,8 +94,10 @@ def validate_server(s, secrets):
     require(isinstance(s, dict), 'Server must be an object')
     require(isinstance(s.get('id'), str) and re.fullmatch(ID, s['id']), 'Invalid server id')
     require(s.get('status') in STATUSES, 'Invalid status')
+    one_line(s.get('description'), 'server description')
     if s.get('transport') == 'http':
-        require(set(s) == {'id', 'transport', 'url', 'headersFromEnv', 'status'}, 'Invalid HTTP fields')
+        require(set(s) == {'id', 'transport', 'url', 'headersFromEnv', 'status', 'description'},
+                'Invalid HTTP fields')
         clean_url(s['url'])
         require(isinstance(s['headersFromEnv'], dict), 'Invalid header references')
         for header, ref in s['headersFromEnv'].items():
@@ -74,7 +106,8 @@ def validate_server(s, secrets):
             require(ref['env'] in secrets, 'Undeclared secret')
             require(ref['prefix'] in ('', 'Bearer '), 'Unsupported header prefix')
     elif s.get('transport') == 'stdio':
-        require(set(s) == {'id', 'transport', 'command', 'args', 'status'}, 'Invalid stdio fields')
+        require(set(s) == {'id', 'transport', 'command', 'args', 'status', 'description'},
+                'Invalid stdio fields')
         require(isinstance(s['command'], str) and bool(s['command']), 'Missing command')
         require(isinstance(s['args'], list) and all(isinstance(a, str) for a in s['args']), 'Invalid args')
     else:
@@ -82,8 +115,9 @@ def validate_server(s, secrets):
 
 
 def validate_model(m, secrets):
-    require(isinstance(m, dict) and set(m) == {'id', 'api', 'env', 'defaultPreset', 'presets', 'status'},
-            'Invalid model fields')
+    require(isinstance(m, dict) and set(m) == {
+        'id', 'api', 'env', 'defaultPreset', 'presets', 'status', 'description'}, 'Invalid model fields')
+    one_line(m['description'], 'model description')
     require(isinstance(m['id'], str) and re.fullmatch(ID, m['id']), 'Invalid model id')
     require(m['api'] == 'openai-compatible', 'Unsupported model API')
     env = m['env']
@@ -94,7 +128,9 @@ def validate_model(m, secrets):
     require(isinstance(presets, dict) and presets, 'Model needs presets')
     for name, preset in presets.items():
         require(re.fullmatch(ID, name), 'Invalid preset name')
-        require(isinstance(preset, dict) and set(preset) == {'baseUrl', 'model', 'docs'}, 'Invalid preset fields')
+        require(isinstance(preset, dict) and set(preset) == {'baseUrl', 'model', 'docs', 'description'},
+                'Invalid preset fields')
+        one_line(preset['description'], 'preset description')
         clean_url(preset['baseUrl'], allow_http_loopback=True)
         require(isinstance(preset['model'], str), 'Preset model must be text')
         clean_url(preset['docs'])
@@ -106,7 +142,7 @@ def validate_package(p, root):
     require(isinstance(p, dict), 'Package must be an object')
     require(isinstance(p.get('id'), str) and re.fullmatch(ID, p['id']), 'Invalid package id')
     require(isinstance(p.get('version'), str) and re.fullmatch(PIN, p['version']), 'Package version must be an exact pin')
-    require(isinstance(p.get('description'), str) and bool(p['description']), 'Missing package description')
+    one_line(p.get('description'), 'package description')
     kind = p.get('kind')
     if kind in PACKAGE_NAMES:
         require(set(p) == {'id', 'kind', 'name', 'version', 'description'}, 'Invalid package fields')
@@ -141,7 +177,7 @@ def validate(path):
     require(set(data) == FIELDS[data['formatVersion']], 'Unexpected or missing fields')
     for key, pattern in [('name', ID), ('version', r'\d+\.\d+\.\d+')]:
         require(isinstance(data[key], str) and re.fullmatch(pattern, data[key]), f'Invalid {key}')
-    require(isinstance(data['description'], str), 'description must be text')
+    one_line(data.get('description'), 'belt description')
     lists = FIELDS[data['formatVersion']] - {'formatVersion', 'name', 'version', 'description'}
     for key in sorted(lists):
         require(isinstance(data[key], list), f'{key} must be an array')
