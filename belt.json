@@ -11,7 +11,8 @@
     "skills/build-api-slice/SKILL.md",
     "skills/reconcile-data/SKILL.md",
     "skills/verify-browser-flow/SKILL.md",
-    "skills/evaluate-mcp/SKILL.md"
+    "skills/evaluate-mcp/SKILL.md",
+    "skills/break-room/SKILL.md"
   ],
   "servers": [
     {
@@ -116,6 +117,13 @@
       "path": "styling",
       "version": "0.1.0",
       "description": "Design tokens as CSS variables and JSON. Use when theming belt-branded surfaces; not copied by client exports."
+    },
+    {
+      "id": "breakroom",
+      "kind": "files",
+      "path": "tools/breakroom",
+      "version": "1.0.0",
+      "description": "Shared team board CLI for bot coordination on one box; run via belt.py breakroom or install bin/breakroom on PATH."
     },
     {
       "id": "zizmor",

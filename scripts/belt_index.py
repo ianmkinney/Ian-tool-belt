@@ -25,6 +25,8 @@ COMMANDS = [
      'description': 'Run one allowlisted task (validate, tests, export, pins).'},
     {'id': 'index', 'run': 'python3 belt.py index',
      'description': 'Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check.'},
+    {'id': 'breakroom', 'run': 'python3 belt.py breakroom …',
+     'description': 'Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).'},
 ]
 
 RULE_INFO = {
@@ -103,6 +105,7 @@ TEMPLATE_INFO = {
 
 SKIPPED = [
     {'id': 'styling', 'reason': 'files package; copy styling/ yourself. Client exports do not include it.'},
+    {'id': 'breakroom', 'reason': 'Team-board CLI and data dir; use belt.py breakroom or symlink bin/breakroom. Not an MCP export.'},
     {'id': 'zizmor', 'reason': 'CI-only pin read by zizmor.yml; not an MCP server or export.'},
     {'id': 'actionlint', 'reason': 'CI-only pin read by actionlint.yml; not an MCP server or export.'},
     {'id': 'shellcheck', 'reason': 'CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.'},

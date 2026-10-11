@@ -8,6 +8,7 @@ These are original, repository-contained instruction packages, not copies of sys
 | reconcile-data | Reconcile Postgres/Snowflake exports and spreadsheet results |
 | verify-browser-flow | Reproduce and verify a web user journey |
 | evaluate-mcp | Check provenance, permissions and compatibility of a proposed tool |
+| break-room | Use the shared break room board each turn on the team box |
 
 Each folder contains a portable SKILL.md with name and trigger description. Read only the skill needed for the current task. The exporter includes copies under `skills/`; import them through your client's documented skill mechanism or explicitly attach the relevant file. Automatic discovery is not configured by this prototype.
 

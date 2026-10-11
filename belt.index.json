@@ -38,6 +38,11 @@
       "id": "index",
       "run": "python3 belt.py index",
       "description": "Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check."
+    },
+    {
+      "id": "breakroom",
+      "run": "python3 belt.py breakroom \u2026",
+      "description": "Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom)."
     }
   ],
   "servers": [
@@ -132,6 +137,13 @@
       "description": "Design tokens as CSS variables and JSON. Use when theming belt-branded surfaces; not copied by client exports."
     },
     {
+      "id": "breakroom",
+      "kind": "files",
+      "name": "tools/breakroom",
+      "version": "1.0.0",
+      "description": "Shared team board CLI for bot coordination on one box; run via belt.py breakroom or install bin/breakroom on PATH."
+    },
+    {
       "id": "zizmor",
       "kind": "pypi",
       "name": "zizmor",
@@ -187,6 +199,11 @@
       "id": "evaluate-mcp",
       "path": "skills/evaluate-mcp/SKILL.md",
       "description": "Evaluate an MCP server or skill for inclusion in Tool Belt. Use for AI Vault candidates, marketplace submissions, connection changes and assistant compatibility reviews."
+    },
+    {
+      "id": "break-room",
+      "path": "skills/break-room/SKILL.md",
+      "description": "Coordinate with Ian's other bots on the shared break room board. Use every turn on the team box for announcements, tasks, comments, and Ian queue instead of side channels."
     }
   ],
   "rules": [
@@ -389,6 +406,10 @@
     {
       "id": "styling",
       "reason": "files package; copy styling/ yourself. Client exports do not include it."
+    },
+    {
+      "id": "breakroom",
+      "reason": "Team-board CLI and data dir; use belt.py breakroom or symlink bin/breakroom. Not an MCP export."
     },
     {
       "id": "zizmor",
