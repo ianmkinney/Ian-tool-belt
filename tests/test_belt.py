@@ -115,7 +115,8 @@ class BeltTests(BeltCase):
     def test_personal_connections_are_opt_in(self):
         self.data['personalServers'] = [{'id': 'home-notes', 'transport': 'http',
                                          'url': 'https://notes.example.com/mcp', 'headersFromEnv': {},
-                                         'status': 'untested'}]
+                                         'status': 'untested',
+                                         'description': 'Personal notes MCP. Export only with --include-personal.'}]
         self.write()
         work = self.root / 'work'
         report = exporter.export_belt(self.manifest, 'claude-code', work)
@@ -241,6 +242,9 @@ class BeltTests(BeltCase):
         self.data = json.loads(json.dumps(baseline))
         self.data['servers'][2]['args'] = 'shell'
         self.invalid()
+        self.data = json.loads(json.dumps(baseline))
+        self.data['servers'][0].pop('description')
+        self.invalid()
 
     def test_invalid_model_variants(self):
         baseline = json.loads(json.dumps(self.data))
@@ -255,6 +259,8 @@ class BeltTests(BeltCase):
             lambda m: m['presets']['ollama'].update(docs='http://example.com'),
             lambda m: m['presets']['ollama'].update(token='x'),
             lambda m: m.update(status='connected'),
+            lambda m: m.pop('description'),
+            lambda m: m['presets']['ollama'].pop('description'),
         ]
         for index, mutate in enumerate(cases):
             with self.subTest(case=index):
@@ -312,7 +318,10 @@ class BeltTests(BeltCase):
         self.assertRegex(workflow, r'uses: actions/setup-python@[0-9a-f]{40} # v')
         self.assertIn('persist-credentials: false', workflow)
         self.assertIn("p['id'] == 'actionlint'", workflow)
+        self.assertIn("p['id'] == 'shellcheck'", workflow)
         self.assertIn('actionlint-py==$ACTIONLINT_PY', workflow)
+        self.assertIn('shellcheck-py==$SHELLCHECK_PY', workflow)
+        self.assertIn('-shellcheck "$(command -v shellcheck)"', workflow)
         self.assertNotIn(pin['version'], workflow)
         self.assertIn('templates/app-adoption/.github/workflows/*.yml', workflow)
         self.assertIn('templates/versioning/release.yml', workflow)
@@ -320,6 +329,31 @@ class BeltTests(BeltCase):
         self.assertIn('.github/workflows/pr-title.yml', config)
         self.assertIn('.github/workflows/release.yml', config)
         self.assertIn(r'\$/\.github/workflows/.+', config)
+
+    def test_shellcheck_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'shellcheck')
+        self.assertEqual((pin['kind'], pin['name']), ('pypi', 'shellcheck-py'))
+        self.assertRegex(pin['version'], r'^\d+\.\d+\.\d+\.\d+$')
+        workflow = (ROOT / '.github/workflows/shellcheck.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertRegex(workflow, r'uses: actions/setup-python@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn("p['id'] == 'shellcheck'", workflow)
+        self.assertIn('shellcheck-py==$SHELLCHECK_PY', workflow)
+        self.assertIn('scripts/check_shell.py', workflow)
+        self.assertNotIn(pin['version'], workflow)
+
+    def test_gitleaks_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'gitleaks')
+        self.assertEqual((pin['kind'], pin['name']), ('github-release', 'gitleaks/gitleaks'))
+        workflow = (ROOT / '.github/workflows/gitleaks.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertIn('fetch-depth: 0', workflow)
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn("p['id'] == 'gitleaks'", workflow)
+        self.assertIn('GITLEAKS_VERSION', workflow)
+        self.assertIn('gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz', workflow)
+        self.assertNotIn(pin['version'], workflow)
 
     def test_ollmcp_is_a_pinned_pypi_package(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ollmcp')

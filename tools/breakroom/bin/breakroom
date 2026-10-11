@@ -1,0 +1,406 @@
+#!/usr/bin/env python3
+"""breakroom: shared coordination board for Ian Kinney's bots. Stdlib only; files only; never sends messages."""
+import argparse, difflib, fcntl, json, os, re, sys, tempfile
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+TZ = ZoneInfo("America/New_York")
+HOME = os.environ.get("BREAKROOM_HOME", os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+F = {k: os.path.join(HOME, v) for k, v in dict(ann="announcements.jsonl", tasks="tasks.jsonl", events="events.jsonl",
+     dec="decisions.jsonl", reg="registry.json", lock=".lock").items()}
+STATUSES = ["proposed", "active", "blocked", "waiting_ian", "done", "shelved"]
+ANN_KINDS = ["model-limit", "rule", "goal", "pause", "info"]
+EV_KINDS = ["handoff", "request", "advice", "objection", "claim", "release", "status", "announcement", "decision"]
+STALE_H = 24
+STRONG = 0.72  # similarity at/above which claim refuses
+LIKELY = 0.5   # similarity at/above which check reports
+
+def now(): return datetime.now(TZ).replace(microsecond=0)
+def iso(d=None): return (d or now()).isoformat()
+def parse_dt(s):
+    if not s: return None
+    try: d = datetime.fromisoformat(s)
+    except ValueError: d = datetime.fromisoformat(s + "T23:59:59")
+    return d if d.tzinfo else d.replace(tzinfo=TZ)
+
+class Lock:
+    def __enter__(self):
+        os.makedirs(HOME, exist_ok=True)
+        self.f = open(F["lock"], "a"); fcntl.flock(self.f, fcntl.LOCK_EX); return self
+    def __exit__(self, *a): fcntl.flock(self.f, fcntl.LOCK_UN); self.f.close()
+
+def read_jsonl(key):
+    out = []
+    try:
+        with open(F[key]) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try: out.append(json.loads(line))
+                    except json.JSONDecodeError: pass  # tolerate a torn line
+    except FileNotFoundError: pass
+    return out
+
+def append(key, obj):
+    """Caller must hold Lock. Single write() of one full line with O_APPEND, then fsync."""
+    data = (json.dumps(obj, ensure_ascii=False) + "\n").encode()
+    fd = os.open(F[key], os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o664)
+    try: os.write(fd, data); os.fsync(fd)
+    finally: os.close(fd)
+
+def write_atomic(path, obj):
+    d = os.path.dirname(path); fd, tmp = tempfile.mkstemp(dir=d, prefix=".tmp-")
+    with os.fdopen(fd, "w") as f: json.dump(obj, f, indent=2, ensure_ascii=False); f.write("\n"); f.flush(); os.fsync(f.fileno())
+    os.chmod(tmp, 0o664); os.replace(tmp, path)
+
+def next_id(key, prefix):
+    n = 0
+    for r in read_jsonl(key):
+        m = re.match(prefix + r"-(\d+)$", str(r.get("id", "")))
+        if m: n = max(n, int(m.group(1)))
+    return f"{prefix}-{n+1:04d}"
+
+# ---------- registry / identity ----------
+def registry():
+    try:
+        with open(F["reg"]) as f: return json.load(f).get("bots", [])
+    except FileNotFoundError: return []
+
+def norm(s): return re.sub(r"[^a-z0-9 ]", " ", (s or "").lower()).split()
+
+def resolve(name):
+    if not name: return None
+    bots = registry(); n = name.strip().lower()
+    for b in bots:
+        if n in (b["id"].lower(), b["name"].lower()): return b
+    for b in bots:
+        if b["id"].lower().startswith(n) and len(n) >= 6: return b
+    base = lambda s: re.sub(r"\s*\((ba|ao|sf)\)", "", s.lower()).strip()
+    hits = [b for b in bots if base(b["name"]) == base(name)] or [b for b in bots if n in b["name"].lower()]
+    return hits[0] if len(hits) == 1 else None
+
+def me(args, required=True):
+    raw = getattr(args, "as_", None) or os.environ.get("BREAKROOM_AGENT")
+    if not raw:
+        if required: die("identity needed: pass --as <name-or-id> or set BREAKROOM_AGENT")
+        return {"id": "unknown", "name": "unknown"}
+    b = resolve(raw)
+    return {"id": b["id"], "name": b["name"]} if b else {"id": raw, "name": raw}
+
+def die(msg, code=2): print("breakroom: " + msg, file=sys.stderr); sys.exit(code)
+
+# ---------- events ----------
+def event(frm, to, kind, summary, card_id=None):
+    e = {"from": frm["name"] if isinstance(frm, dict) else frm, "from_id": frm.get("id") if isinstance(frm, dict) else None,
+         "to": to, "kind": kind, "card_id": card_id, "summary": summary, "at": iso()}
+    append("events", e); return e
+
+# ---------- tasks ----------
+def cards():
+    st = {}
+    for r in read_jsonl("tasks"):
+        cid = r.get("id")
+        if not cid: continue
+        if r.get("_op") == "patch" and cid in st: st[cid].update({k: v for k, v in r.items() if k != "_op"})
+        else: st[cid] = {k: v for k, v in r.items() if k != "_op"}
+    return st
+
+def is_stale(c):
+    if c.get("status") not in ("active", "blocked", "proposed", "waiting_ian"): return False
+    hb = parse_dt(c.get("heartbeat_at") or c.get("updated_at"))
+    return hb is None or now() - hb > timedelta(hours=STALE_H)
+
+def get_card(cid):
+    c = cards().get(cid.upper()) or cards().get(cid)
+    if not c: die(f"no card {cid}", 4)
+    return c
+
+def patch(cid, who, ev_kind, summary, to="all", **fields):
+    with Lock():
+        c = get_card(cid)
+        fields["updated_at"] = iso(); fields.setdefault("heartbeat_at", c.get("heartbeat_at"))
+        if who["id"] == c.get("owner_agent_id") or ev_kind == "claim": fields["heartbeat_at"] = iso()
+        append("tasks", {"_op": "patch", "id": c["id"], **fields})
+        event(who, to, ev_kind, summary, c["id"])
+        c.update(fields); return c
+
+def similarity(a, b):
+    ta, tb = set(norm(a)), set(norm(b))
+    ratio = difflib.SequenceMatcher(None, " ".join(norm(a)), " ".join(norm(b))).ratio()
+    tok = len(ta & tb) / max(1, min(len(ta), len(tb))) if ta and tb else 0
+    jac = len(ta & tb) / max(1, len(ta | tb))
+    return round(max(ratio, (tok + jac) / 2), 3)
+
+def find_dupes(title, product=None):
+    out = []
+    for c in cards().values():
+        if c.get("status") == "done": continue
+        s = similarity(title, c.get("title", ""))
+        if product and c.get("product") and c["product"].lower() == product.lower(): s = min(1.0, s + 0.05)
+        if s >= LIKELY: out.append({**c, "score": round(s, 3), "stale": is_stale(c)})
+    return sorted(out, key=lambda x: -x["score"])
+
+def fmt_card(c, long=False):
+    flags = []
+    if is_stale(c): flags.append("STALE")
+    if c.get("waiting_on_ian"): flags.append("IAN?")
+    s = f"{c['id']} [{c.get('status')}] {c.get('title')} ({c.get('product') or '-'}) owner={c.get('owner_name') or '-'}"
+    if flags: s += " " + " ".join(flags)
+    if long:
+        lines = [s]
+        for k in ("goal", "blocked_on", "ian_question", "eta", "cost_tier", "depends_on", "helpers", "links", "heartbeat_at", "created_at", "updated_at"):
+            v = c.get(k)
+            if v not in (None, "", [], False): lines.append(f"  {k}: {', '.join(v) if isinstance(v, list) else v}")
+        for cm in c.get("comments", []): lines.append(f"  - {cm['kind']} by {cm['by']} @ {cm['at']}: {cm['text']}")
+        return "\n".join(lines)
+    return s
+
+# ---------- announcements ----------
+def active_announcements(show_all=False):
+    allr = read_jsonl("ann"); superseded = {a.get("supersedes") for a in allr if a.get("supersedes")}
+    out = []
+    for a in allr:
+        exp = parse_dt(a.get("expires_at"))
+        hidden = a["id"] in superseded or (exp and exp < now())
+        if show_all or not hidden: out.append({**a, "hidden": bool(hidden)} if show_all else a)
+    return sorted(out, key=lambda a: a.get("posted_at", ""), reverse=True)
+
+def fmt_ann(a):
+    s = f"{a['id']} [{a['kind']}] {a['title']} ({a.get('source') or a.get('posted_by')}, {a['posted_at'][:16]})"
+    if a.get("expires_at"): s += f" expires {a['expires_at']}"
+    if a.get("hidden"): s += " (hidden)"
+    return s + "\n    " + a["body"]
+
+def since(spec):
+    m = re.match(r"(\d+)([hd])$", spec or "24h")
+    if not m: return parse_dt(spec)
+    n = int(m.group(1)); return now() - (timedelta(hours=n) if m.group(2) == "h" else timedelta(days=n))
+
+def out(args, obj, text):
+    if getattr(args, "json", False): print(json.dumps(obj, indent=2, ensure_ascii=False, default=str))
+    else: print(text)
+
+# ---------- commands ----------
+def c_start(a):
+    who = me(a, required=False)
+    anns = active_announcements(); cs = list(cards().values())
+    mine = [c for c in cs if c.get("owner_agent_id") == who["id"] and c.get("status") not in ("done", "shelved")]
+    ian = [c for c in cs if c.get("waiting_on_ian") and c.get("status") not in ("done", "shelved")]
+    stale = [c for c in cs if is_stale(c)]
+    cut = since("24h"); evs = [e for e in read_jsonl("events") if parse_dt(e["at"]) >= cut][-15:][::-1]
+    obj = dict(agent=who, announcements=anns, my_cards=mine, waiting_on_ian=len(ian), stale=stale, recent_events=evs)
+    L = [f"== BREAK ROOM == {iso()[:16]}  you: {who['name']}", "", f"ANNOUNCEMENTS ({len(anns)} active; these override older memory):"]
+    L += ["  " + fmt_ann(x).replace("\n", "\n  ") for x in anns] or ["  (none)"]
+    L += ["", f"YOUR CARDS ({len(mine)}):"] + (["  " + fmt_card(c) for c in mine] or ["  (none)"])
+    L += ["", f"WAITING ON IAN: {len(ian)}  (breakroom ian-queue)", f"STALE CLAIMS: {len(stale)}"] + ["  " + fmt_card(c) for c in stale]
+    L += ["", f"RECENT EVENTS (24h, {len(evs)}):"] + ([f"  {e['at'][11:16]} {e['from']} -> {e['to']} {e['kind']}{' '+e['card_id'] if e.get('card_id') else ''}: {e['summary']}" for e in evs] or ["  (none)"])
+    L += ["", "Before new work: breakroom check \"<title>\"  then  breakroom claim \"<title>\" --product P"]
+    out(a, obj, "\n".join(L))
+
+def c_announce(a):
+    who = me(a, required=False)
+    if a.kind not in ANN_KINDS: die(f"kind must be one of {ANN_KINDS}")
+    with Lock():
+        if a.supersedes and not any(x["id"] == a.supersedes for x in read_jsonl("ann")): die(f"no announcement {a.supersedes}", 4)
+        r = dict(id=next_id("ann", "A"), kind=a.kind, title=a.title, body=a.body, posted_by=who["name"],
+                 source=a.source or who["name"], posted_at=iso(), expires_at=iso(parse_dt(a.expires)) if a.expires else None, supersedes=a.supersedes)
+        append("ann", r); event(who, "all", "announcement", f"[{a.kind}] {a.title}")
+    out(a, r, f"posted {r['id']}")
+
+def c_announcements(a):
+    an = active_announcements(a.all); out(a, an, "\n".join(fmt_ann(x) for x in an) or "(no announcements)")
+
+def c_check(a):
+    d = find_dupes(a.title, a.product)
+    out(a, d, "\n".join(f"{x['score']:.2f}  " + fmt_card(x) for x in d) or "no likely duplicates")
+    return 3 if d else 0
+
+def c_claim(a):
+    who = me(a)
+    with Lock():
+        d = find_dupes(a.title, a.product); strong = [x for x in d if x["score"] >= STRONG]
+        live = [x for x in strong if not x["stale"] and x.get("owner_agent_id") != who["id"]]
+        if live and not a.force:
+            print("refusing: likely duplicate(s). Join with `breakroom help ID \"...\"` or use --force:", file=sys.stderr)
+            for x in live: print(f"  {x['score']:.2f}  " + fmt_card(x), file=sys.stderr)
+            return 3
+        stale = [x for x in strong if x["stale"]]
+        if stale and not a.new:
+            c = stale[0]; t = iso()
+            f = dict(owner_agent_id=who["id"], owner_name=who["name"], status="active", heartbeat_at=t, updated_at=t)
+            append("tasks", {"_op": "patch", "id": c["id"], **f})
+            event(who, c.get("owner_name") or "all", "claim", f"took over stale card from {c.get('owner_name')}: {c['title']}", c["id"])
+            c.update(f); out(a, c, f"took over stale {c['id']}: {c['title']}"); return 0
+        t = iso()
+        c = dict(id=next_id("tasks", "T"), title=a.title, owner_agent_id=who["id"], owner_name=who["name"], product=a.product,
+                 status="active", goal=a.goal or "", depends_on=a.depends_on or [], helpers=[], blocked_on="", waiting_on_ian=False,
+                 ian_question="", links=a.link or [], cost_tier=a.cost, eta=a.eta or "", comments=[], heartbeat_at=t, created_at=t, updated_at=t)
+        append("tasks", c); event(who, "all", "claim", f"claimed: {a.title}", c["id"])
+    out(a, c, f"claimed {c['id']}: {c['title']}"); return 0
+
+def c_update(a):
+    who = me(a); c = get_card(a.id); f = {}
+    if a.status:
+        if a.status not in STATUSES: die(f"status must be one of {STATUSES}")
+        f["status"] = a.status
+        if a.status != "waiting_ian" and c.get("waiting_on_ian") and a.status in ("done", "shelved", "active"): f["waiting_on_ian"] = False
+    if a.link: f["links"] = c.get("links", []) + [l for l in a.link if l not in c.get("links", [])]
+    if a.blocked_on is not None: f["blocked_on"] = a.blocked_on; f.setdefault("status", "blocked" if a.blocked_on else c["status"])
+    if a.eta: f["eta"] = a.eta
+    if a.goal: f["goal"] = a.goal
+    if a.cost: f["cost_tier"] = a.cost
+    if a.depends_on: f["depends_on"] = sorted(set(c.get("depends_on", []) + a.depends_on))
+    if not f: die("nothing to update")
+    c = patch(a.id, who, "status", "updated " + ", ".join(f"{k}={v}" for k, v in f.items() if k not in ("links",)) or "links", **f)
+    out(a, c, fmt_card(c))
+
+def c_simple(status, kind, verb):
+    def run(a):
+        who = me(a); f = {}
+        if status: f["status"] = status
+        if status in ("done", "shelved"): f["waiting_on_ian"] = False
+        if verb == "released": f.update(owner_agent_id=None, owner_name=None, status="proposed")
+        c = get_card(a.id); c = patch(a.id, who, kind, f"{verb}: {c['title']}", **f)
+        if verb == "heartbeat" and who["id"] != c.get("owner_agent_id"): print("note: you are not the owner", file=sys.stderr)
+        out(a, c, fmt_card(c))
+    return run
+
+def c_comment(kind, evk):
+    def run(a):
+        who = me(a); c = get_card(a.id)
+        cm = dict(by=who["name"], kind=kind, text=a.text, at=iso()); f = dict(comments=c.get("comments", []) + [cm])
+        if kind == "help" and who["name"] not in c.get("helpers", []): f["helpers"] = c.get("helpers", []) + [who["name"]]
+        c = patch(a.id, who, evk, f"{kind} on {c['title']}: {a.text[:120]}", to=c.get("owner_name") or "all", **f)
+        out(a, c, fmt_card(c, True))
+    return run
+
+def c_ask_ian(a):
+    who = me(a); c = patch(a.id, who, "request", f"ask Ian: {a.question[:150]}", to="Ian", waiting_on_ian=True, ian_question=a.question, status="waiting_ian")
+    out(a, c, fmt_card(c, True))
+
+def ian_items():
+    groups, seen = {}, {}
+    for c in cards().values():
+        if not c.get("waiting_on_ian") or c.get("status") in ("done", "shelved"): continue
+        key = (c.get("product") or "-").lower(), " ".join(norm(c.get("ian_question")))
+        if key in seen:  # dedupe identical questions; merge card ids
+            seen[key]["cards"].append(c["id"]); seen[key]["asked_by"] = sorted(set(seen[key]["asked_by"] + [c.get("owner_name") or "-"])); continue
+        item = dict(product=c.get("product") or "-", question=c.get("ian_question"), cards=[c["id"]], asked_by=[c.get("owner_name") or "-"], title=c.get("title"))
+        seen[key] = item; groups.setdefault(item["product"], []).append(item)
+    return groups
+
+def c_ian_queue(a):
+    g = ian_items(); L = []
+    for p, items in sorted(g.items()):
+        L.append(f"## {p}"); L += [f"- {i['question']}  [{', '.join(i['cards'])}; {', '.join(i['asked_by'])}]" for i in items]
+    out(a, g, "\n".join(L) or "nothing waiting on Ian")
+
+def c_list(a):
+    cs = list(cards().values())
+    if a.status: cs = [c for c in cs if c.get("status") == a.status]
+    elif not a.all: cs = [c for c in cs if c.get("status") not in ("done", "shelved")]
+    if a.product: cs = [c for c in cs if (c.get("product") or "").lower() == a.product.lower()]
+    if a.owner:
+        b = resolve(a.owner); oid = b["id"] if b else a.owner
+        cs = [c for c in cs if c.get("owner_agent_id") == oid or (c.get("owner_name") or "").lower() == a.owner.lower()]
+    if a.stale: cs = [c for c in cs if is_stale(c)]
+    out(a, cs, "\n".join(fmt_card(c) for c in cs) or "(no cards)")
+
+def c_show(a): c = get_card(a.id); out(a, {**c, "stale": is_stale(c)}, fmt_card(c, True))
+
+def c_decide(a):
+    who = me(a, required=False)
+    with Lock():
+        r = dict(id=next_id("dec", "D"), date=iso(), product=a.product, decision=a.decision, decided_by=a.by,
+                 source=a.source or who["name"], supersedes=a.supersedes)
+        append("dec", r); event(who, "all", "decision", f"[{a.product}] {a.decision[:150]}")
+    out(a, r, f"recorded {r['id']}")
+
+def c_decisions(a):
+    ds = read_jsonl("dec"); sup = {d.get("supersedes") for d in ds if d.get("supersedes")}
+    ds = [d for d in ds if (a.all or d["id"] not in sup) and (not a.product or (d.get("product") or "").lower() == a.product.lower())]
+    out(a, ds, "\n".join(f"{d['id']} {d['date'][:10]} [{d['product']}] {d['decision']} (by {d['decided_by']}; {d['source']})" for d in ds) or "(no decisions)")
+
+def c_who(a):
+    bots = registry()
+    if a.query:
+        q = a.query.lower(); qt = set(norm(q))
+        bots = [b for b in bots if q in json.dumps(b).lower() or qt & set(norm(b["name"] + " " + b.get("owns", "")))]
+    out(a, bots, "\n".join(f"{b['name']:<28} {b['id']}  owns: {b.get('owns') or '-'}" + (f"  not: {b['does_not_own']}" if b.get("does_not_own") else "") for b in bots) or "(no match)")
+
+def c_register(a):
+    with Lock():
+        try:
+            with open(F["reg"]) as f: data = json.load(f)
+        except FileNotFoundError: data = {"bots": []}
+        b = next((x for x in data["bots"] if x["id"] == a.id), None)
+        if not b: b = dict(id=a.id, name=a.name or a.id, tag="none", owns="", does_not_own=""); data["bots"].append(b)
+        for k in ("name", "tag", "owns", "does_not_own"):
+            v = getattr(a, k);
+            if v is not None: b[k] = v
+        write_atomic(F["reg"], data); event({"id": a.id, "name": b["name"]}, "all", "status", f"registered/updated bot {b['name']}")
+    out(a, b, f"registered {b['name']} ({b['id']})")
+
+def c_digest(a):
+    cut = since(a.since); inwin = lambda s: s and parse_dt(s) >= cut
+    cs = list(cards().values()); evs = [e for e in read_jsonl("events") if inwin(e["at"])]
+    new = [c for c in cs if inwin(c.get("created_at"))]
+    done_ids = {e["card_id"] for e in evs if e["kind"] == "status" and e["summary"].startswith("done")}
+    fin = [c for c in cs if c["id"] in done_ids and c.get("status") == "done"]
+    objs = [e for e in evs if e["kind"] == "objection"]
+    anns = [x for x in read_jsonl("ann") if inwin(x["posted_at"])]; decs = [d for d in read_jsonl("dec") if inwin(d["date"])]
+    q = ian_items()
+    obj = dict(since=iso(cut), new_cards=new, finished=fin, objections=objs, ian_queue=q, announcements=anns, decisions=decs)
+    L = [f"# Break room digest (since {iso(cut)[:16]})", "", f"## Needs Ian ({sum(len(v) for v in q.values())})"]
+    for p, items in sorted(q.items()): L += [f"- **{p}**: {i['question']} ({', '.join(i['cards'])})" for i in items]
+    L += ["", f"## New cards ({len(new)})"] + [f"- {c['id']} {c['title']} ({c.get('product')}, {c.get('owner_name')}, {c.get('status')})" for c in new]
+    L += ["", f"## Finished ({len(fin)})"] + [f"- {c['id']} {c['title']} ({c.get('owner_name')})" for c in fin]
+    L += ["", f"## Objections ({len(objs)})"] + [f"- {e['card_id']} {e['from']}: {e['summary']}" for e in objs]
+    L += ["", f"## Announcements ({len(anns)})"] + [f"- [{x['kind']}] {x['title']}" for x in anns]
+    L += ["", f"## Decisions ({len(decs)})"] + [f"- [{d['product']}] {d['decision']}" for d in decs]
+    out(a, obj, "\n".join(L))
+
+def c_log(a):
+    who = me(a)
+    if a.kind not in EV_KINDS: die(f"kind must be one of {EV_KINDS}")
+    with Lock(): e = event(who, a.to, a.kind, a.summary, a.card)
+    out(a, e, "logged")
+
+def main(argv=None):
+    p = argparse.ArgumentParser(prog="breakroom", description="Shared break room for Ian's bots. Files only; never sends messages. Identity: --as NAME or $BREAKROOM_AGENT.")
+    p.add_argument("--as", dest="as_", help="your bot name or id (registry)"); p.add_argument("--json", action="store_true")
+    sp = p.add_subparsers(dest="cmd", required=True)
+    def sub(name, fn, help, aliases=()):
+        s = sp.add_parser(name, help=help, aliases=list(aliases)); s.set_defaults(fn=fn)
+        s.add_argument("--as", dest="as_", default=argparse.SUPPRESS); s.add_argument("--json", action="store_true", default=argparse.SUPPRESS); return s
+    sub("start", c_start, "turn-start brief (run this first every turn)", ["brief"])
+    s = sub("announce", c_announce, "post an announcement"); s.add_argument("--kind", required=True, choices=ANN_KINDS); s.add_argument("--title", required=True); s.add_argument("--body", required=True)
+    s.add_argument("--source"); s.add_argument("--expires"); s.add_argument("--supersedes")
+    s = sub("announcements", c_announcements, "list active announcements"); s.add_argument("--all", action="store_true")
+    s = sub("check", c_check, "find likely duplicate cards (exit 3 if any)"); s.add_argument("title"); s.add_argument("--product")
+    s = sub("claim", c_claim, "claim a task (creates card)"); s.add_argument("title"); s.add_argument("--product", required=True); s.add_argument("--goal")
+    s.add_argument("--link", action="append"); s.add_argument("--cost", choices=["free", "low", "high"], default="low"); s.add_argument("--eta"); s.add_argument("--depends-on", action="append")
+    s.add_argument("--force", action="store_true", help="create even if an active duplicate exists"); s.add_argument("--new", action="store_true", help="create new card instead of taking over a stale match")
+    s = sub("update", c_update, "update a card"); s.add_argument("id"); s.add_argument("--status", choices=STATUSES); s.add_argument("--link", action="append")
+    s.add_argument("--blocked-on"); s.add_argument("--eta"); s.add_argument("--goal"); s.add_argument("--cost", choices=["free", "low", "high"]); s.add_argument("--depends-on", action="append")
+    for n, st, k, v in (("heartbeat", None, "status", "heartbeat"), ("release", None, "release", "released"), ("done", "done", "status", "done")):
+        sub(n, c_simple(st, k, v), f"{n} a card").add_argument("id")
+    for n, k, e in (("help", "help", "advice"), ("advise", "advice", "advice"), ("object", "objection", "objection"), ("note", "note", "status")):
+        s = sub(n, c_comment(k, e), f"comment ({k}) on a card"); s.add_argument("id"); s.add_argument("text")
+    s = sub("ask-ian", c_ask_ian, "mark card waiting on Ian with a question"); s.add_argument("id"); s.add_argument("question")
+    sub("ian-queue", c_ian_queue, "everything waiting on Ian, deduped, by product")
+    s = sub("list", c_list, "list cards"); s.add_argument("--status", choices=STATUSES); s.add_argument("--product"); s.add_argument("--owner"); s.add_argument("--stale", action="store_true"); s.add_argument("--all", action="store_true")
+    s = sub("show", c_show, "show one card"); s.add_argument("id")
+    s = sub("decide", c_decide, "record a decision"); s.add_argument("decision"); s.add_argument("--product", required=True); s.add_argument("--by", default="Ian"); s.add_argument("--source"); s.add_argument("--supersedes")
+    s = sub("decisions", c_decisions, "list decisions"); s.add_argument("--product"); s.add_argument("--all", action="store_true")
+    s = sub("who", c_who, "search bot registry"); s.add_argument("query", nargs="?")
+    s = sub("register", c_register, "add/update a bot"); s.add_argument("id"); s.add_argument("--name"); s.add_argument("--tag"); s.add_argument("--owns"); s.add_argument("--does-not-own")
+    s = sub("digest", c_digest, "markdown digest for Ian"); s.add_argument("--since", default="24h")
+    s = sub("log", c_log, "record an event without a card"); s.add_argument("summary"); s.add_argument("--to", required=True); s.add_argument("--kind", required=True, choices=EV_KINDS); s.add_argument("--card")
+    a = p.parse_args(argv)
+    for k, v in (("as_", None), ("json", False)): a.__dict__.setdefault(k, v)
+    return a.fn(a) or 0
+
+if __name__ == "__main__":
+    try: sys.exit(main())
+    except BrokenPipeError: sys.exit(0)

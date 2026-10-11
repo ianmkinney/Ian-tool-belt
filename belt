@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+"""Shim so `./belt` and `python3 belt.py` are the same CLI."""
+import runpy
+from pathlib import Path
+
+runpy.run_path(str(Path(__file__).resolve().parent / 'belt.py'), run_name='__main__')

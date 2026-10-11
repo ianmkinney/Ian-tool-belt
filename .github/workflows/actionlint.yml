@@ -18,12 +18,17 @@ jobs:
         id: pin
         run: |
           python3 -c "import json; print('version=' + next(p['version'] for p in json.load(open('belt.json'))['packages'] if p['id'] == 'actionlint'))" >> "$GITHUB_OUTPUT"
+      - name: Read the shellcheck pin from belt.json
+        id: shellcheck-pin
+        run: |
+          python3 -c "import json; print('version=' + next(p['version'] for p in json.load(open('belt.json'))['packages'] if p['id'] == 'shellcheck'))" >> "$GITHUB_OUTPUT"
       - name: Install and run actionlint
         env:
           ACTIONLINT_PY: ${{ steps.pin.outputs.version }}
+          SHELLCHECK_PY: ${{ steps.shellcheck-pin.outputs.version }}
         run: |
-          python3 -m pip install "actionlint-py==$ACTIONLINT_PY"
-          actionlint -color \
+          python3 -m pip install "actionlint-py==$ACTIONLINT_PY" "shellcheck-py==$SHELLCHECK_PY"
+          actionlint -color -shellcheck "$(command -v shellcheck)" \
             .github/workflows/*.yml \
             templates/app-adoption/.github/workflows/*.yml \
             templates/versioning/release.yml \

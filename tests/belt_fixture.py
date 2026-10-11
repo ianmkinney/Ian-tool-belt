@@ -28,6 +28,9 @@ class BeltCase(unittest.TestCase):
         self.source.mkdir()
         for name in ['rules', 'skills', 'styling']:
             shutil.copytree(ROOT / name, self.source / name)
+        breakroom = ROOT / 'tools' / 'breakroom'
+        if breakroom.is_dir():
+            shutil.copytree(breakroom, self.source / 'tools' / 'breakroom')
         self.data = json.loads((ROOT / 'belt.json').read_text())
         self.manifest = self.source / 'belt.json'
         self.write()
