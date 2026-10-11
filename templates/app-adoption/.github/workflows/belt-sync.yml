@@ -10,8 +10,9 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    # Tracks the tool belt's main on purpose; the sync itself always reads the latest belt.
-    uses: ianmkinney/Ian-tool-belt/.github/workflows/belt-sync-reusable.yml@main # zizmor: ignore[unpinned-uses]
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/belt-sync-reusable.yml@__BELT_SHA__ # v__BELT_VERSION__
+    with:
+      belt-ref: __BELT_SHA__
     secrets:
       BELT_SYNC_TOKEN: ${{ secrets.BELT_SYNC_TOKEN }}
       RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}

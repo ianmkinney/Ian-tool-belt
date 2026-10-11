@@ -13,7 +13,7 @@ SemVer, Conventional Commit PR titles and release-please. Every change lands thr
 
 Set the manifest to the app's current `package.json` version. Change `release-type` for non-Node repos (`simple` for static sites, `python` for Python). Add `extra-files` for other version-bearing files, for example `{"type": "json", "path": "app.json", "jsonpath": "$.expo.version"}`.
 
-The callers use `ianmkinney/Ian-tool-belt/.github/workflows/<file>@main`, so Ian-tool-belt must stay public and the workflows must be on its `main` branch.
+The callers use `ianmkinney/Ian-tool-belt/.github/workflows/<file>@<SHA>` with placeholders in the belt templates. After copying, run `python3 scripts/belt_sync.py --adopt --app .` from a belt checkout (or merge a belt sync PR) to fill in the SHA and version. Ian-tool-belt must stay public so GitHub can fetch that commit.
 
 ## Manual steps per repo
 

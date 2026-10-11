@@ -1,5 +1,6 @@
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -31,11 +32,14 @@ class BeltSyncWorkflowTests(unittest.TestCase):
         job = workflow['jobs']['sync']
         self.assertEqual(job['permissions'], {'contents': 'write', 'pull-requests': 'write'})
         upstream = [s for s in job['steps'] if s.get('with', {}).get('repository')][0]['with']
-        self.assertEqual((upstream['repository'], upstream['ref']), ('ianmkinney/Ian-tool-belt', 'main'))
-        self.assertEqual(set(upstream['sparse-checkout'].split()),
-                         {'templates/app-adoption', 'rules', 'scripts'})
+        self.assertEqual(upstream['repository'], 'ianmkinney/Ian-tool-belt')
+        self.assertEqual(upstream['ref'], '${{ inputs.belt-ref }}')
+        self.assertIn('belt.json', upstream['sparse-checkout'])
+        self.assertIn('workflow_call', workflow['on'])
+        self.assertTrue(workflow['on']['workflow_call']['inputs']['belt-ref']['required'])
         sync = [s for s in job['steps'] if s.get('id') == 'sync'][0]
         self.assertIn('scripts/belt_sync.py', sync['run'])
+        self.assertIn('--fetch-ref main', sync['run'])
         pr = [s for s in job['steps'] if 'create-pull-request' in s.get('uses', '')][0]
         self.assertRegex(pr['uses'], r'^peter-evans/create-pull-request@[0-9a-f]{40}$')
         self.assertIs(pr['with']['draft'], True)
@@ -46,9 +50,11 @@ class BeltSyncWorkflowTests(unittest.TestCase):
         caller = load_yaml(ADOPTION / '.github/workflows/belt-sync.yml')
         self.assertEqual(caller['on']['schedule'], [{'cron': '17 13 * * 1'}])
         self.assertIn('workflow_dispatch', caller['on'])
+        self.assertEqual(caller['jobs']['sync']['with']['belt-ref'], '__BELT_SHA__')
 
     def test_every_managed_file_carries_marker(self):
-        files = belt_sync.managed_files(ROOT)
+        pin = 'f' * 40
+        files = belt_sync.managed_files(ROOT, pin, '0.3.0')
         self.assertEqual(set(files), set(belt_sync.TEMPLATE_FILES) | CURSOR_RULES)
         for relative, content in files.items():
             with self.subTest(file=relative):
@@ -58,7 +64,7 @@ class BeltSyncWorkflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             out = Path(temp) / 'cursor'
             exporter.export_belt(ROOT / 'belt.json', 'cursor', out)
-            managed = belt_sync.managed_files(ROOT)
+            managed = belt_sync.managed_files(ROOT, 'f' * 40, '0.3.0')
             for relative in CURSOR_RULES:
                 with self.subTest(file=relative):
                     exported = (out / relative).read_text()
@@ -79,16 +85,34 @@ class BeltSyncLogicTests(unittest.TestCase):
         shutil.copytree(ROOT / 'rules', self.belt / 'rules')
         self.app.mkdir()
         self.body = Path(temp.name) / 'body.md'
-        self.set_belt_version('0.3.0')
-        self.run_sync('--adopt')
+        self.init_belt_git()
+        self.commit_belt('0.3.0')
+        self.old_pin = belt_sync.belt_commit_sha(self.belt)
+        self.run_sync('--adopt', '--pin-sha', self.old_pin)
         self.body.unlink()
         self.set_belt_version('0.4.0')
+        self.commit_belt('0.4.0')
+        self.new_pin = belt_sync.belt_commit_sha(self.belt)
 
     def set_belt_version(self, version):
         rules = json.loads((ROOT / 'belt.json').read_text())['rules']
         (self.belt / 'belt.json').write_text(json.dumps({'version': version, 'rules': rules}))
 
+    def init_belt_git(self):
+        subprocess.check_call(['git', 'init', '-q', str(self.belt)])
+        subprocess.check_call(['git', '-C', str(self.belt), 'config', 'user.email', 't@example.com'])
+        subprocess.check_call(['git', '-C', str(self.belt), 'config', 'user.name', 'test'])
+
+    def commit_belt(self, version):
+        self.set_belt_version(version)
+        subprocess.check_call(['git', '-C', str(self.belt), 'add', '-A'])
+        subprocess.check_call(
+            ['git', '-C', str(self.belt), 'commit', '-q', '-m', f'belt {version}', '--allow-empty'],
+        )
+
     def run_sync(self, *flags):
+        if '--pin-sha' not in flags:
+            flags = ('--pin-sha', belt_sync.belt_commit_sha(self.belt), *flags)
         return belt_sync.main(['--belt', str(self.belt), '--app', str(self.app),
                                '--body', str(self.body), *flags])
 
@@ -112,14 +136,30 @@ class BeltSyncLogicTests(unittest.TestCase):
         self.assertFalse(belt_sync.has_marker('\n' * belt_sync.MARKER_LINES + 'managed by Ian-tool-belt'))
 
     def test_adopt_writes_every_managed_file_and_marker(self):
-        for relative, content in belt_sync.managed_files(self.belt).items():
+        for relative, content in belt_sync.managed_files(self.belt, self.old_pin, '0.3.0').items():
             self.assertEqual((self.app / relative).read_text(), content)
         self.assertEqual(json.loads((self.app / '.tool-belt.json').read_text())['beltVersion'], '0.3.0')
+        self.assertIn(f'@{self.old_pin}', (self.app / '.github/workflows/belt.yml').read_text())
+
+    def test_sync_bumps_stale_workflow_pin_at_same_version(self):
+        self.set_belt_version('0.3.0')
+        self.commit_belt('0.3.0')
+        new_pin = belt_sync.belt_commit_sha(self.belt)
+        self.assertNotEqual(new_pin, self.old_pin)
+        outputs = self.run_sync('--allow-workflow-files', '--pin-sha', new_pin)
+        self.assertEqual(outputs['changed'], 'true')
+        self.assertIn(f'@{new_pin}', (self.app / '.github/workflows/belt.yml').read_text())
+        self.assertNotIn(f'@{self.old_pin}', (self.app / '.github/workflows/belt.yml').read_text())
 
     def test_up_to_date_app_is_untouched(self):
         self.set_belt_version('0.3.0')
+        self.commit_belt('0.3.0')
+        pin = belt_sync.belt_commit_sha(self.belt)
+        for name in ('belt.yml', 'belt-sync.yml'):
+            path = self.app / '.github/workflows' / name
+            path.write_text(belt_sync.substitute_belt_pins(path.read_text(), pin, '0.3.0'))
         before = self.app_files()
-        self.assertEqual(self.run_sync('--allow-workflow-files')['changed'], 'false')
+        self.assertEqual(self.run_sync('--allow-workflow-files', '--pin-sha', pin)['changed'], 'false')
         self.assertEqual(self.app_files(), before)
         self.assertFalse(self.body.exists())
 
@@ -134,9 +174,12 @@ class BeltSyncLogicTests(unittest.TestCase):
         outputs = self.run_sync('--allow-workflow-files')
         self.assertEqual(outputs['changed'], 'true')
         self.assertEqual(outputs['version'], '0.4.0')
-        self.assertEqual(set(outputs['paths'].split()),
-                         {'AGENTS.md', '.cursor/rules/engineering.mdc',
-                          '.github/workflows/belt-sync.yml', '.tool-belt.json'})
+        paths = set(outputs['paths'].split())
+        self.assertIn('.tool-belt.json', paths)
+        self.assertIn('AGENTS.md', paths)
+        self.assertIn('.cursor/rules/engineering.mdc', paths)
+        self.assertIn('.github/workflows/belt-sync.yml', paths)
+        self.assertTrue({'.github/workflows/belt.yml', '.github/workflows/belt-sync.yml'} & paths)
         self.assertIn('New rules', (self.app / 'AGENTS.md').read_text())
         self.assertIn('New engineering rule.', (self.app / '.cursor/rules/engineering.mdc').read_text())
         self.assertEqual((self.app / '.cursor/rules/working-agreement.mdc').read_text(), OWNED)

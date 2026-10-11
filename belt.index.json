@@ -267,7 +267,7 @@
     },
     {
       "id": "scripts/belt_sync.py",
-      "description": "Copy managed adoption-kit files into an app repo. Use --adopt for a first install."
+      "description": "Copy managed adoption-kit files into an app repo; substitutes @__BELT_SHA__ and belt-ref on adopt or sync."
     },
     {
       "id": "scripts/beltfile.py",
@@ -276,6 +276,10 @@
     {
       "id": "scripts/build_tokens.py",
       "description": "Generate styling/tokens.css from tokens.json. --check confirms they match."
+    },
+    {
+      "id": "scripts/check_belt_workflow_pins.py",
+      "description": "Fail CI if templates or workflows call Ian-tool-belt reusable workflows at @main."
     },
     {
       "id": "scripts/check_pins.py",
@@ -367,11 +371,11 @@
   "templates": [
     {
       "id": "templates/app-adoption/.github/workflows/belt-sync.yml",
-      "description": "App caller for the weekly managed-file sync."
+      "description": "Weekly managed-file sync caller; belt-ref and uses lines use __BELT_SHA__ placeholders until sync."
     },
     {
       "id": "templates/app-adoption/.github/workflows/belt.yml",
-      "description": "App caller for PR-title and release-please reusable workflows."
+      "description": "App caller for PR-title and release-please; uses @__BELT_SHA__ until belt_sync fills the pin."
     },
     {
       "id": "templates/app-adoption/.tool-belt.json",
@@ -391,7 +395,7 @@
     },
     {
       "id": "templates/versioning/pr-title.yml",
-      "description": "Standalone PR-title caller template for app repos."
+      "description": "Standalone PR-title caller; pins belt reusable workflow at @__BELT_SHA__ until belt_sync runs."
     },
     {
       "id": "templates/versioning/release-please-config.json",
@@ -399,7 +403,7 @@
     },
     {
       "id": "templates/versioning/release.yml",
-      "description": "Standalone release-please caller template for app repos."
+      "description": "Standalone release-please caller; pins belt reusable workflow at @__BELT_SHA__ until belt_sync runs."
     }
   ],
   "skipped": [

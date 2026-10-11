@@ -53,4 +53,8 @@ Then set `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY` in the client environment if 
 
 `python3 belt.py doctor --offline` and `python3 -m unittest discover -s tests -v` never start servers or read secrets.
 
+## App adoption
+
+App workflow templates pin reusable belt workflows to a **commit SHA** (`@__BELT_SHA__` / `v__BELT_VERSION__` until `python3 scripts/belt_sync.py --adopt` or the weekly sync substitutes them). Never use `@main` on `ianmkinney/Ian-tool-belt` workflow references; Belt checks run `scripts/check_belt_workflow_pins.py`. See [docs/automation.md](docs/automation.md) for the adoption kit, sync PRs and versioning templates.
+
 MIT licensed. Third-party tools keep their own licenses. “Pack once. Build anywhere.” is the direction, not a claim that every assistant supports every capability.

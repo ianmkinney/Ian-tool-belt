@@ -21,6 +21,7 @@ jobs:
       - run: python scripts/validate.py belt.json
       - run: python scripts/validate.py examples/personal/belt.json
       - run: python scripts/validate.py templates/app-adoption
+      - run: python scripts/check_belt_workflow_pins.py
       - run: python belt.py doctor --offline
       - run: python belt.py index --check
       - run: python -m unittest discover -s tests -v

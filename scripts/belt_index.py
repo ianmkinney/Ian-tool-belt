@@ -46,7 +46,8 @@ SCRIPT_INFO = {
     'scripts/tasks.py': 'Run one allowlisted belt task without a shell. belt.py run wraps this.',
     'scripts/local_ai_check.py': 'Contact the local OpenAI-compatible endpoint. Only script that does; belt.py doctor wraps it.',
     'scripts/mcp_smoke.py': 'Start one MCP server through the pinned Inspector and list (or call) a tool.',
-    'scripts/belt_sync.py': 'Copy managed adoption-kit files into an app repo. Use --adopt for a first install.',
+    'scripts/belt_sync.py': 'Copy managed adoption-kit files into an app repo; substitutes @__BELT_SHA__ and belt-ref on adopt or sync.',
+    'scripts/check_belt_workflow_pins.py': 'Fail CI if templates or workflows call Ian-tool-belt reusable workflows at @main.',
     'scripts/beltfile.py': 'Shared load/save helpers for belt.json. Import from other scripts; do not run it.',
     'scripts/build_tokens.py': 'Generate styling/tokens.css from tokens.json. --check confirms they match.',
     'scripts/belt_index.py': 'Build belt.index.json and the AGENTS.md map from belt.json. belt.py index wraps this.',
@@ -86,15 +87,15 @@ TEMPLATE_INFO = {
     'templates/app-adoption/AGENTS.md':
         'App-repo agent instructions pointing at belt rules. Copied by belt_sync --adopt.',
     'templates/app-adoption/.github/workflows/belt.yml':
-        'App caller for PR-title and release-please reusable workflows.',
+        'App caller for PR-title and release-please; uses @__BELT_SHA__ until belt_sync fills the pin.',
     'templates/app-adoption/.github/workflows/belt-sync.yml':
-        'App caller for the weekly managed-file sync.',
+        'Weekly managed-file sync caller; belt-ref and uses lines use __BELT_SHA__ placeholders until sync.',
     'templates/app-adoption/.tool-belt.json':
         'Adoption marker (belt name + version). Validate with python3 scripts/validate.py APP_DIR.',
     'templates/versioning/release.yml':
-        'Standalone release-please caller template for app repos.',
+        'Standalone release-please caller; pins belt reusable workflow at @__BELT_SHA__ until belt_sync runs.',
     'templates/versioning/pr-title.yml':
-        'Standalone PR-title caller template for app repos.',
+        'Standalone PR-title caller; pins belt reusable workflow at @__BELT_SHA__ until belt_sync runs.',
     'templates/versioning/README.md':
         'How to wire release-please, PR titles and optional tokens in an app repo.',
     'templates/versioning/release-please-config.json':

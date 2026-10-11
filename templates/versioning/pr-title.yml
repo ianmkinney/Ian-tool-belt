@@ -7,5 +7,4 @@ jobs:
   lint:
     permissions:
       pull-requests: read
-    # Tracks the tool belt's main on purpose; switch to a tag such as @v1 once one is published.
-    uses: ianmkinney/Ian-tool-belt/.github/workflows/pr-title-reusable.yml@main # zizmor: ignore[unpinned-uses]
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/pr-title-reusable.yml@__BELT_SHA__ # v__BELT_VERSION__

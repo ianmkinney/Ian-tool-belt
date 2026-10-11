@@ -6,19 +6,18 @@ on:
   push:
     branches: [main]
 permissions: {}
-# These track the tool belt's main on purpose so belt-sync can keep them current.
 jobs:
   pr-title:
     if: github.event_name == 'pull_request'
     permissions:
       pull-requests: read
-    uses: ianmkinney/Ian-tool-belt/.github/workflows/pr-title-reusable.yml@main # zizmor: ignore[unpinned-uses]
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/pr-title-reusable.yml@__BELT_SHA__ # v__BELT_VERSION__
   release:
     if: github.event_name == 'push'
     permissions:
       contents: write
       pull-requests: write
-    uses: ianmkinney/Ian-tool-belt/.github/workflows/release-please-reusable.yml@main # zizmor: ignore[unpinned-uses]
+    uses: ianmkinney/Ian-tool-belt/.github/workflows/release-please-reusable.yml@__BELT_SHA__ # v__BELT_VERSION__
     with:
       config-file: release-please-config.json
       manifest-file: .release-please-manifest.json
