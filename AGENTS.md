@@ -21,6 +21,7 @@ Machine-readable copy: [`belt.index.json`](belt.index.json).
 - `python3 belt.py set PATH VALUE` — Change one allowlisted belt.json field and validate.
 - `python3 belt.py run TASK` — Run one allowlisted task (validate, tests, export, pins).
 - `python3 belt.py index` — Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check.
+- `python3 belt.py breakroom …` — Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).
 
 ### Drop this belt into a project
 
@@ -42,6 +43,7 @@ Auto-detects Cursor, OpenCode, Claude Code or VS Code. Pass a target if several 
 - `reconcile-data` — Reconcile exports and build repeatable data transformations. Use for Postgres or Snowflake extracts, CSV files, Pandas pipelines and Excel reconciliation reports.
 - `verify-browser-flow` — Verify a web application user journey using browser evidence. Use for React or Next.js UI checks, regression reproduction and frontend-to-API troubleshooting.
 - `evaluate-mcp` — Evaluate an MCP server or skill for inclusion in Tool Belt. Use for AI Vault candidates, marketplace submissions, connection changes and assistant compatibility reviews.
+- `break-room` — Coordinate with Ian's other bots on the shared break room board. Use every turn on the team box for announcements, tasks, comments, and Ian queue instead of side channels.
 
 **Rules**
 - `working-agreement` — Shared operating rules: small changes, secrets out of Git, honest verification. Always apply.
@@ -58,6 +60,7 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 ### Not exported as connections
 
 - `styling` — files package; copy styling/ yourself. Client exports do not include it.
+- `breakroom` — Team-board CLI and data dir; use belt.py breakroom or symlink bin/breakroom. Not an MCP export.
 - `zizmor` — CI-only pin read by zizmor.yml; not an MCP server or export.
 - `actionlint` — CI-only pin read by actionlint.yml; not an MCP server or export.
 - `shellcheck` — CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.
