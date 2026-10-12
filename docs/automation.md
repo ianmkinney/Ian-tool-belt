@@ -13,6 +13,7 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Shell script lint** (`shellcheck.yml`) | push, pull request | Runs ShellCheck on tracked `*.sh` files and shell shebang scripts via `scripts/check_shell.py`, and fails on findings | read |
 | **Secret scan** (`gitleaks.yml`) | push, pull request | Downloads the pinned gitleaks release binary and scans the repository for leaked secrets | read |
 | **Pre-commit** (`pre-commit.yml`) | push, pull request | Installs the pinned `pre-commit` package and runs `pre-commit run --all-files` on the shared config | read |
+| **Dependency vulnerability scan** (`osv-scanner.yml`) | push, pull request | Downloads the pinned OSV-Scanner release binary and scans lockfiles and SBOMs for known CVEs | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
 | **Deploy GitHub Pages** (`pages.yml`) | push to `main`, or manual | Builds the site with `scripts/build_site.py` and deploys to GitHub Pages | pages: write, `id-token`: write |
@@ -134,10 +135,32 @@ Agents and contributors can run `pre-commit run --all-files` without installing 
 
 To remove pre-commit: run `pre-commit uninstall`, delete `.pre-commit-config.yaml`, remove `.github/workflows/pre-commit.yml`, delete the `pre-commit` package from `belt.json`, and drop [docs/pre-commit.md](pre-commit.md) from your docs. See [pre-commit.md](pre-commit.md) for hook details and bot guidance.
 
+## Dependency vulnerability scan
+
+[OSV-Scanner](https://github.com/google/osv-scanner) (Apache-2.0) scans project dependencies against the [OSV.dev](https://osv.dev/) database. It finds known CVEs in lockfiles (`package-lock.json`, `poetry.lock`, `go.sum`, and others), SBOMs and container images. gitleaks checks for leaked secrets; zizmor and actionlint check workflow files; OSV-Scanner closes the gap for **third-party dependency vulnerabilities** in application code the belt and adopted apps ship.
+
+The version comes from the `osv-scanner` `github-release` package in `belt.json` (`google/osv-scanner`, pinned at **v2.6.0** as of this proposal). The weekly pin check queries GitHub releases for newer stable tags (**v2.7.0** released 2026-10-12 is the next upgrade candidate once it has baked). The job downloads the official `linux_amd64` binary from the release (no third-party wrapper). The official [google/osv-scanner-action](https://github.com/google/osv-scanner-action) is an alternative for workflows that prefer a composite action; pin it by full commit SHA if you use it instead of the CLI download pattern here.
+
+Run it on every push and pull request when the repository has lockfiles or SBOMs to protect. Bots and maintainers can run the same command locally before opening a dependency bump. This belt repository has no lockfiles today; CI passes `--allow-no-lockfiles` so an empty tree does not fail the job. Projects that copy this workflow should drop that flag once they have dependency manifests to scan.
+
+Run it locally after installing the same release (paths match CI):
+
+```sh
+curl -sSL -o osv-scanner "https://github.com/google/osv-scanner/releases/download/v2.6.0/osv-scanner_linux_amd64"
+chmod +x osv-scanner
+./osv-scanner scan source -r . --allow-no-lockfiles
+```
+
+On macOS, download `osv-scanner_darwin_amd64` or `osv-scanner_darwin_arm64` instead. Release assets include `osv-scanner_SHA256SUMS` for checksum verification. You can also build with `go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.6.0`.
+
+Results list affected packages, CVE or GHSA ids, severity when OSV provides it, and fixed versions when known. Exit code 0 means no vulnerabilities (or no lockfiles when `--allow-no-lockfiles` is set). Non-zero means at least one finding worth triaging; read the table or pass `-f json` for automation.
+
+To remove OSV-Scanner from a project that adopted this belt: delete the `osv-scanner` entry from `packages` in `belt.json`, remove `.github/workflows/osv-scanner.yml`, and drop this section from your automation docs.
+
 ## One-time repository setting
 
 The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, with no third-party action. GitHub only lets them open pull requests if a maintainer enables **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**. Without it, the run validates and pushes the branch, then fails at the PR step.
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-Belt checks, zizmor, actionlint, shellcheck, gitleaks and pre-commit run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
+Belt checks, zizmor, actionlint, shellcheck, gitleaks, pre-commit and osv-scanner run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.

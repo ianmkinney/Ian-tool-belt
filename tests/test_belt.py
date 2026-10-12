@@ -381,6 +381,18 @@ class BeltTests(BeltCase):
         template = (ROOT / 'templates/pre-commit/.pre-commit-config.yaml').read_text()
         self.assertEqual(template, (ROOT / '.pre-commit-config.yaml').read_text())
 
+    def test_osv_scanner_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'osv-scanner')
+        self.assertEqual((pin['kind'], pin['name']), ('github-release', 'google/osv-scanner'))
+        workflow = (ROOT / '.github/workflows/osv-scanner.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn("p['id'] == 'osv-scanner'", workflow)
+        self.assertIn('OSV_SCANNER_VERSION', workflow)
+        self.assertIn('osv-scanner_linux_amd64', workflow)
+        self.assertIn('scan source -r . --allow-no-lockfiles', workflow)
+        self.assertNotIn(pin['version'], workflow)
+
     def test_ollmcp_is_a_pinned_pypi_package(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ollmcp')
         self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'ollmcp', '0.35.1'))

@@ -76,6 +76,8 @@ WORKFLOW_INFO = {
         'Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json.',
     '.github/workflows/pre-commit.yml':
         'Run the shared .pre-commit-config.yaml with the pre-commit PyPI pin from belt.json.',
+    '.github/workflows/osv-scanner.yml':
+        'Scan lockfiles and SBOMs for known CVEs with the osv-scanner github-release pin from belt.json.',
     '.github/workflows/release.yml':
         'release-please on push to main; merging its PR bumps versions and tags.',
     '.github/workflows/pr-title.yml':
@@ -123,6 +125,7 @@ SKIPPED = [
     {'id': 'shellcheck', 'reason': 'CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.'},
     {'id': 'gitleaks', 'reason': 'CI-only pin read by gitleaks.yml; not an MCP server or export.'},
     {'id': 'pre-commit', 'reason': 'CI and opt-in local hooks via pre-commit.yml; not an MCP server or export.'},
+    {'id': 'osv-scanner', 'reason': 'CI-only pin read by osv-scanner.yml; not an MCP server or export.'},
     {'id': 'mcp-inspector', 'reason': 'Used by scripts/mcp_smoke.py; not declared as a connection.'},
     {'id': 'ollmcp', 'reason': 'Optional client. Load the claude-code export with --servers-json; not a fifth adapter.'},
     {'id': 'playwright-mcp', 'reason': 'Consumed through the playwright server args, not copied as its own export.'},
