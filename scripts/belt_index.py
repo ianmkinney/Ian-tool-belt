@@ -74,6 +74,8 @@ WORKFLOW_INFO = {
         'Lint tracked shell scripts with the shellcheck-py pin via scripts/check_shell.py.',
     '.github/workflows/gitleaks.yml':
         'Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json.',
+    '.github/workflows/pre-commit.yml':
+        'Run the shared .pre-commit-config.yaml with the pre-commit PyPI pin from belt.json.',
     '.github/workflows/release.yml':
         'release-please on push to main; merging its PR bumps versions and tags.',
     '.github/workflows/pr-title.yml':
@@ -107,6 +109,10 @@ TEMPLATE_INFO = {
         'release-please config copied into an app repo (release-type, extra-files).',
     'templates/versioning/.release-please-manifest.json':
         'release-please manifest template; the app version starts at 0.0.0.',
+    'templates/pre-commit/.pre-commit-config.yaml':
+        'Opt-in pre-commit hook config; copy to the app root and run pre-commit install.',
+    'templates/pre-commit/README.md':
+        'Copy/install steps for the pre-commit template; hooks are never installed automatically.',
 }
 
 SKIPPED = [
@@ -116,6 +122,7 @@ SKIPPED = [
     {'id': 'actionlint', 'reason': 'CI-only pin read by actionlint.yml; not an MCP server or export.'},
     {'id': 'shellcheck', 'reason': 'CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.'},
     {'id': 'gitleaks', 'reason': 'CI-only pin read by gitleaks.yml; not an MCP server or export.'},
+    {'id': 'pre-commit', 'reason': 'CI and opt-in local hooks via pre-commit.yml; not an MCP server or export.'},
     {'id': 'mcp-inspector', 'reason': 'Used by scripts/mcp_smoke.py; not declared as a connection.'},
     {'id': 'ollmcp', 'reason': 'Optional client. Load the claude-code export with --servers-json; not a fifth adapter.'},
     {'id': 'playwright-mcp', 'reason': 'Consumed through the playwright server args, not copied as its own export.'},

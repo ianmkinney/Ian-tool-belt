@@ -12,6 +12,7 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Workflow syntax lint** (`actionlint.yml`) | push, pull request | Runs actionlint on `.github/workflows`, the app workflow templates, and the versioning caller templates, and fails on findings | read |
 | **Shell script lint** (`shellcheck.yml`) | push, pull request | Runs ShellCheck on tracked `*.sh` files and shell shebang scripts via `scripts/check_shell.py`, and fails on findings | read |
 | **Secret scan** (`gitleaks.yml`) | push, pull request | Downloads the pinned gitleaks release binary and scans the repository for leaked secrets | read |
+| **Pre-commit** (`pre-commit.yml`) | push, pull request | Installs the pinned `pre-commit` package and runs `pre-commit run --all-files` on the shared config | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
 | **Deploy GitHub Pages** (`pages.yml`) | push to `main`, or manual | Builds the site with `scripts/build_site.py` and deploys to GitHub Pages | pages: write, `id-token`: write |
@@ -116,10 +117,27 @@ On macOS, swap the archive name for `gitleaks_8.30.1_darwin_arm64.tar.gz` or `da
 
 To remove gitleaks from a project that adopted this belt: delete the `gitleaks` entry from `packages` in `belt.json`, remove `.github/workflows/gitleaks.yml`, and drop the Secret scan section from your automation docs.
 
+## Pre-commit
+
+[pre-commit](https://github.com/pre-commit/pre-commit) (MIT) runs configured linters as git hooks. The belt pins the framework on PyPI (`pre-commit` package in `belt.json`, currently **4.6.2**). [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) reuses the same gitleaks, shellcheck-py, actionlint, and zizmor versions as the CI workflows above, plus a few hooks from [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks).
+
+Opt in locally (hooks are never installed without this):
+
+```sh
+cp templates/pre-commit/.pre-commit-config.yaml .   # or copy from a belt checkout
+python3 -m pip install 'pre-commit==4.6.2'
+pre-commit install
+pre-commit run --all-files
+```
+
+Agents and contributors can run `pre-commit run --all-files` without installing hooks. The **Pre-commit** workflow runs the same command on every push and pull request so CI and laptops stay aligned.
+
+To remove pre-commit: run `pre-commit uninstall`, delete `.pre-commit-config.yaml`, remove `.github/workflows/pre-commit.yml`, delete the `pre-commit` package from `belt.json`, and drop [docs/pre-commit.md](pre-commit.md) from your docs. See [pre-commit.md](pre-commit.md) for hook details and bot guidance.
+
 ## One-time repository setting
 
 The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, with no third-party action. GitHub only lets them open pull requests if a maintainer enables **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**. Without it, the run validates and pushes the branch, then fails at the PR step.
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-Belt checks, zizmor, actionlint, shellcheck and gitleaks run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
+Belt checks, zizmor, actionlint, shellcheck, gitleaks and pre-commit run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.

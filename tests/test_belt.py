@@ -355,6 +355,32 @@ class BeltTests(BeltCase):
         self.assertIn('gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz', workflow)
         self.assertNotIn(pin['version'], workflow)
 
+    def test_pre_commit_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'pre-commit')
+        self.assertEqual((pin['kind'], pin['name']), ('pypi', 'pre-commit'))
+        workflow = (ROOT / '.github/workflows/pre-commit.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertRegex(workflow, r'uses: actions/setup-python@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn("p['id'] == 'pre-commit'", workflow)
+        self.assertIn('pre-commit==$PRE_COMMIT_VERSION', workflow)
+        self.assertIn('pre-commit run --all-files', workflow)
+        self.assertNotIn(pin['version'], workflow)
+
+    def test_pre_commit_config_matches_belt_pins(self):
+        import yaml
+
+        belt = validate(ROOT / 'belt.json')
+        pins = {p['id']: p['version'] for p in belt['packages']}
+        config = yaml.safe_load((ROOT / '.pre-commit-config.yaml').read_text())
+        revs = {repo['repo'].rstrip('/').split('/')[-1]: repo['rev'] for repo in config['repos']}
+        self.assertEqual(revs['gitleaks'], f"v{pins['gitleaks']}")
+        self.assertEqual(revs['shellcheck-py'], f"v{pins['shellcheck']}")
+        self.assertEqual(revs['zizmor-pre-commit'], f"v{pins['zizmor']}")
+        self.assertEqual(revs['actionlint'], 'v1.7.12')
+        template = (ROOT / 'templates/pre-commit/.pre-commit-config.yaml').read_text()
+        self.assertEqual(template, (ROOT / '.pre-commit-config.yaml').read_text())
+
     def test_ollmcp_is_a_pinned_pypi_package(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ollmcp')
         self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'ollmcp', '0.35.1'))
