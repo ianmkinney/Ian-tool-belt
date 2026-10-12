@@ -165,7 +165,8 @@ class CheckPinsTests(BeltCase):
         seen = []
         check_pins.check(self.reload(), lambda kind, name: seen.append(name) or '0.0.83')
         self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector', 'zizmor',
-                                 'actionlint-py', 'shellcheck-py', 'gitleaks/gitleaks', 'ollmcp'])
+                                 'actionlint-py', 'shellcheck-py', 'gitleaks/gitleaks',
+                                 'google/osv-scanner', 'ollmcp'])
 
     def test_registry_urls(self):
         captured = []

@@ -154,6 +154,13 @@
       "description": "Pinned gitleaks CLI (github-release). Use in CI via gitleaks.yml to scan the repo for secrets; not an MCP server."
     },
     {
+      "id": "osv-scanner",
+      "kind": "github-release",
+      "name": "google/osv-scanner",
+      "version": "2.6.0",
+      "description": "Pinned OSV-Scanner CLI (github-release). Use in CI via osv-scanner.yml to scan lockfiles and SBOMs for known CVEs; not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
