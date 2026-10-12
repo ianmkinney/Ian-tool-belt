@@ -177,6 +177,13 @@
       "description": "Pinned gitleaks CLI (github-release). Use in CI via gitleaks.yml to scan the repo for secrets; not an MCP server."
     },
     {
+      "id": "pre-commit",
+      "kind": "pypi",
+      "name": "pre-commit",
+      "version": "4.6.2",
+      "description": "Pinned pre-commit framework (PyPI). Opt-in local git hooks via .pre-commit-config.yaml; CI via pre-commit.yml; not an MCP server."
+    },
+    {
       "id": "osv-scanner",
       "kind": "github-release",
       "name": "google/osv-scanner",
@@ -368,6 +375,10 @@
       "description": "Require a Conventional Commit pull request title."
     },
     {
+      "id": ".github/workflows/pre-commit.yml",
+      "description": "Run the shared .pre-commit-config.yaml with the pre-commit PyPI pin from belt.json."
+    },
+    {
       "id": ".github/workflows/release-please-reusable.yml",
       "description": "Reusable release-please job for this repo and adopted apps."
     },
@@ -408,6 +419,14 @@
     {
       "id": "templates/app-adoption/AGENTS.md",
       "description": "App-repo agent instructions pointing at belt rules. Copied by belt_sync --adopt."
+    },
+    {
+      "id": "templates/pre-commit/.pre-commit-config.yaml",
+      "description": "Opt-in pre-commit hook config; copy to the app root and run pre-commit install."
+    },
+    {
+      "id": "templates/pre-commit/README.md",
+      "description": "Copy/install steps for the pre-commit template; hooks are never installed automatically."
     },
     {
       "id": "templates/versioning/.release-please-manifest.json",
@@ -454,6 +473,10 @@
     {
       "id": "gitleaks",
       "reason": "CI-only pin read by gitleaks.yml; not an MCP server or export."
+    },
+    {
+      "id": "pre-commit",
+      "reason": "CI and opt-in local hooks via pre-commit.yml; not an MCP server or export."
     },
     {
       "id": "osv-scanner",

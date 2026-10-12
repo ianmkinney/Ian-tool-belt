@@ -47,6 +47,7 @@ Then set `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY` in the client environment if 
 - **Connections and smoke tests:** [connections/README.md](connections/README.md)
 - **Format:** [docs/design.md](docs/design.md)
 - **GitHub Actions, pin checks, adoption kit:** [docs/automation.md](docs/automation.md)
+- **Opt-in pre-commit hooks (local lint before commit):** [docs/pre-commit.md](docs/pre-commit.md)
 - **Skills:** [skills/README.md](skills/README.md)
 - **Break room (team board for bots):** [docs/breakroom.md](docs/breakroom.md)
 - **Engineering contract:** [rules/engineering.md](rules/engineering.md)
