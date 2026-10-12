@@ -9,6 +9,7 @@
   python3 belt.py run TASK
   python3 belt.py index [--check]
   python3 belt.py breakroom …   team board CLI (passthrough)
+  python3 belt.py edit FILE.html [--port N]   in-place HTML editor (passthrough)
 """
 import argparse
 import json
@@ -257,6 +258,16 @@ def cmd_breakroom(args):
         return 1
 
 
+def cmd_edit(args):
+    script = ROOT / 'tools' / 'html-edit' / 'html_edit.py'
+    argv = [sys.executable, str(script), *args.edit_args]
+    try:
+        return subprocess.run(argv).returncode
+    except OSError as error:
+        print(f'edit failed: {error}', file=sys.stderr)
+        return 1
+
+
 def cmd_index(args):
     try:
         index = belt_index.build(args.belt)
@@ -333,6 +344,11 @@ def build_parser():
     breakroom.add_argument('breakroom_args', nargs=argparse.REMAINDER,
                            help='arguments passed to tools/breakroom/bin/breakroom')
     breakroom.set_defaults(func=cmd_breakroom)
+
+    edit = sub.add_parser('edit', help='serve an HTML file with the in-place html-edit tool')
+    edit.add_argument('edit_args', nargs=argparse.REMAINDER,
+                      help='arguments passed to tools/html-edit/html_edit.py')
+    edit.set_defaults(func=cmd_edit)
     return parser
 
 

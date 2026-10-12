@@ -43,6 +43,11 @@
       "id": "breakroom",
       "run": "python3 belt.py breakroom \u2026",
       "description": "Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom)."
+    },
+    {
+      "id": "edit",
+      "run": "python3 belt.py edit FILE.html [--port N]",
+      "description": "Serve an HTML file with the html-edit in-place editor (tools/html-edit/html_edit.py)."
     }
   ],
   "servers": [
@@ -144,6 +149,20 @@
       "description": "Team board CLI with lobby notes, reactions, and weekly Bot of the Week; run via belt.py breakroom or bin/breakroom on PATH."
     },
     {
+      "id": "html-edit",
+      "kind": "files",
+      "name": "tools/html-edit",
+      "version": "0.1.0",
+      "description": "In-place HTML editor served on localhost; run via belt.py edit. Stdlib Python only; saves cleaned .edited.html beside the source."
+    },
+    {
+      "id": "graphifyy",
+      "kind": "pypi",
+      "name": "graphifyy",
+      "version": "0.9.86",
+      "description": "Pinned Graphify knowledge-graph CLI (graphify package). Use with skills/graphify; heavy native deps; optional Whisper/Neo4j; no belt-hosted paid keys."
+    },
+    {
       "id": "zizmor",
       "kind": "pypi",
       "name": "zizmor",
@@ -204,6 +223,16 @@
       "id": "break-room",
       "path": "skills/break-room/SKILL.md",
       "description": "Coordinate on the shared break room board each turn \u2014 tasks, lobby notes, reactions, and weekly Bot of the Week scoring."
+    },
+    {
+      "id": "brag",
+      "path": "skills/brag/SKILL.md",
+      "description": "Launch demo video via Hyperframes; needs Node.js, npx hyperframes, and ffmpeg. Use for /brag, launch videos, or showing off a shipped project."
+    },
+    {
+      "id": "graphify",
+      "path": "skills/graphify/SKILL.md",
+      "description": "Build or query a codebase knowledge graph (graphifyy CLI); needs Python 3.10+, tree-sitter/numpy stack, optional ffmpeg/Whisper and Neo4j. Use when graphify-out/ exists or architecture/path questions need the graph."
     }
   ],
   "rules": [
@@ -414,6 +443,14 @@
     {
       "id": "breakroom",
       "reason": "Team-board CLI and data dir; use belt.py breakroom or symlink bin/breakroom. Not an MCP export."
+    },
+    {
+      "id": "html-edit",
+      "reason": "Local HTML editor server; use belt.py edit. Not an MCP export."
+    },
+    {
+      "id": "graphifyy",
+      "reason": "Optional CLI pin for skills/graphify; install with pip when running graphify pipelines."
     },
     {
       "id": "zizmor",

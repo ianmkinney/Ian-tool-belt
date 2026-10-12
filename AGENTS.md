@@ -22,6 +22,7 @@ Machine-readable copy: [`belt.index.json`](belt.index.json).
 - `python3 belt.py run TASK` — Run one allowlisted task (validate, tests, export, pins).
 - `python3 belt.py index` — Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check.
 - `python3 belt.py breakroom …` — Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).
+- `python3 belt.py edit FILE.html [--port N]` — Serve an HTML file with the html-edit in-place editor (tools/html-edit/html_edit.py).
 
 ### Drop this belt into a project
 
@@ -44,6 +45,8 @@ Auto-detects Cursor, OpenCode, Claude Code or VS Code. Pass a target if several 
 - `verify-browser-flow` — Verify a web application user journey using browser evidence. Use for React or Next.js UI checks, regression reproduction and frontend-to-API troubleshooting.
 - `evaluate-mcp` — Evaluate an MCP server or skill for inclusion in Tool Belt. Use for AI Vault candidates, marketplace submissions, connection changes and assistant compatibility reviews.
 - `break-room` — Coordinate on the shared break room board each turn — tasks, lobby notes, reactions, and weekly Bot of the Week scoring.
+- `brag` — Launch demo video via Hyperframes; needs Node.js, npx hyperframes, and ffmpeg. Use for /brag, launch videos, or showing off a shipped project.
+- `graphify` — Build or query a codebase knowledge graph (graphifyy CLI); needs Python 3.10+, tree-sitter/numpy stack, optional ffmpeg/Whisper and Neo4j. Use when graphify-out/ exists or architecture/path questions need the graph.
 
 **Rules**
 - `working-agreement` — Shared operating rules: small changes, secrets out of Git, honest verification. Always apply.
@@ -61,6 +64,8 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 
 - `styling` — files package; copy styling/ yourself. Client exports do not include it.
 - `breakroom` — Team-board CLI and data dir; use belt.py breakroom or symlink bin/breakroom. Not an MCP export.
+- `html-edit` — Local HTML editor server; use belt.py edit. Not an MCP export.
+- `graphifyy` — Optional CLI pin for skills/graphify; install with pip when running graphify pipelines.
 - `zizmor` — CI-only pin read by zizmor.yml; not an MCP server or export.
 - `actionlint` — CI-only pin read by actionlint.yml; not an MCP server or export.
 - `shellcheck` — CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.

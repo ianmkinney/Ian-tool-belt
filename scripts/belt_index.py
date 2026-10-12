@@ -27,6 +27,8 @@ COMMANDS = [
      'description': 'Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check.'},
     {'id': 'breakroom', 'run': 'python3 belt.py breakroom …',
      'description': 'Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).'},
+    {'id': 'edit', 'run': 'python3 belt.py edit FILE.html [--port N]',
+     'description': 'Serve an HTML file with the html-edit in-place editor (tools/html-edit/html_edit.py).'},
 ]
 
 RULE_INFO = {
@@ -107,6 +109,8 @@ TEMPLATE_INFO = {
 SKIPPED = [
     {'id': 'styling', 'reason': 'files package; copy styling/ yourself. Client exports do not include it.'},
     {'id': 'breakroom', 'reason': 'Team-board CLI and data dir; use belt.py breakroom or symlink bin/breakroom. Not an MCP export.'},
+    {'id': 'html-edit', 'reason': 'Local HTML editor server; use belt.py edit. Not an MCP export.'},
+    {'id': 'graphifyy', 'reason': 'Optional CLI pin for skills/graphify; install with pip when running graphify pipelines.'},
     {'id': 'zizmor', 'reason': 'CI-only pin read by zizmor.yml; not an MCP server or export.'},
     {'id': 'actionlint', 'reason': 'CI-only pin read by actionlint.yml; not an MCP server or export.'},
     {'id': 'shellcheck', 'reason': 'CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.'},

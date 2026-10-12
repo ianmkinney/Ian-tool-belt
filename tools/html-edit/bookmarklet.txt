@@ -1,0 +1,9 @@
+Drag this to your bookmarks bar, or paste after opening any HTML file:
+
+javascript:(function(){var s=document.createElement('script');s.src='http://127.0.0.1:8765/__html_edit__/editor.js';document.body.appendChild(s);})();
+
+For file:// pages without the server, open the HTML through `python3 belt.py edit file.html` so editor.js loads from the local server.
+
+One-line embed when editor.js is hosted next to the page:
+
+<script src="editor.js"></script>
