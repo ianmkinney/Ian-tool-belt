@@ -22,6 +22,7 @@ Machine-readable copy: [`belt.index.json`](belt.index.json).
 - `python3 belt.py run TASK` — Run one allowlisted task (validate, tests, export, pins).
 - `python3 belt.py index` — Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check.
 - `python3 belt.py breakroom …` — Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).
+- `python3 belt.py site` — Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check.
 
 ### Drop this belt into a project
 

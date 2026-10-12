@@ -43,6 +43,11 @@
       "id": "breakroom",
       "run": "python3 belt.py breakroom \u2026",
       "description": "Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom)."
+    },
+    {
+      "id": "site",
+      "run": "python3 belt.py site",
+      "description": "Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check."
     }
   ],
   "servers": [
@@ -274,6 +279,10 @@
       "description": "Shared load/save helpers for belt.json. Import from other scripts; do not run it."
     },
     {
+      "id": "scripts/build_site.py",
+      "description": "Render the static GitHub Pages site from belt.json, index, skills, and docs. belt.py site wraps this."
+    },
+    {
       "id": "scripts/build_tokens.py",
       "description": "Generate styling/tokens.css from tokens.json. --check confirms they match."
     },
@@ -334,6 +343,10 @@
     {
       "id": ".github/workflows/gitleaks.yml",
       "description": "Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json."
+    },
+    {
+      "id": ".github/workflows/pages.yml",
+      "description": "Build the blueprint site with scripts/build_site.py and deploy to GitHub Pages on push to main."
     },
     {
       "id": ".github/workflows/pr-title-reusable.yml",

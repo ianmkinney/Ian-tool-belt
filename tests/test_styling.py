@@ -22,13 +22,11 @@ class StylingTests(unittest.TestCase):
             hex_value = TOKENS['color'][name]
             self.assertRegex(guide, rf'{name} `{hex_value}`')
 
-    def test_site_palette_matches_tokens(self):
-        html = (ROOT / 'docs/index.html').read_text()
-        site = dict(re.findall(r'--(\w+):(#[0-9a-f]{6})', html))
-        mapping = {'ink': 'charcoal', 'cream': 'cream', 'paper': 'paper', 'brass': 'brass',
-                   'teal': 'teal', 'muted': 'muted', 'line': 'line'}
-        for site_name, token in mapping.items():
-            self.assertEqual(site[site_name].upper(), TOKENS['color'][token])
+    def test_site_css_includes_blueprint_tokens(self):
+        build = load_script('build_site')
+        css = build.css_text(ROOT)
+        for name in ['blueprint-navy', 'blueprint-cyan', 'blueprint-amber']:
+            self.assertIn(f'--tb-color-{name}: {TOKENS["color"][name]}', css)
 
     def test_package_version_matches_tokens(self):
         belt = json.loads((ROOT / 'belt.json').read_text())
