@@ -69,7 +69,8 @@ def md_to_html(text):
                     out.append(f'</{list_open}>')
                 out.append('<ol>')
                 list_open = 'ol'
-            out.append(f'<li>{inline_md(re.sub(r"^\\d+\\.\\s+", "", line))}</li>')
+            item = re.sub(r'^\d+\.\s+', '', line)
+            out.append(f'<li>{inline_md(item)}</li>')
             continue
         if not line.strip():
             if list_open:
