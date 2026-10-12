@@ -177,6 +177,13 @@
       "description": "Pinned gitleaks CLI (github-release). Use in CI via gitleaks.yml to scan the repo for secrets; not an MCP server."
     },
     {
+      "id": "osv-scanner",
+      "kind": "github-release",
+      "name": "google/osv-scanner",
+      "version": "2.6.0",
+      "description": "Pinned OSV-Scanner CLI (github-release). Use in CI via osv-scanner.yml to scan lockfiles and SBOMs for known CVEs; not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
@@ -345,6 +352,10 @@
       "description": "Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json."
     },
     {
+      "id": ".github/workflows/osv-scanner.yml",
+      "description": "Scan lockfiles and SBOMs for known CVEs with the osv-scanner github-release pin from belt.json."
+    },
+    {
       "id": ".github/workflows/pages.yml",
       "description": "Build the blueprint site with scripts/build_site.py and deploy to GitHub Pages on push to main."
     },
@@ -443,6 +454,10 @@
     {
       "id": "gitleaks",
       "reason": "CI-only pin read by gitleaks.yml; not an MCP server or export."
+    },
+    {
+      "id": "osv-scanner",
+      "reason": "CI-only pin read by osv-scanner.yml; not an MCP server or export."
     },
     {
       "id": "mcp-inspector",
