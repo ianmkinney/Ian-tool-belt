@@ -14,6 +14,7 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Secret scan** (`gitleaks.yml`) | push, pull request | Downloads the pinned gitleaks release binary and scans the repository for leaked secrets | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
+| **Deploy GitHub Pages** (`pages.yml`) | push to `main`, or manual | Builds the site with `scripts/build_site.py` and deploys to GitHub Pages | pages: write, `id-token`: write |
 
 ## Update a belt variable
 

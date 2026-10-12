@@ -29,6 +29,8 @@ COMMANDS = [
      'description': 'Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).'},
     {'id': 'edit', 'run': 'python3 belt.py edit FILE.html [--port N]',
      'description': 'Serve an HTML file with the html-edit in-place editor (tools/html-edit/html_edit.py).'},
+    {'id': 'site', 'run': 'python3 belt.py site',
+     'description': 'Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check.'},
 ]
 
 RULE_INFO = {
@@ -50,6 +52,7 @@ SCRIPT_INFO = {
     'scripts/mcp_smoke.py': 'Start one MCP server through the pinned Inspector and list (or call) a tool.',
     'scripts/belt_sync.py': 'Copy managed adoption-kit files into an app repo; substitutes @__BELT_SHA__ and belt-ref on adopt or sync.',
     'scripts/check_belt_workflow_pins.py': 'Fail CI if templates or workflows call Ian-tool-belt reusable workflows at @main.',
+    'scripts/build_site.py': 'Render the static GitHub Pages site from belt.json, index, skills, and docs. belt.py site wraps this.',
     'scripts/beltfile.py': 'Shared load/save helpers for belt.json. Import from other scripts; do not run it.',
     'scripts/build_tokens.py': 'Generate styling/tokens.css from tokens.json. --check confirms they match.',
     'scripts/belt_index.py': 'Build belt.index.json and the AGENTS.md map from belt.json. belt.py index wraps this.',
@@ -83,6 +86,8 @@ WORKFLOW_INFO = {
         'Reusable release-please job for this repo and adopted apps.',
     '.github/workflows/pr-title-reusable.yml':
         'Reusable Conventional Commit title check for this repo and adopted apps.',
+    '.github/workflows/pages.yml':
+        'Build the blueprint site with scripts/build_site.py and deploy to GitHub Pages on push to main.',
 }
 
 TEMPLATE_INFO = {

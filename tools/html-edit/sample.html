@@ -2,16 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>html-edit sample</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Field Notes — html-edit sample</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; line-height: 1.5; }
-    img { max-width: 100%; border: 1px solid #ccc; }
+    :root { --navy: #0E3478; --cyan: #78D2FF; --amber: #FFC450; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Georgia, serif; color: #1a1a2e; background: #f7f8fc; line-height: 1.55; }
+    header {
+      background: var(--navy); color: #fff; padding: 2.5rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,.4);
+    }
+    header h1 { margin: 0 0 .5rem; font-size: 2rem; font-weight: 600; }
+    header p { margin: 0; max-width: 36rem; opacity: .92; }
+    main { max-width: 42rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .card {
+      background: #fff; border: 1px solid #dde3ef; border-radius: 6px;
+      padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+      box-shadow: 0 1px 0 rgba(14,52,120,.06);
+    }
+    .card h2 { margin-top: 0; font-size: 1.15rem; color: var(--navy); }
+    figure { margin: 1.5rem 0; }
+    figcaption { font-size: .9rem; color: #555; margin-top: .5rem; }
+    a { color: var(--navy); text-decoration-thickness: 1px; }
+    a:hover { color: var(--cyan); }
+    footer { text-align: center; font-size: .85rem; color: #666; padding: 2rem; }
   </style>
 </head>
 <body>
-  <h1>Blueprint demo page</h1>
-  <p>Edit this paragraph in place with <strong>html-edit</strong>.</p>
-  <p><a href="https://example.com">Example link</a></p>
-  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80'%3E%3Crect fill='%230E3478' width='120' height='80'/%3E%3Ctext x='10' y='45' fill='%2378D2FF' font-size='14'%3Enavy%3C/text%3E%3C/svg%3E" alt="sample">
+  <header>
+    <h1>Field Notes</h1>
+    <p>A realistic one-pager you can edit in place: copy, links, and a hero illustration.</p>
+  </header>
+  <main>
+    <div class="card">
+      <h2>Why this page exists</h2>
+      <p>Use <strong>html-edit</strong> to tweak marketing copy without opening a separate CMS. Toggle edit mode, click a paragraph, and save a cleaned <code>.edited.html</code> beside the original.</p>
+      <p>Read the <a href="https://example.com/docs/html-edit">documentation</a> or <a href="#pricing">jump to pricing</a>.</p>
+    </div>
+    <figure>
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='200' viewBox='0 0 640 200'%3E%3Crect fill='%230E3478' width='640' height='200'/%3E%3Cpath d='M0 140h640' stroke='%2378D2FF' stroke-width='1' opacity='.4'/%3E%3Cpath d='M80 40h480' stroke='%23fff' stroke-width='1' opacity='.25'/%3E%3Ctext x='32' y='120' fill='%23FFC450' font-family='monospace' font-size='14'%3EBlueprint grid · sample hero%3C/text%3E%3C/svg%3E" alt="Blueprint hero">
+      <figcaption>Click the image in edit mode to swap the source or upload a replacement.</figcaption>
+    </figure>
+    <div class="card" id="pricing">
+      <h2>Pricing</h2>
+      <p>Teams plan starts at <strong>$24/mo</strong>. No credit card required for the sandbox.</p>
+    </div>
+  </main>
+  <footer>
+    <p>Sample page for belt html-edit · not a live product.</p>
+  </footer>
 </body>
 </html>

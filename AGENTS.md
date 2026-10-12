@@ -23,6 +23,7 @@ Machine-readable copy: [`belt.index.json`](belt.index.json).
 - `python3 belt.py index` — Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check.
 - `python3 belt.py breakroom …` — Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).
 - `python3 belt.py edit FILE.html [--port N]` — Serve an HTML file with the html-edit in-place editor (tools/html-edit/html_edit.py).
+- `python3 belt.py site` — Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check.
 
 ### Drop this belt into a project
 
@@ -47,6 +48,7 @@ Auto-detects Cursor, OpenCode, Claude Code or VS Code. Pass a target if several 
 - `break-room` — Coordinate on the shared break room board each turn — tasks, lobby notes, reactions, and weekly Bot of the Week scoring.
 - `brag` — Launch demo video via Hyperframes; needs Node.js, npx hyperframes, and ffmpeg. Use for /brag, launch videos, or showing off a shipped project.
 - `graphify` — Build or query a codebase knowledge graph (graphifyy CLI); needs Python 3.10+, tree-sitter/numpy stack, optional ffmpeg/Whisper and Neo4j. Use when graphify-out/ exists or architecture/path questions need the graph.
+- `archify` — Interactive architecture and workflow diagrams as HTML/SVG; needs Node 18+ and upstream archify CLI from GitHub. Use for system maps, sequences, Mermaid polish, or dataflow/lifecycle visuals (not charts).
 
 **Rules**
 - `working-agreement` — Shared operating rules: small changes, secrets out of Git, honest verification. Always apply.

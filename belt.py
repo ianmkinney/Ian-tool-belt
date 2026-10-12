@@ -10,6 +10,7 @@
   python3 belt.py index [--check]
   python3 belt.py breakroom …   team board CLI (passthrough)
   python3 belt.py edit FILE.html [--port N]   in-place HTML editor (passthrough)
+  python3 belt.py site [--check]  build the GitHub Pages site into site/
 """
 import argparse
 import json
@@ -24,6 +25,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / 'scripts'))
 
 import belt_index  # noqa: E402
+import build_site  # noqa: E402
 import belt_set  # noqa: E402
 import check_pins  # noqa: E402
 import export  # noqa: E402
@@ -268,6 +270,13 @@ def cmd_edit(args):
         return 1
 
 
+def cmd_site(args):
+    argv = ['--out', str(args.out), '--base', args.base]
+    if args.check:
+        argv.append('--check')
+    return build_site.main(argv)
+
+
 def cmd_index(args):
     try:
         index = belt_index.build(args.belt)
@@ -349,6 +358,13 @@ def build_parser():
     edit.add_argument('edit_args', nargs=argparse.REMAINDER,
                       help='arguments passed to tools/html-edit/html_edit.py')
     edit.set_defaults(func=cmd_edit)
+
+    site = sub.add_parser('site', help='build the static GitHub Pages site')
+    site.add_argument('--out', type=Path, default=ROOT / 'site', help='output directory')
+    site.add_argument('--base', default=os.environ.get('SITE_BASE', '/Ian-tool-belt/'),
+                      help='URL path prefix for GitHub Pages')
+    site.add_argument('--check', action='store_true', help='build and validate links and catalog coverage')
+    site.set_defaults(func=cmd_site)
     return parser
 
 
