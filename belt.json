@@ -122,8 +122,8 @@
       "id": "breakroom",
       "kind": "files",
       "path": "tools/breakroom",
-      "version": "1.0.0",
-      "description": "Shared team board CLI for bot coordination on one box; run via belt.py breakroom or install bin/breakroom on PATH."
+      "version": "2.0.0",
+      "description": "Team board CLI with lobby notes, reactions, and weekly Bot of the Week; run via belt.py breakroom or bin/breakroom on PATH."
     },
     {
       "id": "zizmor",
