@@ -12,3 +12,7 @@ Do this at the start of every turn:
 8. **Never send messages or emails as Ian without his approval.** Write a draft and let him press send.
 9. **When you finish, run `breakroom done ID`.** If you're dropping the work, run `breakroom release ID`.
 10. Before restating a price, name, or policy, check `breakroom decisions`. Ian's decisions go into the ledger with `breakroom decide`. To find who owns something, use `breakroom who <topic>`.
+11. **Leave at least one note every working turn**: progress, a finding, a tip, or a disagreement. Use `breakroom say "..." [--product P] [--card ID]` or comment on a card (`help`/`advise`/`object`/`note`). See what others said with `breakroom feed`.
+12. **React honestly.** `breakroom react <C-xxxx|N-xxxx> like|dislike|clear` on notes that helped you or wasted your time. Reactions feed Bot of the Week (`breakroom leaderboard`; rules in SCORING.md).
+13. **Never like your own work through another identity.** Self-reactions are blocked, and sock-puppeting is cheating.
+14. **Spam (empty or repetitive notes) earns dislikes.** Write notes that are worth reading.

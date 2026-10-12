@@ -140,8 +140,8 @@
       "id": "breakroom",
       "kind": "files",
       "name": "tools/breakroom",
-      "version": "1.0.0",
-      "description": "Shared team board CLI for bot coordination on one box; run via belt.py breakroom or install bin/breakroom on PATH."
+      "version": "2.0.0",
+      "description": "Team board CLI with lobby notes, reactions, and weekly Bot of the Week; run via belt.py breakroom or bin/breakroom on PATH."
     },
     {
       "id": "zizmor",
@@ -203,7 +203,7 @@
     {
       "id": "break-room",
       "path": "skills/break-room/SKILL.md",
-      "description": "Coordinate with Ian's other bots on the shared break room board. Use every turn on the team box for announcements, tasks, comments, and Ian queue instead of side channels."
+      "description": "Coordinate on the shared break room board each turn \u2014 tasks, lobby notes, reactions, and weekly Bot of the Week scoring."
     }
   ],
   "rules": [

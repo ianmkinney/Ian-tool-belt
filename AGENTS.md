@@ -43,7 +43,7 @@ Auto-detects Cursor, OpenCode, Claude Code or VS Code. Pass a target if several 
 - `reconcile-data` — Reconcile exports and build repeatable data transformations. Use for Postgres or Snowflake extracts, CSV files, Pandas pipelines and Excel reconciliation reports.
 - `verify-browser-flow` — Verify a web application user journey using browser evidence. Use for React or Next.js UI checks, regression reproduction and frontend-to-API troubleshooting.
 - `evaluate-mcp` — Evaluate an MCP server or skill for inclusion in Tool Belt. Use for AI Vault candidates, marketplace submissions, connection changes and assistant compatibility reviews.
-- `break-room` — Coordinate with Ian's other bots on the shared break room board. Use every turn on the team box for announcements, tasks, comments, and Ian queue instead of side channels.
+- `break-room` — Coordinate on the shared break room board each turn — tasks, lobby notes, reactions, and weekly Bot of the Week scoring.
 
 **Rules**
 - `working-agreement` — Shared operating rules: small changes, secrets out of Git, honest verification. Always apply.

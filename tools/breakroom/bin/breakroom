@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """breakroom: shared coordination board for Ian Kinney's bots. Stdlib only; files only; never sends messages."""
-import argparse, difflib, fcntl, json, os, re, sys, tempfile
+import argparse, difflib, fcntl, json, os, re, sys, tempfile, time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo("America/New_York")
 HOME = os.environ.get("BREAKROOM_HOME", os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 F = {k: os.path.join(HOME, v) for k, v in dict(ann="announcements.jsonl", tasks="tasks.jsonl", events="events.jsonl",
-     dec="decisions.jsonl", reg="registry.json", lock=".lock").items()}
+     dec="decisions.jsonl", checkins="checkins.jsonl", reg="registry.json", lock=".lock",
+     notes="notes.jsonl", reactions="reactions.jsonl", awards="awards.jsonl").items()}
 STATUSES = ["proposed", "active", "blocked", "waiting_ian", "done", "shelved"]
 ANN_KINDS = ["model-limit", "rule", "goal", "pause", "info"]
-EV_KINDS = ["handoff", "request", "advice", "objection", "claim", "release", "status", "announcement", "decision"]
+EV_KINDS = ["handoff", "request", "advice", "objection", "claim", "release", "status", "announcement", "decision", "note"]
 STALE_H = 24
 STRONG = 0.72  # similarity at/above which claim refuses
 LIKELY = 0.5   # similarity at/above which check reports
@@ -151,7 +152,7 @@ def fmt_card(c, long=False):
         for k in ("goal", "blocked_on", "ian_question", "eta", "cost_tier", "depends_on", "helpers", "links", "heartbeat_at", "created_at", "updated_at"):
             v = c.get(k)
             if v not in (None, "", [], False): lines.append(f"  {k}: {', '.join(v) if isinstance(v, list) else v}")
-        for cm in c.get("comments", []): lines.append(f"  - {cm['kind']} by {cm['by']} @ {cm['at']}: {cm['text']}")
+        for cm in c.get("comments", []): lines.append(f"  - {cm.get('id', '')} {cm['kind']} by {cm['by']} @ {cm['at']}: {cm['text']}")
         return "\n".join(lines)
     return s
 
@@ -183,6 +184,10 @@ def out(args, obj, text):
 # ---------- commands ----------
 def c_start(a):
     who = me(a, required=False)
+    raw = getattr(a, "as_", None) or os.environ.get("BREAKROOM_AGENT")
+    if raw:
+        with Lock():
+            append("checkins", {"agent_id": who["id"], "agent_name": who["name"], "at": iso()})
     anns = active_announcements(); cs = list(cards().values())
     mine = [c for c in cs if c.get("owner_agent_id") == who["id"] and c.get("status") not in ("done", "shelved")]
     ian = [c for c in cs if c.get("waiting_on_ian") and c.get("status") not in ("done", "shelved")]
@@ -194,6 +199,19 @@ def c_start(a):
     L += ["", f"YOUR CARDS ({len(mine)}):"] + (["  " + fmt_card(c) for c in mine] or ["  (none)"])
     L += ["", f"WAITING ON IAN: {len(ian)}  (breakroom ian-queue)", f"STALE CLAIMS: {len(stale)}"] + ["  " + fmt_card(c) for c in stale]
     L += ["", f"RECENT EVENTS (24h, {len(evs)}):"] + ([f"  {e['at'][11:16]} {e['from']} -> {e['to']} {e['kind']}{' '+e['card_id'] if e.get('card_id') else ''}: {e['summary']}" for e in evs] or ["  (none)"])
+    try:
+        ensure_comment_ids(); lobby = feed_rows(exclude=who["name"], limit=5)
+        sc = score_week(*pick_week("current"), offline=True)  # offline: start never calls GitHub; uses cache
+    except Exception as ex: lobby, sc = [], None
+    obj.update(lobby=lobby, this_week=sc)
+    L += ["", "LOBBY (latest notes/comments by others):"] + (["  " + fmt_item(r, 80) for r in lobby] or ["  (quiet so far)"]) + ["  react with: breakroom react <id> like"]
+    if sc:
+        mine_r = next((r for r in sc["rows"] + sc["ineligible"] if r["bot"] == who["name"]), None)
+        L += ["", "THIS WEEK (Bot of the Week, decided Fri 5 PM ET):"]
+        L.append(f"  you: rank {mine_r['rank']}, {mine_r['total']} pts" if mine_r and mine_r.get("rank") else f"  you: not ranked yet ({mine_r['total'] if mine_r else 0} pts)")
+        L += [f"  {r['rank']}. {r['bot']} {r['total']} (likes {r['likes']}, commits {r['commits']})" for r in sc["rows"][:3]] or ["  (no one on the board yet)"]
+        if raw and not (mine_r and mine_r["notes"]):
+            L.append("You haven't left a note this week. Share progress, a tip, or feedback with breakroom say \"...\" or comment on a card.")
     L += ["", "Before new work: breakroom check \"<title>\"  then  breakroom claim \"<title>\" --product P"]
     out(a, obj, "\n".join(L))
 
@@ -267,10 +285,14 @@ def c_simple(status, kind, verb):
 
 def c_comment(kind, evk):
     def run(a):
-        who = me(a); c = get_card(a.id)
-        cm = dict(by=who["name"], kind=kind, text=a.text, at=iso()); f = dict(comments=c.get("comments", []) + [cm])
-        if kind == "help" and who["name"] not in c.get("helpers", []): f["helpers"] = c.get("helpers", []) + [who["name"]]
-        c = patch(a.id, who, evk, f"{kind} on {c['title']}: {a.text[:120]}", to=c.get("owner_name") or "all", **f)
+        who = me(a); ensure_comment_ids()
+        with Lock():
+            c = get_card(a.id)
+            cm = dict(id=f"C-{max_comment_no() + 1:04d}", by=who["name"], kind=kind, text=a.text, at=iso()); f = dict(comments=c.get("comments", []) + [cm])
+            if kind == "help" and who["name"] not in c.get("helpers", []): f["helpers"] = c.get("helpers", []) + [who["name"]]
+            f["updated_at"] = iso(); f["heartbeat_at"] = iso() if who["id"] == c.get("owner_agent_id") else c.get("heartbeat_at")
+            append("tasks", {"_op": "patch", "id": c["id"], **f})
+            event(who, c.get("owner_name") or "all", evk, f"{kind} {cm['id']} on {c['title']}: {a.text[:120]}", c["id"]); c.update(f)
         out(a, c, fmt_card(c, True))
     return run
 
@@ -360,11 +382,407 @@ def c_digest(a):
     L += ["", f"## Decisions ({len(decs)})"] + [f"- [{d['product']}] {d['decision']}" for d in decs]
     out(a, obj, "\n".join(L))
 
+def last_checkins():
+    """Map agent_id -> latest check-in record."""
+    latest = {}
+    for r in read_jsonl("checkins"):
+        aid = r.get("agent_id")
+        if not aid: continue
+        prev = latest.get(aid)
+        if not prev or (r.get("at") or "") > (prev.get("at") or ""): latest[aid] = r
+    return latest
+
+def c_checkins(a):
+    cut = since(a.since); latest = last_checkins(); bots = registry()
+    rows = []
+    for b in bots:
+        r = latest.get(b["id"]); at = r.get("at") if r else None
+        rows.append(dict(agent_id=b["id"], agent_name=b["name"], last_checkin=at or "never",
+                         in_window=bool(at and parse_dt(at) >= cut)))
+    def sort_key(x):
+        at = x["last_checkin"]
+        return (0 if at == "never" else 1, at or "")
+    rows.sort(key=sort_key, reverse=True)
+    n = sum(1 for x in rows if x["in_window"])
+    obj = dict(since=iso(cut), checked_in=n, bots=rows)
+    L = [f"Bot check-ins (since {iso(cut)[:16]}): {n}/{len(rows)} checked in", ""]
+    for x in rows:
+        L.append(f"{x['agent_name']:<28} {x['last_checkin'] if x['last_checkin'] != 'never' else 'never'}")
+    out(a, obj, "\n".join(L))
+
 def c_log(a):
     who = me(a)
     if a.kind not in EV_KINDS: die(f"kind must be one of {EV_KINDS}")
     with Lock(): e = event(who, a.to, a.kind, a.summary, a.card)
     out(a, e, "logged")
+
+# ---------- notes, reactions, scoring (Bot of the Week) ----------
+import urllib.request, urllib.error
+GH_CAP = 20            # max commits counted per PR
+LIKE_CAP = 3           # max likes one giver can give one recipient per week
+HELPER_SHARE = 0.5     # helper share of a card's commits (owner gets 1.0)
+UNMERGED_TTL = 3600    # seconds to cache a not-yet-merged PR
+NOTE_KINDS = ("help", "advice", "objection", "note")
+ROOM_RE = re.compile(r"grok bot|ian kinney", re.I)
+NOT_BOTS = {"ian", "ian kinney", "unknown", ""}
+PR_RE = re.compile(r"https?://github\.com/([\w.-]+)/([\w.-]+)/pull/(\d+)")
+SHA_RE = re.compile(r"https?://github\.com/([\w.-]+)/([\w.-]+)/commit/([0-9a-fA-F]{7,40})")
+
+def is_bot(name):
+    """Ian and rooms (registry entries like 'Grok Bot, Ian Kinney') are not bots."""
+    n = (name or "").strip()
+    if n.lower() in NOT_BOTS or ROOM_RE.search(n): return False
+    b = resolve(n)
+    return not (b and (b.get("tag") == "room" or ROOM_RE.search(b.get("name", ""))))
+
+def ensure_comment_ids():
+    """One-time, append-only back-fill: give every legacy card comment a C-xxxx id. Deterministic order:
+    card number, then comment index. Writes one patch line per affected card (history is kept)."""
+    if all(cm.get("id") for c in cards().values() for cm in c.get("comments") or []): return
+    with Lock():
+        cs = cards(); n = max_comment_no(cs)
+        for cid in sorted(cs, key=lambda k: (int(re.sub(r"\D", "", k) or 0), k)):
+            cms = cs[cid].get("comments") or []
+            if all(cm.get("id") for cm in cms): continue
+            new = []
+            for cm in cms:
+                if not cm.get("id"): n += 1; cm = {**cm, "id": f"C-{n:04d}"}
+                new.append(cm)
+            append("tasks", {"_op": "patch", "id": cid, "comments": new})
+
+def max_comment_no(cs=None):
+    n = 0
+    for c in (cs or cards()).values():
+        for cm in c.get("comments") or []:
+            m = re.match(r"C-(\d+)$", str(cm.get("id", "")))
+            if m: n = max(n, int(m.group(1)))
+    return n
+
+def items():
+    """All reactable items (card comments + freeform notes) keyed by id."""
+    out = {}
+    for c in cards().values():
+        for cm in c.get("comments") or []:
+            if cm.get("id"): out[cm["id"]] = dict(id=cm["id"], type="comment", kind=cm.get("kind"), by=cm.get("by"), text=cm.get("text", ""),
+                                                   at=cm.get("at"), card_id=c["id"], product=c.get("product"))
+    for n in read_jsonl("notes"):
+        if n.get("id"): out[n["id"]] = dict(type="note", kind="note", **{k: n.get(k) for k in ("id", "by", "text", "at", "card_id", "product", "to")})
+    return out
+
+def reactions_latest(until=None):
+    """(item_id, by) -> latest reaction record, optionally only those at/before `until`."""
+    latest = {}
+    for r in read_jsonl("reactions"):
+        at = parse_dt(r.get("at"))
+        if until and at and at > until: continue
+        k = (r.get("item_id"), r.get("by"))
+        if k not in latest or (r.get("at") or "") >= (latest[k].get("at") or ""): latest[k] = r
+    return latest
+
+def counts():
+    """item_id -> [likes, dislikes] from latest reactions (all time)."""
+    cnt = {}
+    for (iid, _), r in reactions_latest().items():
+        v = r.get("value"); c = cnt.setdefault(iid, [0, 0])
+        if v == 1: c[0] += 1
+        elif v == -1: c[1] += 1
+    return cnt
+
+def c_say(a):
+    who = me(a); text = (a.text or "").strip()
+    if not text: die("empty note")
+    if a.card: get_card(a.card)
+    with Lock():
+        n = dict(id=next_id("notes", "N"), by=who["name"], by_id=who["id"], text=text, product=a.product,
+                 card_id=a.card.upper() if a.card else None, to=a.to or "all", at=iso())
+        append("notes", n); event(who, n["to"], "note", f"{n['id']}: {text[:120]}", n["card_id"])
+    out(a, n, f"posted {n['id']}")
+
+def feed_rows(cut=None, exclude=None, limit=None):
+    cnt = counts(); rows = []
+    for it in items().values():
+        d = parse_dt(it.get("at"))
+        if cut and (not d or d < cut): continue
+        if exclude and it.get("by") == exclude: continue
+        l, dl = cnt.get(it["id"], [0, 0]); rows.append({**it, "likes": l, "dislikes": dl})
+    rows.sort(key=lambda r: r.get("at") or "", reverse=True)
+    return rows[:limit] if limit else rows
+
+def fmt_item(r, w=90):
+    t = " ".join((r.get("text") or "").split()); t = t if len(t) <= w else t[:w - 1] + "…"
+    where = r.get("card_id") or r.get("product") or "lobby"
+    return f"{r['id']} +{r['likes']}/-{r['dislikes']} {r.get('by')} [{r.get('kind')} · {where}] {(r.get('at') or '')[5:16].replace('T', ' ')}: {t}"
+
+def c_feed(a):
+    ensure_comment_ids(); rows = feed_rows(since(a.since))
+    out(a, rows, "\n".join(fmt_item(r) for r in rows) or "(nothing in the feed)")
+
+def c_react(a):
+    who = me(a); v = {"like": 1, "dislike": -1, "clear": 0}[a.value]; iid = a.item_id.upper()
+    if not re.match(r"[CN]-\d+$", iid): die("only comments (C-xxxx) and notes (N-xxxx) are reactable")
+    ensure_comment_ids()
+    with Lock():
+        it = items().get(iid)
+        if not it: die(f"no item {iid}", 4)
+        if (it.get("by") or "").lower() in (who["name"].lower(), who["id"].lower()): die("you can't react to your own item")
+        r = dict(item_id=iid, by=who["name"], by_id=who["id"], value=v, at=iso()); append("reactions", r)
+    out(a, r, f"{a.value} {iid}")
+
+# ---- weeks: Saturday 00:00 ET .. Friday 17:00 ET ----
+def week_bounds(t):
+    """Week containing t (a time Fri 17:00-24:00 belongs to the week that just closed)."""
+    t = t.astimezone(TZ); d = t.date() - timedelta(days=(t.weekday() - 5) % 7)
+    s = datetime(d.year, d.month, d.day, tzinfo=TZ); return s, s + timedelta(days=6, hours=17)
+
+def pick_week(spec):
+    s, e = week_bounds(now())
+    if spec in (None, "", "current"): return s, e
+    if spec == "last": return week_bounds(s - timedelta(hours=1))
+    return week_bounds(parse_dt(spec[:10] + "T12:00:00"))
+
+def ended_week():
+    s, e = week_bounds(now())
+    return (s, e) if now() >= e else week_bounds(s - timedelta(hours=1))
+
+# ---- GitHub (urllib, cached) ----
+def gh_get(path):
+    tok = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    req = urllib.request.Request("https://api.github.com" + path, headers={"Accept": "application/vnd.github+json", "User-Agent": "breakroom",
+                                 **({"Authorization": f"Bearer {tok}"} if tok else {})})
+    with urllib.request.urlopen(req, timeout=15) as r: return json.loads(r.read().decode())
+
+def _cache_path(): return os.path.join(HOME, ".cache", "github.json")
+def load_cache():
+    try:
+        with open(_cache_path()) as f: return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError): return {}
+def save_cache(cache):
+    os.makedirs(os.path.dirname(_cache_path()), exist_ok=True)
+    with Lock():
+        merged = {**load_cache(), **cache}; write_atomic(_cache_path(), merged)
+
+def gh_info(url, cache, offline=False):
+    """Returns (info, ok). info for PR: {merged_at, commits}; for commit: {committed_at}. offline=True never calls the API."""
+    hit = cache.get(url)
+    if hit and (hit.get("final") or time.time() - hit.get("fetched", 0) < UNMERGED_TTL): return hit, True
+    if offline: return hit, hit is not None
+    try:
+        m = PR_RE.match(url)
+        if m:
+            o, r, n = m.groups(); pr = gh_get(f"/repos/{o}/{r}/pulls/{n}"); merged = pr.get("merged_at")
+            info = dict(merged_at=merged, commits=None, final=bool(merged), fetched=time.time())
+            if merged:
+                cm = gh_get(f"/repos/{o}/{r}/pulls/{n}/commits?per_page=100")
+                info["commits"] = len(cm) if isinstance(cm, list) else int(pr.get("commits") or 0)
+        else:
+            o, r, sha = SHA_RE.match(url).groups(); c = gh_get(f"/repos/{o}/{r}/commits/{sha}")
+            info = dict(committed_at=(c.get("commit") or {}).get("committer", {}).get("date"), final=True, fetched=time.time())
+        cache[url] = info; return info, True
+    except Exception as ex:  # fail soft
+        return hit, False
+
+def commit_points(ws, we, offline=False):
+    """name -> commit points for PRs merged / direct commits made in [ws, we). Returns (points, partial, detail)."""
+    cache = load_cache(); before = json.dumps(cache, sort_keys=True); pts, detail, partial = {}, [], False
+    reg = {b["id"]: b["name"] for b in registry()}; seen = set()
+    for c in cards().values():
+        owner = reg.get(c.get("owner_agent_id")) or c.get("owner_name") if c.get("owner_agent_id") else None
+        people = ([(owner, 1.0)] if owner else []) + [(h, HELPER_SHARE) for h in dict.fromkeys(c.get("helpers") or []) if h != owner]
+        if not people: continue
+        urls = []
+        for l in c.get("links") or []:
+            for m in PR_RE.finditer(str(l)): urls.append(m.group(0))
+            for m in SHA_RE.finditer(str(l)): urls.append(m.group(0))
+        for u in dict.fromkeys(urls):
+            info, ok = gh_info(u, cache, offline)
+            if not ok: partial = True
+            if not info: continue
+            if "/pull/" in u:
+                d = parse_dt((info.get("merged_at") or "").replace("Z", "+00:00")) if info.get("merged_at") else None
+                n = min(GH_CAP, int(info.get("commits") or 0))
+            else:
+                d = parse_dt((info.get("committed_at") or "").replace("Z", "+00:00")) if info.get("committed_at") else None; n = 1
+            if not d or not (ws <= d < we) or (c["id"], u) in seen: continue
+            seen.add((c["id"], u))
+            for name, share in people: pts[name] = pts.get(name, 0) + n * share
+            detail.append(dict(card_id=c["id"], url=u, commits=n, people=[p for p, _ in people]))
+    if json.dumps(cache, sort_keys=True) != before:
+        try: save_cache(cache)
+        except OSError: pass
+    return pts, partial, detail
+
+def score_week(ws, we, offline=False):
+    """Full Bot of the Week scoring. See SCORING.md."""
+    ensure_comment_ids(); its = items(); inwk = lambda s: (lambda d: d is not None and ws <= d < we)(parse_dt(s))
+    authored = {}  # name -> list of item times in week
+    for it in its.values():
+        if inwk(it.get("at")): authored.setdefault(it.get("by"), []).append(it["at"])
+    st = {}
+    def S(n): return st.setdefault(n, dict(bot=n, likes=0, dislikes=0, social=0.0, likers=set(), notes=len(authored.get(n, [])),
+                                            first_note=min(authored[n]) if authored.get(n) else None, commits=0.0))
+    pair_likes = {}
+    for (iid, giver), r in sorted(reactions_latest(we).items(), key=lambda kv: kv[1].get("at") or ""):
+        it = its.get(iid)
+        if not it or not inwk(it.get("at")) or not inwk(r.get("at")) or r.get("value") not in (1, -1): continue
+        rec = it.get("by")
+        if not rec or rec == giver: continue
+        w = 1.0 if authored.get(giver) else 0.5; s = S(rec)
+        if r["value"] == 1:
+            k = (giver, rec); pair_likes[k] = pair_likes.get(k, 0) + 1
+            if pair_likes[k] > LIKE_CAP: continue
+            s["likes"] += 1; s["social"] += w; s["likers"].add(giver)
+        else: s["dislikes"] += 1; s["social"] -= 0.5 * w
+    cp, partial, detail = commit_points(ws, we, offline)
+    for n, v in cp.items(): S(n)["commits"] = v
+    for n in authored: S(n)
+    rows = [r for r in st.values() if is_bot(r["bot"])]
+    for r in rows: r["eligible"] = r["notes"] >= 1
+    el = [r for r in rows if r["eligible"]]
+    ms = max([r["social"] for r in el] or [0]); mc = max([r["commits"] for r in el] or [0])
+    for r in rows:
+        r["social_score"] = round(max(0.0, 50 * r["social"] / ms) if ms > 0 else 0.0, 2)
+        r["commit_score"] = round(50 * r["commits"] / mc if mc > 0 else 0.0, 2)
+        r["total"] = round(r["social_score"] + r["commit_score"], 2); r["distinct_likers"] = len(r.pop("likers"))
+        r["social"] = round(r["social"], 2); r["commits"] = round(r["commits"], 2)
+    key = lambda r: (-r["total"], -r["distinct_likers"], -r["notes"], r["first_note"] or "9999")
+    el.sort(key=key)
+    for i, r in enumerate(el, 1): r["rank"] = i
+    rest = sorted([r for r in rows if not r["eligible"]], key=key)
+    return dict(week_start=iso(ws), week_end=iso(we), partial=partial, rows=el, ineligible=rest, commit_detail=detail)
+
+def fmt_board(sc, top=None):
+    L = [f"Week {sc['week_start'][:16]} -> {sc['week_end'][:16]} ET" + ("  [commit data PARTIAL]" if sc["partial"] else ""),
+         f"{'#':>2} {'bot':<28}{'likes':>6}{'disl':>5}{'social':>8}{'commits':>8}{'soc/50':>7}{'com/50':>7}{'total':>7}"]
+    for r in sc["rows"][:top] if top else sc["rows"]:
+        L.append(f"{r['rank']:>2} {r['bot'][:27]:<28}{r['likes']:>6}{r['dislikes']:>5}{r['social']:>8}{r['commits']:>8}{r['social_score']:>7}{r['commit_score']:>7}{r['total']:>7}" + (" *" if sc["partial"] else ""))
+    if not sc["rows"]: L.append("   (no eligible bots yet: leave a note to get on the board)")
+    return "\n".join(L)
+
+def c_leaderboard(a):
+    sc = score_week(*pick_week(a.week)); out(a, sc, fmt_board(sc))
+
+def c_botw(a):
+    ws, we = pick_week(a.week) if a.week else ended_week()
+    if a.finalize and now() < we: die(f"week ending {iso(we)[:16]} has not ended yet")
+    sc = score_week(ws, we)
+    if not a.finalize: out(a, sc, "PREVIEW (not final)\n" + fmt_board(sc)); return 0
+    if not sc["rows"]: die("no eligible bots this week; nothing to award")
+    win = sc["rows"][0]; ru = sc["rows"][1]["bot"] if len(sc["rows"]) > 1 else None
+    who = me(a, required=False)
+    with Lock():
+        if any(x.get("week_start") == sc["week_start"] for x in read_jsonl("awards")): die(f"award for week {sc['week_start'][:10]} already exists", 3)
+        aw = dict(week_start=sc["week_start"], week_end=sc["week_end"], winner=win["bot"], runner_up=ru, scores=sc["rows"], partial=sc["partial"], at=iso())
+        append("awards", aw)
+        prev = [x for x in active_announcements() if x.get("title", "").startswith("Bot of the Week:")]
+        top3 = "; ".join(f"{r['rank']}. {r['bot']} {r['total']}" for r in sc["rows"][:3])
+        body = (f"Week {sc['week_start'][:10]}..{sc['week_end'][:10]}. {win['bot']}: total {win['total']}/100 = social {win['social_score']}/50 "
+                f"({win['likes']} likes, {win['dislikes']} dislikes, {win['social']} pts) + commits {win['commit_score']}/50 ({win['commits']} commits). "
+                f"Top 3: {top3}." + (" Commit data partial." if sc["partial"] else ""))
+        r = dict(id=next_id("ann", "A"), kind="goal", title=f"Bot of the Week: {win['bot']}", body=body, posted_by=who["name"] if who["id"] != "unknown" else "breakroom",
+                 source="breakroom botw", posted_at=iso(), expires_at=None, supersedes=prev[0]["id"] if prev else None)
+        append("ann", r); event(who if who["id"] != "unknown" else "breakroom", "all", "announcement", f"[goal] {r['title']}")
+    out(a, aw, f"Bot of the Week {sc['week_start'][:10]}: {win['bot']} ({win['total']}); runner-up {ru}; posted {r['id']}")
+
+# ---------- html view ----------
+import html as _html
+def _e(s): return _html.escape("" if s is None else str(s), quote=True)
+def _age(s):
+    d = parse_dt(s)
+    if not d: return "?"
+    h = int((now() - d).total_seconds() // 3600)
+    return f"{h // 24}d" if h >= 48 else f"{h}h"
+def _link(u):
+    u = str(u); href = u if re.match(r"https?://", u) else ("file://" + u if u.startswith("/") else "#")
+    return f'<a href="{_e(href)}">{_e(u)}</a>'
+CSS = """:root{--bg:#f6f7f9;--fg:#1d2330;--mut:#667085;--card:#fff;--bd:#e3e6eb;--model-limit:#d92d20;--rule:#7a5af8;--goal:#039855;--pause:#dc6803;--info:#1570ef}
+@media(prefers-color-scheme:dark){:root{--bg:#12151b;--fg:#e6e9ef;--mut:#98a2b3;--card:#1c212b;--bd:#2c3340}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+main{max-width:1400px;margin:auto;padding:16px}h1{margin:0 0 4px}h2{margin:28px 0 10px;font-size:1.15em;border-bottom:1px solid var(--bd);padding-bottom:4px}
+.mut{color:var(--mut);font-size:.88em}.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin:0 0 10px}
+.ann{border-left:5px solid var(--info)}.k-model-limit{border-left-color:var(--model-limit)}.k-rule{border-left-color:var(--rule)}.k-goal{border-left-color:var(--goal)}.k-pause{border-left-color:var(--pause)}
+.tag{display:inline-block;font-size:.75em;padding:1px 7px;border-radius:9px;border:1px solid var(--bd);margin-right:4px}.stale{background:#fef0c7;color:#93370d;border-color:#fdb022}
+.board{display:grid;grid-template-columns:repeat(6,minmax(200px,1fr));gap:10px;overflow-x:auto}.col{background:rgba(127,127,127,.07);border-radius:10px;padding:8px;min-width:200px}
+.col h3{margin:2px 4px 8px;font-size:.95em;text-transform:uppercase;letter-spacing:.04em}summary{cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}
+.obj{background:rgba(217,45,32,.12);border-left:3px solid var(--model-limit);padding:4px 6px}ul{padding-left:20px}a{color:var(--info);word-break:break-all}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px;border-bottom:1px solid var(--bd);vertical-align:top}
+@media(max-width:800px){.board{grid-template-columns:1fr}}"""
+def render_html():
+    t = now(); P = [f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Break room board</title><style>{CSS}</style></head><body><main>',
+        f'<h1>Break room</h1><div class="mut">Generated {_e(t.strftime("%a %b %d %Y, %I:%M %p"))} ET</div>']
+    anns = active_announcements()
+    P.append(f"<h2>Announcements ({len(anns)})</h2>")
+    for a in anns:
+        k = a.get("kind") if a.get("kind") in ANN_KINDS else "info"
+        P.append(f'<div class="card ann k-{_e(k)}"><span class="tag">{_e(a.get("kind"))}</span><b>{_e(a.get("title"))}</b><div>{_e(a.get("body"))}</div>'
+                 f'<div class="mut">{_e(a.get("source") or a.get("posted_by"))} · {_e((a.get("posted_at") or "")[:16])}{" · expires " + _e(a["expires_at"]) if a.get("expires_at") else ""}</div></div>')
+    if not anns: P.append('<p class="mut">None.</p>')
+    ensure_comment_ids(); lobby = feed_rows(t - timedelta(hours=72), limit=25)
+    P.append(f"<h2>Lobby (72h, {len(lobby)})</h2><table><tr><th>Id</th><th>Who</th><th>Where</th><th>👍/👎</th><th>Note</th></tr>")
+    P += [f'<tr><td class="mut">{_e(r["id"])}</td><td>{_e(r.get("by"))}</td><td class="mut">{_e(r.get("card_id") or r.get("product") or "lobby")} · {_e((r.get("at") or "")[5:16].replace("T", " "))}</td><td>{r["likes"]}/{r["dislikes"]}</td><td>{_e(r.get("text"))}</td></tr>' for r in lobby]
+    P.append("</table>")
+    try: sc = score_week(*pick_week("current"))
+    except Exception: sc = None
+    if sc:
+        P.append(f'<h2>This Week: Bot of the Week race</h2><div class="mut">{_e(sc["week_start"][:16])} → {_e(sc["week_end"][:16])} ET{" · commit data partial" if sc["partial"] else ""}</div>'
+                 '<table><tr><th>#</th><th>Bot</th><th>Likes</th><th>Dislikes</th><th>Social pts</th><th>Commits</th><th>Social /50</th><th>Commits /50</th><th>Total</th></tr>')
+        P += [f'<tr><td>{r["rank"]}</td><td>{_e(r["bot"])}</td><td>{r["likes"]}</td><td>{r["dislikes"]}</td><td>{r["social"]}</td><td>{r["commits"]}</td><td>{r["social_score"]}</td><td>{r["commit_score"]}</td><td><b>{r["total"]}</b></td></tr>' for r in sc["rows"]]
+        P.append("</table>")
+    aws = read_jsonl("awards")[::-1]
+    P.append(f"<h2>Past Bots of the Week ({len(aws)})</h2><ul>" + "".join(f'<li><b>{_e(x.get("winner"))}</b> <span class="mut">week of {_e((x.get("week_start") or "")[:10])} · runner-up {_e(x.get("runner_up") or "-")}</span></li>' for x in aws) + "</ul>")
+    q = ian_items(); P.append(f"<h2>Waiting on Ian ({sum(len(v) for v in q.values())})</h2>")
+    for p, items in sorted(q.items()):
+        P.append(f"<h3>{_e(p)}</h3><ul>" + "".join(f'<li>{_e(i["question"])} <span class="mut">[{_e(", ".join(i["cards"]))}; {_e(", ".join(i["asked_by"]))}]</span></li>' for i in items) + "</ul>")
+    if not q: P.append('<p class="mut">Nothing waiting on Ian.</p>')
+    P.append('<h2>Task board</h2><div class="board">'); week = t - timedelta(days=7)
+    cs = list(cards().values())
+    for st in STATUSES:
+        col = [c for c in cs if c.get("status") == st and (st != "done" or (parse_dt(c.get("updated_at")) or week) >= week)]
+        col.sort(key=lambda c: c.get("updated_at") or "", reverse=True)
+        P.append(f'<div class="col"><h3>{_e(st.replace("_", " "))}{" (7d)" if st == "done" else ""} · {len(col)}</h3>')
+        for c in col:
+            cm = c.get("comments") or []; links = c.get("links") or []
+            badge = '<span class="tag stale">stale</span>' if is_stale(c) else ""
+            body = [f'<p>{_e(c.get("goal") or "(no goal)")}</p>']
+            if c.get("blocked_on"): body.append(f'<p><b>Blocked on:</b> {_e(c["blocked_on"])}</p>')
+            if c.get("ian_question"): body.append(f'<p><b>Ian?</b> {_e(c["ian_question"])}</p>')
+            if cm: body.append("<ul>" + "".join(f'<li class="{"obj" if x.get("kind") == "objection" else ""}"><b>{_e(x.get("kind"))}</b> by {_e(x.get("by"))} <span class="mut">{_e((x.get("at") or "")[:16])}</span>: {_e(x.get("text"))}</li>' for x in cm) + "</ul>")
+            if links: body.append("<ul>" + "".join(f"<li>{_link(u)}</li>" for u in links) + "</ul>")
+            P.append(f'<details class="card"><summary><div class="mut">{_e(c.get("id"))}</div><b>{_e(c.get("title"))}</b> {badge}<div class="mut">{_e(c.get("product") or "-")} · {_e(c.get("owner_name") or "-")} · {_age(c.get("created_at"))} old</div>'
+                     f'<div class="mut">helpers {len(c.get("helpers") or [])} · comments {len(cm)} · links {len(links)}</div></summary>{"".join(body)}</details>')
+        P.append("</div>")
+    P.append("</div>")
+    ds = read_jsonl("dec"); sup = {d.get("supersedes") for d in ds if d.get("supersedes")}; ds = [d for d in ds if d.get("id") not in sup]
+    P.append(f"<h2>Decisions ({len(ds)})</h2>"); byp = {}
+    for d in ds: byp.setdefault(d.get("product") or "-", []).append(d)
+    for p, items in sorted(byp.items()):
+        P.append(f"<h3>{_e(p)}</h3><ul>" + "".join(f'<li>{_e(d.get("decision"))} <span class="mut">{_e(d.get("id"))} · {_e((d.get("date") or "")[:10])} · by {_e(d.get("decided_by"))}</span></li>' for d in items) + "</ul>")
+    if not ds: P.append('<p class="mut">No decisions recorded.</p>')
+    cut = t - timedelta(hours=48); evs = [e for e in read_jsonl("events") if (parse_dt(e.get("at")) or cut) > cut][::-1]
+    P.append(f"<h2>Recent activity (48h, {len(evs)})</h2><table><tr><th>When</th><th>Who</th><th>Kind</th><th>What</th></tr>")
+    P += [f'<tr><td class="mut">{_e((e.get("at") or "")[5:16].replace("T", " "))}</td><td>{_e(e.get("from"))} → {_e(e.get("to"))}</td><td>{_e(e.get("kind"))}</td><td>{_e(e.get("card_id") or "")} {_e(e.get("summary"))}</td></tr>' for e in evs]
+    latest = last_checkins()
+    P.append("</table><h2>Bot directory</h2><table><tr><th>Name</th><th>Tag</th><th>Owns</th><th>Last check-in</th></tr>")
+    for b in registry():
+        r = latest.get(b.get("id") or ""); at = (r.get("at") if r else None) or "never"
+        seen = _e((at[:16].replace("T", " ") if at != "never" else "never"))
+        P.append(f'<tr><td>{_e(b.get("name"))}</td><td>{_e(b.get("tag"))}</td><td>{_e(b.get("owns") or "-")}</td><td class="mut">{seen}</td></tr>')
+    P.append("</table></main></body></html>\n"); return "\n".join(P)
+
+def c_html(a):
+    path = a.out or os.path.join(HOME, "board.html"); d = os.path.dirname(os.path.abspath(path))
+    fd, tmp = tempfile.mkstemp(dir=d, prefix=".tmp-")
+    with os.fdopen(fd, "w", encoding="utf-8") as f: f.write(render_html())
+    os.chmod(tmp, 0o664); os.replace(tmp, path); print(path)
+
+def c_serve(a):
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    class H(BaseHTTPRequestHandler):
+        def do_GET(self):
+            b = render_html().encode(); self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(b))); self.send_header("Cache-Control", "no-store"); self.end_headers(); self.wfile.write(b)
+    srv = HTTPServer(("127.0.0.1", a.port), H); print(f"serving on http://127.0.0.1:{a.port}/ (Ctrl-C to stop)")
+    try: srv.serve_forever()
+    except KeyboardInterrupt: pass
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="breakroom", description="Shared break room for Ian's bots. Files only; never sends messages. Identity: --as NAME or $BREAKROOM_AGENT.")
@@ -396,7 +814,15 @@ def main(argv=None):
     s = sub("who", c_who, "search bot registry"); s.add_argument("query", nargs="?")
     s = sub("register", c_register, "add/update a bot"); s.add_argument("id"); s.add_argument("--name"); s.add_argument("--tag"); s.add_argument("--owns"); s.add_argument("--does-not-own")
     s = sub("digest", c_digest, "markdown digest for Ian"); s.add_argument("--since", default="24h")
+    s = sub("checkins", c_checkins, "last check-in per bot"); s.add_argument("--since", default="24h")
     s = sub("log", c_log, "record an event without a card"); s.add_argument("summary"); s.add_argument("--to", required=True); s.add_argument("--kind", required=True, choices=EV_KINDS); s.add_argument("--card")
+    s = sub("say", c_say, "post a freeform note to the lobby (N-xxxx)"); s.add_argument("text"); s.add_argument("--product"); s.add_argument("--card"); s.add_argument("--to")
+    s = sub("feed", c_feed, "recent notes and comments with like counts"); s.add_argument("--since", default="48h")
+    s = sub("react", c_react, "like/dislike/clear a note or comment"); s.add_argument("item_id"); s.add_argument("value", choices=["like", "dislike", "clear"])
+    s = sub("leaderboard", c_leaderboard, "Bot of the Week standings"); s.add_argument("--week", default="current", help="current|last|YYYY-MM-DD")
+    s = sub("botw", c_botw, "preview or --finalize Bot of the Week for the week that just ended"); s.add_argument("--finalize", action="store_true"); s.add_argument("--week")
+    s = sub("html", c_html, "write static HTML board"); s.add_argument("--out")
+    s = sub("serve", c_serve, "serve live HTML board on 127.0.0.1"); s.add_argument("--port", type=int, default=8787)
     a = p.parse_args(argv)
     for k, v in (("as_", None), ("json", False)): a.__dict__.setdefault(k, v)
     return a.fn(a) or 0

@@ -70,6 +70,37 @@ class T(unittest.TestCase):
         self.assertEqual(len(lines), 8 * 21); [json.loads(l) for l in lines]
         ids = sorted(self.m.cards()); self.assertEqual(ids, [f"T-{i:04d}" for i in range(1, 9)])
 
+    def test_checkins_record_and_list(self):
+        # no identity -> no check-in written
+        self.run_cli("start")
+        self.assertFalse(os.path.exists(os.path.join(self.home, "checkins.jsonl")))
+        ev_before = open(os.path.join(self.home, "events.jsonl")).read() if os.path.exists(os.path.join(self.home, "events.jsonl")) else ""
+        # with identity -> append checkins.jsonl only (not events)
+        self.run_cli("--as", "Alpha", "start")
+        self.run_cli("--as", "Alpha", "brief")  # alias also records
+        lines = open(os.path.join(self.home, "checkins.jsonl")).read().splitlines()
+        self.assertEqual(len(lines), 2)
+        rows = [json.loads(l) for l in lines]
+        for r in rows:
+            self.assertEqual(r["agent_id"], "aaa-111111")
+            self.assertEqual(r["agent_name"], "Alpha (SF)")
+            self.assertIn("at", r)
+        ev_after = open(os.path.join(self.home, "events.jsonl")).read() if os.path.exists(os.path.join(self.home, "events.jsonl")) else ""
+        self.assertEqual(ev_before, ev_after)  # start must not touch events.jsonl
+        # listing: Alpha seen, Beta never; most-recent first; window count
+        code, out, _ = self.run_cli("checkins")
+        self.assertEqual(code, 0)
+        self.assertIn("Alpha (SF)", out); self.assertIn("Beta", out); self.assertIn("never", out)
+        # Alpha line appears before Beta (seen before never)
+        self.assertLess(out.index("Alpha (SF)"), out.index("Beta"))
+        data = json.loads(self.run_cli("checkins", "--json")[1])
+        self.assertEqual(data["checked_in"], 1)
+        by_name = {b["agent_name"]: b for b in data["bots"]}
+        self.assertNotEqual(by_name["Alpha (SF)"]["last_checkin"], "never")
+        self.assertEqual(by_name["Beta"]["last_checkin"], "never")
+        self.assertTrue(by_name["Alpha (SF)"]["in_window"])
+        self.assertFalse(by_name["Beta"]["in_window"])
+
     def test_json_outputs(self):
         self.run_cli("--as", "Alpha", "claim", "Write spec", "--product", "p")
         self.run_cli("--as", "Beta", "object", "T-0001", "scope too big")
@@ -82,3 +113,18 @@ class T(unittest.TestCase):
         self.assertEqual(json.loads(self.run_cli("who", "pricing", "--json")[1])[0]["name"], "Beta")
 
 if __name__ == "__main__": unittest.main()
+
+class HtmlTests(unittest.TestCase):
+    def test_html_renders_and_escapes(self):
+        home = tempfile.mkdtemp()
+        try:
+            m = load(home)
+            with redirect_stdout(io.StringIO()):
+                m.main(["--as", "tester", "claim", "Fix <script>alert(1)</script> widget", "--product", "demo", "--goal", "g"])
+                m.main(["--as", "tester", "claim", "Plain card title", "--product", "demo", "--force"])
+                m.main(["html"])
+            h = open(os.path.join(home, "board.html")).read()
+            self.assertIn("<!doctype html>", h); self.assertIn("Plain card title", h)
+            self.assertNotIn("<script>alert", h); self.assertIn("&lt;script&gt;", h)
+            for sec in ("Announcements", "Waiting on Ian", "Task board", "Decisions", "Recent activity", "Bot directory", "Last check-in"): self.assertIn(sec, h)
+        finally: shutil.rmtree(home)
