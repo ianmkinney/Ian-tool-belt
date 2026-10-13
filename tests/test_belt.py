@@ -393,6 +393,30 @@ class BeltTests(BeltCase):
         self.assertIn('scan source -r . --allow-no-lockfiles', workflow)
         self.assertNotIn(pin['version'], workflow)
 
+    def test_act_pin_docs_and_version_check_workflow(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'act')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']),
+                         ('github-release', 'nektos/act', '0.2.89'))
+        self.assertIn('Docker', pin['description'])
+        workflow = (ROOT / '.github/workflows/act.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn("p['id'] == 'act'", workflow)
+        self.assertIn('ACT_VERSION', workflow)
+        self.assertIn('act_Linux_x86_64.tar.gz', workflow)
+        self.assertIn('checksums.txt', workflow)
+        self.assertIn('./act --version', workflow)
+        self.assertNotIn('act push', workflow)
+        self.assertNotIn(pin['version'], workflow)
+        docs = (ROOT / 'docs/act.md').read_text()
+        self.assertIn('0.2.89', docs)
+        self.assertIn('MIT', docs)
+        self.assertIn('Docker', docs)
+        self.assertIn('act -l', docs)
+        self.assertIn('act push', docs)
+        self.assertIn('## Remove', docs)
+        self.assertIn('nektos/act', docs)
+
     def test_ollmcp_is_a_pinned_pypi_package(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ollmcp')
         self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'ollmcp', '0.35.1'))

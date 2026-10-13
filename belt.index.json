@@ -191,6 +191,13 @@
       "description": "Pinned OSV-Scanner CLI (github-release). Use in CI via osv-scanner.yml to scan lockfiles and SBOMs for known CVEs; not an MCP server."
     },
     {
+      "id": "act",
+      "kind": "github-release",
+      "name": "nektos/act",
+      "version": "0.2.89",
+      "description": "Pinned nektos/act CLI (github-release). Dry-run GitHub Actions locally; Docker is required to run workflows. Not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
@@ -339,6 +346,10 @@
   ],
   "workflows": [
     {
+      "id": ".github/workflows/act.yml",
+      "description": "Download the pinned nektos/act release and run act --version. Does not execute workflows."
+    },
+    {
       "id": ".github/workflows/actionlint.yml",
       "description": "Syntax-lint GitHub workflows with the actionlint-py pin from belt.json."
     },
@@ -481,6 +492,10 @@
     {
       "id": "osv-scanner",
       "reason": "CI-only pin read by osv-scanner.yml; not an MCP server or export."
+    },
+    {
+      "id": "act",
+      "reason": "Local GitHub Actions dry-run; Docker is required to run workflows. act.yml only checks the pinned binary version; not an MCP server or export."
     },
     {
       "id": "mcp-inspector",
