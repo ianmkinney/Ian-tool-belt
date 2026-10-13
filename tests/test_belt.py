@@ -393,6 +393,32 @@ class BeltTests(BeltCase):
         self.assertIn('scan source -r . --allow-no-lockfiles', workflow)
         self.assertNotIn(pin['version'], workflow)
 
+    def test_lychee_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'lychee')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']),
+                         ('github-release', 'lycheeverse/lychee', '0.24.2'))
+        workflow = (ROOT / '.github/workflows/lychee.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn('permissions:', workflow)
+        self.assertIn('contents: read', workflow)
+        self.assertIn("p['id'] == 'lychee'", workflow)
+        self.assertIn('LYCHEE_VERSION', workflow)
+        self.assertIn('lychee-v${LYCHEE_VERSION}', workflow)
+        self.assertIn('lychee-x86_64-unknown-linux-gnu.tar.gz', workflow)
+        self.assertIn('sha256sum -c', workflow)
+        self.assertIn('--strip-components=1', workflow)
+        self.assertIn('--config lychee.toml', workflow)
+        self.assertIn('--no-progress', workflow)
+        self.assertIn('--exclude-loopback', workflow)
+        self.assertIn('README.md', workflow)
+        self.assertIn('docs', workflow)
+        self.assertNotIn(pin['version'], workflow)
+        config = (ROOT / 'lychee.toml').read_text()
+        self.assertIn('raw.githubusercontent.com', config)
+        self.assertIn('exclude_loopback = true', config)
+        self.assertNotIn('exclude = ', config)
+
     def test_act_pin_docs_and_version_check_workflow(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'act')
         self.assertEqual((pin['kind'], pin['name'], pin['version']),

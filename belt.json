@@ -168,6 +168,13 @@
       "description": "Pinned OSV-Scanner CLI (github-release). Use in CI via osv-scanner.yml to scan lockfiles and SBOMs for known CVEs; not an MCP server."
     },
     {
+      "id": "lychee",
+      "kind": "github-release",
+      "name": "lycheeverse/lychee",
+      "version": "0.24.2",
+      "description": "Pinned lychee CLI (github-release). Use in CI via lychee.yml to check docs, README and site-source links; not an MCP server."
+    },
+    {
       "id": "act",
       "kind": "github-release",
       "name": "nektos/act",

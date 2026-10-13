@@ -166,7 +166,7 @@ class CheckPinsTests(BeltCase):
         check_pins.check(self.reload(), lambda kind, name: seen.append(name) or '0.0.83')
         self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector', 'zizmor',
                                  'actionlint-py', 'shellcheck-py', 'gitleaks/gitleaks', 'pre-commit',
-                                 'google/osv-scanner', 'nektos/act', 'ollmcp'])
+                                 'google/osv-scanner', 'lycheeverse/lychee', 'nektos/act', 'ollmcp'])
 
     def test_registry_urls(self):
         captured = []
@@ -195,6 +195,17 @@ class CheckPinsTests(BeltCase):
         self.assertEqual(captured, ['https://registry.npmjs.org/@playwright/mcp/latest',
                                     'https://pypi.org/pypi/requests/json',
                                     'https://api.github.com/repos/gitleaks/gitleaks/releases/latest'])
+
+    def test_github_release_tags_keep_a_numeric_pin(self):
+        self.assertEqual(check_pins.github_release_version({'tag_name': 'v9.0.0'}), '9.0.0')
+        self.assertEqual(check_pins.github_release_version({'tag_name': 'lychee-v0.24.2'}), '0.24.2')
+        self.assertEqual(check_pins.github_release_version({'tag_name': 'v1.2.3-rc.1'}), '1.2.3-rc.1')
+        self.assertFalse(check_pins.is_newer(
+            check_pins.github_release_version({'tag_name': 'v1.2.3-rc.1'}), '1.2.3'))
+        self.assertTrue(check_pins.is_newer(
+            check_pins.github_release_version({'tag_name': 'lychee-v0.25.0'}), '0.24.2'))
+        self.assertFalse(check_pins.is_newer(
+            check_pins.github_release_version({'tag_name': 'lychee-v0.24.2'}), '0.24.2'))
 
 
 class TaskRunnerTests(unittest.TestCase):

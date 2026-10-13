@@ -191,6 +191,13 @@
       "description": "Pinned OSV-Scanner CLI (github-release). Use in CI via osv-scanner.yml to scan lockfiles and SBOMs for known CVEs; not an MCP server."
     },
     {
+      "id": "lychee",
+      "kind": "github-release",
+      "name": "lycheeverse/lychee",
+      "version": "0.24.2",
+      "description": "Pinned lychee CLI (github-release). Use in CI via lychee.yml to check docs, README and site-source links; not an MCP server."
+    },
+    {
       "id": "act",
       "kind": "github-release",
       "name": "nektos/act",
@@ -370,6 +377,10 @@
       "description": "Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json."
     },
     {
+      "id": ".github/workflows/lychee.yml",
+      "description": "Check docs, README and site-source links with the lychee github-release pin from belt.json."
+    },
+    {
       "id": ".github/workflows/osv-scanner.yml",
       "description": "Scan lockfiles and SBOMs for known CVEs with the osv-scanner github-release pin from belt.json."
     },
@@ -492,6 +503,10 @@
     {
       "id": "osv-scanner",
       "reason": "CI-only pin read by osv-scanner.yml; not an MCP server or export."
+    },
+    {
+      "id": "lychee",
+      "reason": "CI-only pin read by lychee.yml; not an MCP server or export."
     },
     {
       "id": "act",

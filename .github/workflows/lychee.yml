@@ -1,0 +1,45 @@
+name: Link check
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read the lychee pin from belt.json
+        id: pin
+        run: |
+          python3 -c "import json; print('version=' + next(p['version'] for p in json.load(open('belt.json'))['packages'] if p['id'] == 'lychee'))" >> "$GITHUB_OUTPUT"
+      - name: Install and run lychee
+        env:
+          LYCHEE_VERSION: ${{ steps.pin.outputs.version }}
+          # Fallback when a GitHub repository URL fails the normal request.
+          # /blob/ file links are remapped in lychee.toml and do not use this.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          archive="lychee-x86_64-unknown-linux-gnu.tar.gz"
+          base="https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}"
+          curl -fsSL -o "$archive" "${base}/${archive}"
+          curl -fsSL -o "${archive}.sha256" "${base}/${archive}.sha256"
+          sha256sum -c "${archive}.sha256"
+          tar -xzf "$archive" --strip-components=1 "lychee-x86_64-unknown-linux-gnu/lychee"
+          chmod +x lychee
+          ./lychee --config lychee.toml --no-progress --exclude-loopback \
+            README.md \
+            AGENTS.md \
+            CHANGELOG.md \
+            CONTRIBUTING.md \
+            docs \
+            rules \
+            skills \
+            connections \
+            templates \
+            styling \
+            branding \
+            tools/breakroom/README.md \
+            tools/breakroom/docs

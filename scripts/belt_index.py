@@ -78,6 +78,8 @@ WORKFLOW_INFO = {
         'Run the shared .pre-commit-config.yaml with the pre-commit PyPI pin from belt.json.',
     '.github/workflows/osv-scanner.yml':
         'Scan lockfiles and SBOMs for known CVEs with the osv-scanner github-release pin from belt.json.',
+    '.github/workflows/lychee.yml':
+        'Check docs, README and site-source links with the lychee github-release pin from belt.json.',
     '.github/workflows/act.yml':
         'Download the pinned nektos/act release and run act --version. Does not execute workflows.',
     '.github/workflows/release.yml':
@@ -128,6 +130,7 @@ SKIPPED = [
     {'id': 'gitleaks', 'reason': 'CI-only pin read by gitleaks.yml; not an MCP server or export.'},
     {'id': 'pre-commit', 'reason': 'CI and opt-in local hooks via pre-commit.yml; not an MCP server or export.'},
     {'id': 'osv-scanner', 'reason': 'CI-only pin read by osv-scanner.yml; not an MCP server or export.'},
+    {'id': 'lychee', 'reason': 'CI-only pin read by lychee.yml; not an MCP server or export.'},
     {'id': 'act', 'reason': 'Local GitHub Actions dry-run; Docker is required to run workflows. act.yml only checks the pinned binary version; not an MCP server or export.'},
     {'id': 'mcp-inspector', 'reason': 'Used by scripts/mcp_smoke.py; not declared as a connection.'},
     {'id': 'ollmcp', 'reason': 'Optional client. Load the claude-code export with --servers-json; not a fifth adapter.'},

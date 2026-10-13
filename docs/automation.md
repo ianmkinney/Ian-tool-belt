@@ -14,6 +14,7 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Secret scan** (`gitleaks.yml`) | push, pull request | Downloads the pinned gitleaks release binary and scans the repository for leaked secrets | read |
 | **Pre-commit** (`pre-commit.yml`) | push, pull request | Installs the pinned `pre-commit` package and runs `pre-commit run --all-files` on the shared config | read |
 | **Dependency vulnerability scan** (`osv-scanner.yml`) | push, pull request | Downloads the pinned OSV-Scanner release binary and scans lockfiles and SBOMs for known CVEs | read |
+| **Link check** (`lychee.yml`) | push, pull request | Downloads the pinned lychee release binary and checks links in docs, the README and site sources | read |
 | **act version check** (`act.yml`) | push, pull request | Downloads the pinned nektos/act binary, checks its checksum, and runs `act --version` (does not execute workflows) | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
@@ -158,6 +159,32 @@ Results list affected packages, CVE or GHSA ids, severity when OSV provides it, 
 
 To remove OSV-Scanner from a project that adopted this belt: delete the `osv-scanner` entry from `packages` in `belt.json`, remove `.github/workflows/osv-scanner.yml`, and drop this section from your automation docs.
 
+## Link check
+
+[lychee](https://github.com/lycheeverse/lychee) (Apache-2.0 OR MIT) finds broken links in Markdown and HTML. The Pages site, `docs/` and the README had no link check. Lychee closes that gap for the files the site is built from.
+
+The version comes from the `lychee` `github-release` package in `belt.json` (`lycheeverse/lychee`, pinned at **0.24.2**, release tag `lychee-v0.24.2`, published 2026-05-01). The weekly pin check reads the trailing numeric version from tags shaped like `lychee-vX.Y.Z`, so a newer stable release can still open a bump PR. The job downloads `lychee-x86_64-unknown-linux-gnu.tar.gz` for `lychee-v` plus the pin, verifies the sibling `.sha256`, and extracts the `lychee` binary. It passes the workflow `GITHUB_TOKEN` (`contents: read`) through to lychee. [`lychee.toml`](../lychee.toml) skips loopback addresses and fails on broken links. GitHub `/blob/` file links are remapped to `raw.githubusercontent.com` because the HTML pages often return 503 under concurrent checks; a missing file is still a 404. No host is excluded. Add an `exclude` regex in that file only if some other host starts flapping.
+
+Run it locally after installing the same release (paths match CI):
+
+```sh
+archive="lychee-x86_64-unknown-linux-gnu.tar.gz"
+base="https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2"
+curl -fsSL -o "$archive" "${base}/${archive}"
+curl -fsSL -o "${archive}.sha256" "${base}/${archive}.sha256"
+sha256sum -c "${archive}.sha256"
+tar -xzf "$archive" --strip-components=1 "lychee-x86_64-unknown-linux-gnu/lychee"
+chmod +x lychee
+GITHUB_TOKEN="$(gh auth token)" ./lychee --config lychee.toml --no-progress --exclude-loopback \
+  README.md AGENTS.md CHANGELOG.md CONTRIBUTING.md \
+  docs rules skills connections templates styling branding \
+  tools/breakroom/README.md tools/breakroom/docs
+```
+
+On macOS, use `lychee-aarch64-apple-darwin.tar.gz` or `lychee-x86_64-apple-darwin.tar.gz`. Exit code 0 means the checked links returned an accepted status. A non-zero exit lists the file, URL and status code. See [lychee.md](lychee.md) for how to read that output.
+
+To remove lychee from a project that adopted this belt: delete the `lychee` entry from `packages` in `belt.json`, remove `.github/workflows/lychee.yml` and `lychee.toml`, delete `docs/lychee.md`, and drop this section from your automation docs. Then run `python3 belt.py index`.
+
 ## Local workflow dry-run (act)
 
 [act](https://github.com/nektos/act) (MIT) runs GitHub Actions workflows on a laptop using Docker. The belt pins `nektos/act` **0.2.89**. actionlint, zizmor, ShellCheck and gitleaks still lint workflow files; act is how you see a job execute before a push. Full usage, job filters and removal steps are in [act.md](act.md).
@@ -185,4 +212,4 @@ The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, w
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-Belt checks, zizmor, actionlint, shellcheck, gitleaks, pre-commit, osv-scanner and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
+Belt checks, zizmor, actionlint, shellcheck, gitleaks, pre-commit, osv-scanner, lychee and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
