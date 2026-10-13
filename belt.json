@@ -175,6 +175,13 @@
       "description": "Pinned lychee CLI (github-release). Use in CI via lychee.yml to check docs, README and site-source links; not an MCP server."
     },
     {
+      "id": "act",
+      "kind": "github-release",
+      "name": "nektos/act",
+      "version": "0.2.89",
+      "description": "Pinned nektos/act CLI (github-release). Dry-run GitHub Actions locally; Docker is required to run workflows. Not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
