@@ -68,6 +68,7 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 - `gitleaks` — CI-only pin read by gitleaks.yml; not an MCP server or export.
 - `pre-commit` — CI and opt-in local hooks via pre-commit.yml; not an MCP server or export.
 - `osv-scanner` — CI-only pin read by osv-scanner.yml; not an MCP server or export.
+- `lychee` — CI-only pin read by lychee.yml; not an MCP server or export.
 - `mcp-inspector` — Used by scripts/mcp_smoke.py; not declared as a connection.
 - `ollmcp` — Optional client. Load the claude-code export with --servers-json; not a fifth adapter.
 - `playwright-mcp` — Consumed through the playwright server args, not copied as its own export.

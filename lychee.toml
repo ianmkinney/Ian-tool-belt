@@ -1,0 +1,21 @@
+# Fail on broken links. No host is excluded.
+# GitHub HTML blob pages often return 503 under concurrent checks.
+# File links are remapped to raw.githubusercontent.com, which returns 404
+# when the file is gone. Repo, tree and release links stay on github.com.
+no_progress = true
+exclude_loopback = true
+max_retries = 6
+retry_wait_time = 2
+host_concurrency = 8
+host_request_interval = "100ms"
+remap = [
+  'https://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.+) https://raw.githubusercontent.com/$1/$2/$3/$4',
+]
+
+[hosts."github.com"]
+concurrency = 2
+request_interval = "500ms"
+
+[hosts."raw.githubusercontent.com"]
+concurrency = 2
+request_interval = "500ms"
