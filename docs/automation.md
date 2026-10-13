@@ -14,6 +14,7 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Secret scan** (`gitleaks.yml`) | push, pull request | Downloads the pinned gitleaks release binary and scans the repository for leaked secrets | read |
 | **Pre-commit** (`pre-commit.yml`) | push, pull request | Installs the pinned `pre-commit` package and runs `pre-commit run --all-files` on the shared config | read |
 | **Dependency vulnerability scan** (`osv-scanner.yml`) | push, pull request | Downloads the pinned OSV-Scanner release binary and scans lockfiles and SBOMs for known CVEs | read |
+| **act version check** (`act.yml`) | push, pull request | Downloads the pinned nektos/act binary, checks its checksum, and runs `act --version` (does not execute workflows) | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
 | **Deploy GitHub Pages** (`pages.yml`) | push to `main`, or manual | Builds the site with `scripts/build_site.py` and deploys to GitHub Pages | pages: write, `id-token`: write |
@@ -157,10 +158,31 @@ Results list affected packages, CVE or GHSA ids, severity when OSV provides it, 
 
 To remove OSV-Scanner from a project that adopted this belt: delete the `osv-scanner` entry from `packages` in `belt.json`, remove `.github/workflows/osv-scanner.yml`, and drop this section from your automation docs.
 
+## Local workflow dry-run (act)
+
+[act](https://github.com/nektos/act) (MIT) runs GitHub Actions workflows on a laptop using Docker. The belt pins `nektos/act` **0.2.89**. actionlint, zizmor, ShellCheck and gitleaks still lint workflow files; act is how you see a job execute before a push. Full usage, job filters and removal steps are in [act.md](act.md).
+
+The version comes from the `act` `github-release` package in `belt.json`. The weekly pin check queries GitHub releases for newer stable tags. `.github/workflows/act.yml` downloads `act_Linux_x86_64.tar.gz` for that tag, verifies `checksums.txt`, and runs `act --version`. It does not run `act push` or any other event: executing workflows inside GitHub Actions needs Docker-in-Docker and is the wrong place for this tool.
+
+Run a real dry-run locally after installing the same release (Docker required for jobs):
+
+```sh
+curl -fsSL -o act_Linux_x86_64.tar.gz "https://github.com/nektos/act/releases/download/v0.2.89/act_Linux_x86_64.tar.gz"
+curl -fsSL -o checksums.txt "https://github.com/nektos/act/releases/download/v0.2.89/checksums.txt"
+grep -F ' act_Linux_x86_64.tar.gz' checksums.txt | sha256sum -c -
+tar -xzf act_Linux_x86_64.tar.gz act
+./act -l
+./act push -j <job-id>
+```
+
+`act -l` lists jobs. A job run prints each step and a summary; non-zero means a step failed. See [act.md](act.md) for reading that output and for macOS archives.
+
+To remove act: delete the `act` package from `belt.json`, remove `.github/workflows/act.yml`, delete [act.md](act.md), and drop this section.
+
 ## One-time repository setting
 
 The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, with no third-party action. GitHub only lets them open pull requests if a maintainer enables **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**. Without it, the run validates and pushes the branch, then fails at the PR step.
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-Belt checks, zizmor, actionlint, shellcheck, gitleaks, pre-commit and osv-scanner run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
+Belt checks, zizmor, actionlint, shellcheck, gitleaks, pre-commit, osv-scanner and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
