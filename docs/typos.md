@@ -23,12 +23,12 @@ typos
 
 Exit code 0 means no findings. A non-zero exit (the default `long` format) prints one block per finding: the misspelled token, the suggested correction, then the file, line and column with the token underlined. `--format brief` is one line, `path:line:col: error: \`token\` should be \`correction\``.
 
-Fix the word in the file. Add a regex to `extend-ignore-re` in `typos.toml` only when the token is a real name or abbreviation. The current file ignores two patterns and nothing else:
+Fix the word in the file. Add a regex to `extend-ignore-re` in `typos.toml` only when the token is a real name or abbreviation, or add the token to `extend-words` when it is a whole identifier. The current file ignores two patterns:
 
 - `(BA)` — breakroom office tag on bot names, next to `(AO)` and `(SF)`
 - `(ba|ao|sf)` — the literal tag strip in `tools/breakroom/bin/breakroom`
 
-A token outside those two patterns still fails. Do not ignore a whole directory to clear one finding.
+`extend-words` also keeps `fpr`, the fetch/pull/rebase command name. A token outside that list still fails. Do not ignore a whole directory to clear one finding.
 
 ## Remove
 
