@@ -167,7 +167,7 @@ class CheckPinsTests(BeltCase):
         self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector', 'zizmor',
                                  'actionlint-py', 'shellcheck-py', 'ruff', 'gitleaks/gitleaks',
                                  'pre-commit', 'google/osv-scanner', 'lycheeverse/lychee',
-                                 'nektos/act', 'ollmcp'])
+                                 'nektos/act', 'typos', 'ollmcp'])
 
     def test_registry_urls(self):
         captured = []

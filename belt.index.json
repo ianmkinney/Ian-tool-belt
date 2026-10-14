@@ -212,6 +212,13 @@
       "description": "Pinned nektos/act CLI (github-release). Dry-run GitHub Actions locally; Docker is required to run workflows. Not an MCP server."
     },
     {
+      "id": "typos",
+      "kind": "pypi",
+      "name": "typos",
+      "version": "1.51.1",
+      "description": "Pinned typos spell checker (PyPI). Use in CI via typos.yml to catch misspellings in source and docs; not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
@@ -428,6 +435,10 @@
       "description": "Lint tracked shell scripts with the shellcheck-py pin via scripts/check_shell.py."
     },
     {
+      "id": ".github/workflows/typos.yml",
+      "description": "Spell-check source and docs with the typos PyPI pin from belt.json."
+    },
+    {
       "id": ".github/workflows/update-variable.yml",
       "description": "Manually set one allowlisted belt.json value and open a draft PR."
     },
@@ -526,6 +537,10 @@
     {
       "id": "act",
       "reason": "Local GitHub Actions dry-run; Docker is required to run workflows. act.yml only checks the pinned binary version; not an MCP server or export."
+    },
+    {
+      "id": "typos",
+      "reason": "CI-only pin read by typos.yml; not an MCP server or export."
     },
     {
       "id": "mcp-inspector",

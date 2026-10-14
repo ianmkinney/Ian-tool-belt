@@ -16,6 +16,7 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Pre-commit** (`pre-commit.yml`) | push, pull request | Installs the pinned `pre-commit` package and runs `pre-commit run --all-files` on the shared config | read |
 | **Dependency vulnerability scan** (`osv-scanner.yml`) | push, pull request | Downloads the pinned OSV-Scanner release binary and scans lockfiles and SBOMs for known CVEs | read |
 | **Link check** (`lychee.yml`) | push, pull request | Downloads the pinned lychee release binary and checks links in docs, the README and site sources | read |
+| **Spell check** (`typos.yml`) | push, pull request | Installs the pinned typos package and fails when source or docs contain a misspelling | read |
 | **act version check** (`act.yml`) | push, pull request | Downloads the pinned nektos/act binary, checks its checksum, and runs `act --version` (does not execute workflows) | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
@@ -141,7 +142,7 @@ To remove gitleaks from a project that adopted this belt: delete the `gitleaks` 
 
 ## Pre-commit
 
-[pre-commit](https://github.com/pre-commit/pre-commit) (MIT) runs configured linters as git hooks. The belt pins the framework on PyPI (`pre-commit` package in `belt.json`, currently **4.6.2**). [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) reuses the same gitleaks, shellcheck-py, actionlint, zizmor and ruff versions as the CI workflows above, plus a few hooks from [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks). The Ruff hooks are `v0.17.0` on `astral-sh/ruff-pre-commit`.
+[pre-commit](https://github.com/pre-commit/pre-commit) (MIT) runs configured linters as git hooks. The belt pins the framework on PyPI (`pre-commit` package in `belt.json`, currently **4.6.2**). [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) reuses the same gitleaks, shellcheck-py, actionlint, zizmor, ruff, and typos versions as the CI workflows above, plus a few hooks from [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks). The Ruff hooks are `v0.17.0` on `astral-sh/ruff-pre-commit`.
 
 Opt in locally (hooks are never installed without this):
 
@@ -204,6 +205,23 @@ On macOS, use `lychee-aarch64-apple-darwin.tar.gz` or `lychee-x86_64-apple-darwi
 
 To remove lychee from a project that adopted this belt: delete the `lychee` entry from `packages` in `belt.json`, remove `.github/workflows/lychee.yml` and `lychee.toml`, delete `docs/lychee.md`, and drop this section from your automation docs. Then run `python3 belt.py index`.
 
+## Spell check
+
+[typos](https://github.com/crate-ci/typos) (MIT OR Apache-2.0) checks source and docs for misspellings. Lychee checks links. ShellCheck and actionlint check syntax. None of those check spelling.
+
+The version comes from the `typos` pypi package in `belt.json` (`typos`, pinned at **1.51.1**, the same number as GitHub tag `v1.51.1`, published 2026-10-06). The weekly pin check covers the PyPI package. The job installs that pin with pip and runs `typos` on the repository. [`typos.toml`](../typos.toml) ignores the breakroom office tag `(BA)` and the literal `(ba|ao|sf)` strip in the name resolver. A token outside those two patterns still fails.
+
+Run it locally (the command matches CI):
+
+```sh
+python3 -m pip install 'typos==1.51.1'
+typos
+```
+
+Exit code 0 means no findings. A non-zero exit prints the file, the misspelling, and a suggested correction. See [typos.md](typos.md).
+
+To remove typos: delete the `typos` entry from `packages` in `belt.json`, remove `.github/workflows/typos.yml` and `typos.toml`, remove the `crate-ci/typos` hook from `.pre-commit-config.yaml` and `templates/pre-commit/.pre-commit-config.yaml`, delete `docs/typos.md`, and drop this section. Then run `python3 belt.py index`.
+
 ## Local workflow dry-run (act)
 
 [act](https://github.com/nektos/act) (MIT) runs GitHub Actions workflows on a laptop using Docker. The belt pins `nektos/act` **0.2.89**. actionlint, zizmor, ShellCheck and gitleaks still lint workflow files; act is how you see a job execute before a push. Full usage, job filters and removal steps are in [act.md](act.md).
@@ -231,4 +249,4 @@ The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, w
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-Belt checks, zizmor, actionlint, shellcheck, ruff, gitleaks, pre-commit, osv-scanner, lychee and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
+Belt checks, zizmor, actionlint, shellcheck, ruff, gitleaks, pre-commit, osv-scanner, lychee, typos and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.

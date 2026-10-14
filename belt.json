@@ -189,6 +189,13 @@
       "description": "Pinned nektos/act CLI (github-release). Dry-run GitHub Actions locally; Docker is required to run workflows. Not an MCP server."
     },
     {
+      "id": "typos",
+      "kind": "pypi",
+      "name": "typos",
+      "version": "1.51.1",
+      "description": "Pinned typos spell checker (PyPI). Use in CI via typos.yml to catch misspellings in source and docs; not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",

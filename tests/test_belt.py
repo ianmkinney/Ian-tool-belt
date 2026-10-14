@@ -378,6 +378,7 @@ class BeltTests(BeltCase):
         self.assertEqual(revs['shellcheck-py'], f"v{pins['shellcheck']}")
         self.assertEqual(revs['zizmor-pre-commit'], f"v{pins['zizmor']}")
         self.assertEqual(revs['actionlint'], 'v1.7.12')
+        self.assertEqual(revs['typos'], f"v{pins['typos']}")
         self.assertEqual(revs['ruff-pre-commit'], f"v{pins['ruff']}")
         ruff_hooks = next(repo for repo in config['repos'] if repo['repo'].endswith('ruff-pre-commit'))
         self.assertEqual([hook['id'] for hook in ruff_hooks['hooks']], ['ruff-check', 'ruff-format'])
@@ -446,6 +447,37 @@ class BeltTests(BeltCase):
         self.assertIn('act push', docs)
         self.assertIn('## Remove', docs)
         self.assertIn('nektos/act', docs)
+
+    def test_typos_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'typos')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'typos', '1.51.1'))
+        self.assertIn('spell', pin['description'].lower())
+        self.assertIn('not an MCP server', pin['description'])
+        workflow = (ROOT / '.github/workflows/typos.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertRegex(workflow, r'uses: actions/setup-python@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn('permissions:', workflow)
+        self.assertIn('contents: read', workflow)
+        self.assertIn("p['id'] == 'typos'", workflow)
+        self.assertIn('TYPOS_VERSION', workflow)
+        self.assertIn('typos==$TYPOS_VERSION', workflow)
+        self.assertIn('\n          typos\n', workflow)
+        self.assertNotIn(pin['version'], workflow)
+        config = (ROOT / 'typos.toml').read_text()
+        # Joined so this file does not contain the office-tag spelling typos.toml ignores.
+        office = ''.join(('\\\\(', 'B', 'A', '\\\\)'))  # noqa: FLY002
+        strip = ''.join(('\\\\(', 'b', 'a', '\\\\|ao\\\\|sf\\\\)'))  # noqa: FLY002
+        self.assertIn(office, config)
+        self.assertIn(strip, config)
+        self.assertIn('office tag', config)
+        docs = (ROOT / 'docs/typos.md').read_text()
+        self.assertIn('1.51.1', docs)
+        self.assertIn('MIT OR Apache-2.0', docs)
+        self.assertIn('crate-ci/typos', docs)
+        self.assertIn('typos==1.51.1', docs)
+        self.assertIn('## Remove', docs)
+        self.assertIn('typos.toml', docs)
 
     def test_ruff_pin_docs_and_workflow(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ruff')

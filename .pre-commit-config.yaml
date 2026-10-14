@@ -29,6 +29,12 @@ repos:
     hooks:
       - id: zizmor
         exclude: ^templates/
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.51.1
+    hooks:
+      - id: typos
+        # Upstream default is --write-changes. Report only, same as typos.yml.
+        args: []
   # rev tracks the ruff package pin in belt.json (tag v0.17.0).
   # types_or stays on Python so the format hook does not rewrite Markdown.
   - repo: https://github.com/astral-sh/ruff-pre-commit
