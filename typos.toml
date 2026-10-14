@@ -1,0 +1,8 @@
+# Breakroom bot names carry an office tag (BA), alongside (AO) and (SF).
+# BA is that tag, not the words "by" or "be". The name resolver strips it
+# with the literal pattern (ba|ao|sf) in tools/breakroom/bin/breakroom.
+[default]
+extend-ignore-re = [
+  "\\(BA\\)",
+  "\\(ba\\|ao\\|sf\\)",
+]

@@ -29,3 +29,9 @@ repos:
     hooks:
       - id: zizmor
         exclude: ^templates/
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.51.1
+    hooks:
+      - id: typos
+        # Upstream default is --write-changes. Report only, same as typos.yml.
+        args: []
