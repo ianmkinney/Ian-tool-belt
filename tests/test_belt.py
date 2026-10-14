@@ -473,6 +473,8 @@ class BeltTests(BeltCase):
         config = (ROOT / 'ruff.toml').read_text()
         self.assertIn('target-version = "py310"', config)
         self.assertIn('extend-select = ["E402"]', config)
+        self.assertIn('tools/breakroom/bin/breakroom', config)
+        self.assertIn('"belt"', config)
         self.assertIn('"scripts/**"', config)
         self.assertIn('"tests/**"', config)
         self.assertIn('"tools/**"', config)

@@ -20,9 +20,11 @@ ruff format --check --force-exclude belt.py scripts tests tools
 
 [`ruff.toml`](../ruff.toml) sets `target-version = "py310"` because Ruff 0.17 would otherwise assume 3.11, and belt checks still run on 3.10. `extend-select = ["E402"]` keeps the `noqa: E402` comments on the imports in `belt.py` that follow `sys.path.insert`.
 
+`tools/breakroom/bin/breakroom` has no `.py` suffix, so the workflow's directory scan skips it. Pre-commit still selects it by the Python shebang, so `ruff.toml` excludes that file from lint. The `belt` shim is the same kind of extensionless file; it is in the format exclude with the rest of the tree.
+
 `[lint] ignore` lists rules that already fire on this tree. The fixes would change behavior or restyle modules. Other default rules still fail the job. Drop a code from that list in the change that cleans it up.
 
-`[format] exclude` lists `belt.py`, `scripts/**`, `tests/**` and `tools/**`. `ruff format` would rewrite almost every Python file (quotes, wrapping, docstring indentation). `--force-exclude` makes that list apply even though CI passes the paths on the command line. Remove a glob in the same change that formats that path.
+`[format] exclude` lists `belt`, `belt.py`, `scripts/**`, `tests/**` and `tools/**`. `ruff format` would rewrite almost every Python file (quotes, wrapping, docstring indentation). `--force-exclude` makes that list apply even though CI and pre-commit pass paths on the command line. Remove a glob in the same change that formats that path.
 
 The weekly pin check reads the latest stable PyPI release. A newer Ruff can open a bump PR. The `astral-sh/ruff-pre-commit` rev in `.pre-commit-config.yaml` is `v0.17.0` (the hook repo prefixes `v`; the Ruff tag does not). Tests require that rev to match the belt pin.
 

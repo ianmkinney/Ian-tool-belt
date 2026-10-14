@@ -4,6 +4,10 @@ target-version = "py310"
 [lint]
 # belt.py imports scripts after sys.path.insert. The noqa comments name E402.
 extend-select = ["E402"]
+# Pre-commit passes this extensionless script by its Python shebang. It is a
+# compact stdlib CLI; rewriting it is a separate change. Directory discovery
+# in ruff.yml skips it because it has no .py suffix.
+exclude = ["tools/breakroom/bin/breakroom"]
 
 # Findings already in this tree. Automatic fixes would change behavior
 # (exception types, control flow) or restyle modules. Drop a code when that
@@ -31,4 +35,4 @@ ignore = [
 # docstring indentation). Keep that out of this pin. CI passes --force-exclude
 # so these globs stay out of `format --check`. Remove a glob in the change
 # that formats that path.
-exclude = ["belt.py", "scripts/**", "tests/**", "tools/**"]
+exclude = ["belt", "belt.py", "scripts/**", "tests/**", "tools/**"]
