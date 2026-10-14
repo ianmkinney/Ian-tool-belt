@@ -1,6 +1,6 @@
 # Pre-commit hooks
 
-[pre-commit](https://github.com/pre-commit/pre-commit) (MIT, PyPI package `pre-commit`) runs configured checks before each `git commit`. The belt pins **4.6.2** (verified 2026-10-12 from [PyPI](https://pypi.org/project/pre-commit/) and [GitHub releases](https://github.com/pre-commit/pre-commit/releases)). It complements CI jobs for gitleaks, ShellCheck, actionlint and zizmor by catching the same classes of problems on a laptop or in a cloud agent workspace before changes are committed.
+[pre-commit](https://github.com/pre-commit/pre-commit) (MIT, PyPI package `pre-commit`) runs configured checks before each `git commit`. The belt pins **4.6.2** (verified 2026-10-12 from [PyPI](https://pypi.org/project/pre-commit/) and [GitHub releases](https://github.com/pre-commit/pre-commit/releases)). It complements CI jobs for gitleaks, ShellCheck, Ruff, actionlint and zizmor by catching the same classes of problems on a laptop or in a cloud agent workspace before changes are committed.
 
 ## What runs locally
 
@@ -13,6 +13,7 @@ The repo root [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) wires:
 | `shellcheck-py/shellcheck-py` | `shellcheck` package `0.11.0.1` | ShellCheck on shell scripts |
 | `rhysd/actionlint` | actionlint **v1.7.12** (matches `actionlint-py` `1.7.12.25`) | Workflow syntax on `.github/workflows` (ShellCheck on `run:` blocks stays in the CI actionlint job) |
 | `woodruffw/zizmor-pre-commit` | `zizmor` package `1.30.1` | Workflow security on `.github/workflows` YAML |
+| `astral-sh/ruff-pre-commit` | `ruff` package `0.17.0` (`v0.17.0`) | Ruff lint and format on Python files (respects `ruff.toml`; Markdown stays out) |
 
 CI still lint templates under `templates/` (actionlint) and runs full-repo gitleaks history; pre-commit zizmor skips `templates/` because adoption placeholders are not valid SHA pins until `belt_sync` runs. That split matches the CI zizmor job, which only audits `.github/workflows`.
 

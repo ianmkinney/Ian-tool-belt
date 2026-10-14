@@ -65,6 +65,7 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 - `zizmor` — CI-only pin read by zizmor.yml; not an MCP server or export.
 - `actionlint` — CI-only pin read by actionlint.yml; not an MCP server or export.
 - `shellcheck` — CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.
+- `ruff` — CI-only pin read by ruff.yml for Python lint and format; not an MCP server or export.
 - `gitleaks` — CI-only pin read by gitleaks.yml; not an MCP server or export.
 - `pre-commit` — CI and opt-in local hooks via pre-commit.yml; not an MCP server or export.
 - `osv-scanner` — CI-only pin read by osv-scanner.yml; not an MCP server or export.

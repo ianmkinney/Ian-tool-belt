@@ -1,7 +1,6 @@
 import contextlib
 import io
 import json
-import re
 import unittest
 
 from belt_fixture import ROOT, load_script
