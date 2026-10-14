@@ -35,3 +35,12 @@ repos:
       - id: typos
         # Upstream default is --write-changes. Report only, same as typos.yml.
         args: []
+  # rev tracks the ruff package pin in belt.json (tag v0.17.0).
+  # types_or stays on Python so the format hook does not rewrite Markdown.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
+    hooks:
+      - id: ruff-check
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]

@@ -327,7 +327,7 @@ def build(root, out_dir, base=DEFAULT_BASE):
             f'<p>{esc(p["description"])}</p><p><code>{esc(name)}</code></p></article>'
         )
         search.append(search_item('tools.html', p['id'], p['description']))
-    tools_body = f'<h1>Tools &amp; packages</h1><p class="lead">Pinned packages and file bundles declared in belt.json.</p>'
+    tools_body = '<h1>Tools &amp; packages</h1><p class="lead">Pinned packages and file bundles declared in belt.json.</p>'
     tools_body += '<div class="search"><label for="q-tools">Filter</label><input id="q-tools" type="search" data-search-target=".grid" placeholder="Search packages…"></div>'
     tools_body += f'<div class="grid">{"".join(pkg_cards)}</div>'
     page('tools.html', 'Tools', tools_body)

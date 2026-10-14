@@ -37,7 +37,7 @@ def run(shellcheck, paths, root):
     if not paths:
         return 0
     argv = [shellcheck, '--external-sources', '--severity=warning', *paths]
-    return subprocess.run(argv, cwd=root).returncode
+    return subprocess.run(argv, cwd=root, check=False).returncode
 
 
 def main(argv=None):

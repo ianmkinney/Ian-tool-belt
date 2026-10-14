@@ -170,6 +170,13 @@
       "description": "Pinned ShellCheck (via shellcheck-py). Use in CI via shellcheck.yml and actionlint -shellcheck; not an MCP server."
     },
     {
+      "id": "ruff",
+      "kind": "pypi",
+      "name": "ruff",
+      "version": "0.17.0",
+      "description": "Pinned Ruff (PyPI). Lint and format Python in belt.py, scripts, tests and tools via ruff.yml; pairs with shellcheck. Not an MCP server."
+    },
+    {
       "id": "gitleaks",
       "kind": "github-release",
       "name": "gitleaks/gitleaks",
@@ -416,6 +423,10 @@
       "description": "release-please on push to main; merging its PR bumps versions and tags."
     },
     {
+      "id": ".github/workflows/ruff.yml",
+      "description": "Lint and format belt.py, scripts, tests and tools with the ruff PyPI pin from belt.json."
+    },
+    {
       "id": ".github/workflows/run-task.yml",
       "description": "Manually run one allowlisted belt task and upload its log."
     },
@@ -502,6 +513,10 @@
     {
       "id": "shellcheck",
       "reason": "CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export."
+    },
+    {
+      "id": "ruff",
+      "reason": "CI-only pin read by ruff.yml for Python lint and format; not an MCP server or export."
     },
     {
       "id": "gitleaks",

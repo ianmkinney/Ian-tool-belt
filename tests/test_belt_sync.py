@@ -10,8 +10,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-import belt_sync
-import export as exporter
+import belt_sync  # noqa: E402
+import export as exporter  # noqa: E402
 
 ADOPTION = ROOT / 'templates/app-adoption'
 WORKFLOW = ROOT / '.github/workflows/belt-sync-reusable.yml'

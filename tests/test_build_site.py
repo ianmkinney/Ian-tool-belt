@@ -18,7 +18,6 @@ class BuildSiteTests(unittest.TestCase):
             index = json.loads((ROOT / 'belt.index.json').read_text())
             errors = build_site.validate_site(out, index, '/Ian-tool-belt/')
             self.assertEqual(errors, [])
-            html = (out / 'index.html').read_text()
             self.assertIn('--tb-color-blueprint-navy', (out / 'assets/style.css').read_text())
             self.assertIn('prefers-reduced-motion', (out / 'assets/style.css').read_text())
 

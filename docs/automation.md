@@ -11,6 +11,7 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Workflow security lint** (`zizmor.yml`) | push, pull request | Runs zizmor on `.github/workflows` and fails on findings, shown as annotations | read |
 | **Workflow syntax lint** (`actionlint.yml`) | push, pull request | Runs actionlint on `.github/workflows`, the app workflow templates, and the versioning caller templates, and fails on findings | read |
 | **Shell script lint** (`shellcheck.yml`) | push, pull request | Runs ShellCheck on tracked `*.sh` files and shell shebang scripts via `scripts/check_shell.py`, and fails on findings | read |
+| **Python lint** (`ruff.yml`) | push, pull request | Installs the pinned `ruff` package and runs `ruff check` and `ruff format --check` on `belt.py`, `scripts/`, `tests/` and `tools/` | read |
 | **Secret scan** (`gitleaks.yml`) | push, pull request | Downloads the pinned gitleaks release binary and scans the repository for leaked secrets | read |
 | **Pre-commit** (`pre-commit.yml`) | push, pull request | Installs the pinned `pre-commit` package and runs `pre-commit run --all-files` on the shared config | read |
 | **Dependency vulnerability scan** (`osv-scanner.yml`) | push, pull request | Downloads the pinned OSV-Scanner release binary and scans lockfiles and SBOMs for known CVEs | read |
@@ -104,6 +105,24 @@ uvx --from shellcheck-py==0.11.0.1 shellcheck --version
 
 To remove ShellCheck from the belt, delete the `shellcheck` package from `belt.json`, remove `.github/workflows/shellcheck.yml`, drop the shellcheck pin step and package from `.github/workflows/actionlint.yml`, delete `scripts/check_shell.py`, and revert the documentation and test references in the same commit.
 
+## Python lint
+
+[Ruff](https://github.com/astral-sh/ruff) (MIT) lints and formats Python. ShellCheck covers shell scripts; Ruff covers `belt.py`, `scripts/`, `tests/` and `tools/`. The version comes from the `ruff` pypi package in `belt.json` (**0.17.0**, release tag `0.17.0`, published 2026-10-09). The weekly pin check covers that PyPI pin.
+
+The job installs the pin with pip and runs `ruff check` and `ruff format --check --force-exclude` on those paths. [`ruff.toml`](../ruff.toml) sets the target to Python 3.10, keeps the `E402` noqa on `belt.py`, ignores rules that already fire on this tree, and excludes the current Python files from the formatter so this pin does not rewrite them. `tools/breakroom/bin/breakroom` has no `.py` suffix, so Ruff's directory discovery skips it. Workflow `run:` blocks are still the actionlint job's concern; that job does not install pyflakes.
+
+Run it locally (commands match CI):
+
+```sh
+python3 -m pip install 'ruff==0.17.0'
+ruff check belt.py scripts tests tools
+ruff format --check --force-exclude belt.py scripts tests tools
+```
+
+Exit code 0 means the linter is clean and the formatter found nothing outside the exclude list. A check failure prints the file, rule code and line. See [ruff.md](ruff.md).
+
+To remove Ruff: delete the `ruff` package from `belt.json`, remove `.github/workflows/ruff.yml` and `ruff.toml`, drop the `astral-sh/ruff-pre-commit` hooks, delete [ruff.md](ruff.md), and drop this section. Then run `python3 belt.py index`.
+
 ## Secret scan
 
 [gitleaks](https://github.com/gitleaks/gitleaks) (MIT) is a static secret scanner for Git repositories. It flags API keys, tokens, passwords and other high-entropy credentials in tracked files and commit history. zizmor checks workflow security; gitleaks checks application and configuration content before it reaches GitHub.
@@ -123,7 +142,7 @@ To remove gitleaks from a project that adopted this belt: delete the `gitleaks` 
 
 ## Pre-commit
 
-[pre-commit](https://github.com/pre-commit/pre-commit) (MIT) runs configured linters as git hooks. The belt pins the framework on PyPI (`pre-commit` package in `belt.json`, currently **4.6.2**). [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) reuses the same gitleaks, shellcheck-py, actionlint, zizmor, and typos versions as the CI workflows above, plus a few hooks from [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks).
+[pre-commit](https://github.com/pre-commit/pre-commit) (MIT) runs configured linters as git hooks. The belt pins the framework on PyPI (`pre-commit` package in `belt.json`, currently **4.6.2**). [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) reuses the same gitleaks, shellcheck-py, actionlint, zizmor, ruff, and typos versions as the CI workflows above, plus a few hooks from [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks). The Ruff hooks are `v0.17.0` on `astral-sh/ruff-pre-commit`.
 
 Opt in locally (hooks are never installed without this):
 
@@ -230,4 +249,4 @@ The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, w
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-Belt checks, zizmor, actionlint, shellcheck, gitleaks, pre-commit, osv-scanner, lychee, typos and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
+Belt checks, zizmor, actionlint, shellcheck, ruff, gitleaks, pre-commit, osv-scanner, lychee, typos and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.

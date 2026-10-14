@@ -147,6 +147,13 @@
       "description": "Pinned ShellCheck (via shellcheck-py). Use in CI via shellcheck.yml and actionlint -shellcheck; not an MCP server."
     },
     {
+      "id": "ruff",
+      "kind": "pypi",
+      "name": "ruff",
+      "version": "0.17.0",
+      "description": "Pinned Ruff (PyPI). Lint and format Python in belt.py, scripts, tests and tools via ruff.yml; pairs with shellcheck. Not an MCP server."
+    },
+    {
       "id": "gitleaks",
       "kind": "github-release",
       "name": "gitleaks/gitleaks",
