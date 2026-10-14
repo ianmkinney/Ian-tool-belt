@@ -1,7 +1,7 @@
-"""Fetch and update a feature branch from the latest origin default branch.
+"""Fetch and update a feature branch from a remote-tracking ref.
 
-  python3 belt.py fpr new <branch>
-  python3 belt.py fpr sync [--rebase]
+  python3 belt.py fpr new <branch> [--base <base>]
+  python3 belt.py fpr sync [--base <base>] [--rebase]
 """
 import argparse
 import os
@@ -139,7 +139,7 @@ def committer_email(repo):
 
 
 def assert_rebase_allowed(repo, branch, default):
-    if branch == default:
+    if branch == 'main' or branch == origin_default(repo):
         raise FprError(f'Refusing to rebase {branch}. That is the default branch.')
     if remote_is_ahead(repo, branch):
         raise FprError(
@@ -164,33 +164,66 @@ def check_branch_name(name):
         raise FprError(f'Invalid branch name {name!r}.')
 
 
-def create_branch(repo, name):
+def local_main_is_behind(repo):
+    local = git(repo, ['rev-parse', '--verify', '--quiet', 'refs/heads/main'],
+                check=False, echo=False)
+    if local.returncode != 0 or not remote_branch_exists(repo, 'main'):
+        return False
+    behind = git(repo, ['rev-list', '--count', 'refs/heads/main..refs/remotes/origin/main'], echo=False)
+    return behind.stdout.strip() not in {'', '0'}
+
+
+def warn_if_local_main_is_behind(repo):
+    if not local_main_is_behind(repo):
+        return False
+    print('Warning: local main is behind origin/main. Leaving it alone. '
+          'origin/<base> after fetch is the source of truth.')
+    return True
+
+
+def resolve_base(repo, base):
+    chosen = base if base else origin_default(repo)
+    if base:
+        check_branch_name(base)
+    if not remote_branch_exists(repo, chosen):
+        raise FprError(
+            f'origin/{chosen} does not exist after fetch. '
+            'fpr uses that remote-tracking ref and will not fall back to a local branch.')
+    return chosen
+
+
+def create_branch(repo, name, base=None):
     check_branch_name(name)
     ensure_clean(repo)
     fetch(repo)
-    default = origin_default(repo)
-    print(f'Creating {name} from origin/{default}')
-    git(repo, ['switch', '-c', name, f'origin/{default}'])
+    warn_if_local_main_is_behind(repo)
+    chosen = resolve_base(repo, base)
+    print(f'Creating {name} from origin/{chosen}')
+    git(repo, ['switch', '-c', name, f'origin/{chosen}'])
 
 
-def sync_branch(repo, rebase=False):
+def sync_branch(repo, rebase=False, base=None):
     ensure_clean(repo)
     fetch(repo)
-    default = origin_default(repo)
+    behind = warn_if_local_main_is_behind(repo)
+    chosen = resolve_base(repo, base)
     branch = current_branch(repo)
+    if branch == 'main' and behind:
+        print('Not updating local main.')
+        return
     pushed = remote_branch_exists(repo, branch)
     if not pushed:
-        print(f'{branch} has not been pushed. Rebasing onto origin/{default}.')
-        rebase_onto(repo, default)
+        print(f'{branch} has not been pushed. Rebasing onto origin/{chosen}.')
+        rebase_onto(repo, chosen)
         return
     if rebase:
-        assert_rebase_allowed(repo, branch, default)
-        rebase_onto(repo, default)
+        assert_rebase_allowed(repo, branch, chosen)
+        rebase_onto(repo, chosen)
         print(f'Pushing {branch} with --force-with-lease')
         git(repo, ['push', '--force-with-lease', 'origin', branch])
         return
-    print(f'{branch} is on origin. Merging origin/{default}.')
-    merge_default(repo, default)
+    print(f'{branch} is on origin. Merging origin/{chosen}.')
+    merge_default(repo, chosen)
 
 
 def main(argv=None):
@@ -198,12 +231,13 @@ def main(argv=None):
     parser.add_argument('action', choices=['new', 'sync'])
     parser.add_argument('branch', nargs='?')
     parser.add_argument('--rebase', action='store_true')
+    parser.add_argument('--base', help='remote branch to stack on; fpr uses origin/<base> after fetch')
     args = parser.parse_args(argv)
     if args.action == 'new' and not args.branch:
-        print('usage: python3 belt.py fpr new <branch>', file=sys.stderr)
+        print('usage: python3 belt.py fpr new <branch> [--base <base>]', file=sys.stderr)
         return 2
     if args.action == 'sync' and args.branch:
-        print('usage: python3 belt.py fpr sync [--rebase]', file=sys.stderr)
+        print('usage: python3 belt.py fpr sync [--base <base>] [--rebase]', file=sys.stderr)
         return 2
     if args.rebase and args.action != 'sync':
         print('--rebase is only for fpr sync', file=sys.stderr)
@@ -211,9 +245,9 @@ def main(argv=None):
     repo = Path.cwd()
     try:
         if args.action == 'new':
-            create_branch(repo, args.branch)
+            create_branch(repo, args.branch, base=args.base)
         else:
-            sync_branch(repo, rebase=args.rebase)
+            sync_branch(repo, rebase=args.rebase, base=args.base)
     except FprError as error:
         print(error, file=sys.stderr)
         return error.code

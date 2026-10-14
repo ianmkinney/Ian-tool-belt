@@ -23,7 +23,7 @@ Machine-readable copy: [`belt.index.json`](belt.index.json).
 - `python3 belt.py index` — Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check.
 - `python3 belt.py breakroom …` — Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).
 - `python3 belt.py site` — Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check.
-- `python3 belt.py fpr new <branch> | sync` — Fetch origin and start or update a feature branch from origin/<default>. Never branch from a stale local main.
+- `python3 belt.py fpr new <branch> [--base <base>] | sync [--base <base>]` — Fetch origin and start or update a feature branch from origin/<base>. Never branch from a stale local main.
 
 ### Drop this belt into a project
 

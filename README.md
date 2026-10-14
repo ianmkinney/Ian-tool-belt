@@ -36,8 +36,8 @@ Then set `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY` in the client environment if 
 | `python3 belt.py add skill\|package ...` | Scaffold and register a skill or package |
 | `python3 belt.py set PATH VALUE` | Change one allowlisted `belt.json` field |
 | `python3 belt.py run TASK` | Allowlisted task (validate, tests, export, pins) |
-| `python3 belt.py fpr new <branch>` | Start a branch from the latest `origin/<default>` |
-| `python3 belt.py fpr sync` | Merge or rebase that branch so it stays current |
+| `python3 belt.py fpr new <branch> [--base <base>]` | Start a branch from `origin/<base>` after fetch |
+| `python3 belt.py fpr sync [--base <base>]` | Merge or rebase onto that remote-tracking ref |
 
 `./belt` is the same CLI. The scripts under `scripts/` still work; `belt.py` wraps them.
 

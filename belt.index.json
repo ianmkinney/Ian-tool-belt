@@ -51,8 +51,8 @@
     },
     {
       "id": "fpr",
-      "run": "python3 belt.py fpr new <branch> | sync",
-      "description": "Fetch origin and start or update a feature branch from origin/<default>. Never branch from a stale local main."
+      "run": "python3 belt.py fpr new <branch> [--base <base>] | sync [--base <base>]",
+      "description": "Fetch origin and start or update a feature branch from origin/<base>. Never branch from a stale local main."
     }
   ],
   "servers": [
@@ -356,7 +356,7 @@
     },
     {
       "id": "scripts/fpr.py",
-      "description": "Fetch origin and create or update a feature branch from origin/<default>. belt.py fpr wraps this."
+      "description": "Fetch origin and create or update a feature branch from origin/<base>. belt.py fpr wraps this."
     },
     {
       "id": "scripts/local_ai_check.py",

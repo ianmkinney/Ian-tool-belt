@@ -10,7 +10,7 @@
   python3 belt.py index [--check]
   python3 belt.py breakroom …   team board CLI (passthrough)
   python3 belt.py site [--check]  build the GitHub Pages site into site/
-  python3 belt.py fpr new <branch> | sync [--rebase]
+  python3 belt.py fpr new <branch> [--base <base>] | sync [--base <base>] [--rebase]
 """
 import argparse
 import json
@@ -265,6 +265,8 @@ def cmd_fpr(args):
     argv = [args.action]
     if args.branch:
         argv.append(args.branch)
+    if args.base:
+        argv.extend(['--base', args.base])
     if args.rebase:
         argv.append('--rebase')
     return fpr.main(argv)
@@ -361,9 +363,10 @@ def build_parser():
     site.add_argument('--check', action='store_true', help='build and validate links and catalog coverage')
     site.set_defaults(func=cmd_site)
 
-    update = sub.add_parser('fpr', help='fetch origin and start or update a branch from origin/<default>')
+    update = sub.add_parser('fpr', help='fetch origin and start or update a branch from origin/<base>')
     update.add_argument('action', choices=['new', 'sync'])
     update.add_argument('branch', nargs='?')
+    update.add_argument('--base', help='remote branch to stack on; uses origin/<base> after fetch')
     update.add_argument('--rebase', action='store_true',
                         help='rebase a pushed branch you alone own, then push --force-with-lease')
     update.set_defaults(func=cmd_fpr)

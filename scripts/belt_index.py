@@ -29,8 +29,8 @@ COMMANDS = [
      'description': 'Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).'},
     {'id': 'site', 'run': 'python3 belt.py site',
      'description': 'Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check.'},
-    {'id': 'fpr', 'run': 'python3 belt.py fpr new <branch> | sync',
-     'description': 'Fetch origin and start or update a feature branch from origin/<default>. Never branch from a stale local main.'},
+    {'id': 'fpr', 'run': 'python3 belt.py fpr new <branch> [--base <base>] | sync [--base <base>]',
+     'description': 'Fetch origin and start or update a feature branch from origin/<base>. Never branch from a stale local main.'},
 ]
 
 RULE_INFO = {
@@ -57,7 +57,7 @@ SCRIPT_INFO = {
     'scripts/build_tokens.py': 'Generate styling/tokens.css from tokens.json. --check confirms they match.',
     'scripts/belt_index.py': 'Build belt.index.json and the AGENTS.md map from belt.json. belt.py index wraps this.',
     'scripts/check_shell.py': 'Run shellcheck on git-tracked shell scripts. CI uses the belt shellcheck pin; not part of client export.',
-    'scripts/fpr.py': 'Fetch origin and create or update a feature branch from origin/<default>. belt.py fpr wraps this.',
+    'scripts/fpr.py': 'Fetch origin and create or update a feature branch from origin/<base>. belt.py fpr wraps this.',
 }
 
 WORKFLOW_INFO = {
