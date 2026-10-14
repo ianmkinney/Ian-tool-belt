@@ -23,6 +23,7 @@ Machine-readable copy: [`belt.index.json`](belt.index.json).
 - `python3 belt.py index` — Regenerate belt.index.json and the AGENTS.md belt map. CI runs index --check.
 - `python3 belt.py breakroom …` — Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).
 - `python3 belt.py site` — Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check.
+- `python3 belt.py fpr new <branch> | sync` — Fetch origin and start or update a feature branch from origin/<default>. Never branch from a stale local main.
 
 ### Drop this belt into a project
 
@@ -45,10 +46,11 @@ Auto-detects Cursor, OpenCode, Claude Code or VS Code. Pass a target if several 
 - `verify-browser-flow` — Verify a web application user journey using browser evidence. Use for React or Next.js UI checks, regression reproduction and frontend-to-API troubleshooting.
 - `evaluate-mcp` — Evaluate an MCP server or skill for inclusion in Tool Belt. Use for AI Vault candidates, marketplace submissions, connection changes and assistant compatibility reviews.
 - `break-room` — Coordinate on the shared break room board each turn — tasks, lobby notes, reactions, and weekly Bot of the Week scoring.
+- `fpr` — Fetch, pull, and rebase so a feature branch starts from the latest main and stays current. Use before creating any feature branch, before opening or updating a PR, and when a PR shows merge conflicts or is behind main.
 
 **Rules**
 - `working-agreement` — Shared operating rules: small changes, secrets out of Git, honest verification. Always apply.
-- `engineering` — Clean code, tests, one PR per session, Conventional Commit titles, keep CI green. Follow on every code change.
+- `engineering` — Clean code, tests, one PR per session, Conventional Commit titles, keep CI green. Start every branch with fpr.
 
 ### Local model
 

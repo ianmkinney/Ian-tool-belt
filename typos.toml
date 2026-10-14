@@ -6,3 +6,7 @@ extend-ignore-re = [
   "\\(BA\\)",
   "\\(ba\\|ao\\|sf\\)",
 ]
+
+[default.extend-words]
+# Command and skill name (fetch, pull, rebase). Not the word "for".
+fpr = "fpr"

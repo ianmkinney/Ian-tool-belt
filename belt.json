@@ -12,7 +12,8 @@
     "skills/reconcile-data/SKILL.md",
     "skills/verify-browser-flow/SKILL.md",
     "skills/evaluate-mcp/SKILL.md",
-    "skills/break-room/SKILL.md"
+    "skills/break-room/SKILL.md",
+    "skills/fpr/SKILL.md"
   ],
   "servers": [
     {
