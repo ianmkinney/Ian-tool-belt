@@ -253,7 +253,7 @@ def cmd_breakroom(args):
     script = ROOT / 'tools' / 'breakroom' / 'bin' / 'breakroom'
     argv = [sys.executable, str(script), *args.breakroom_args]
     try:
-        return subprocess.run(argv).returncode
+        return subprocess.run(argv, check=False).returncode
     except OSError as error:
         print(f'breakroom failed: {error}', file=sys.stderr)
         return 1

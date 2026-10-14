@@ -50,7 +50,8 @@ def run(task, out, preset=None):
         for argv in TASKS[task][0](out, preset):
             log.write('$ ' + ' '.join(argv[1:] if argv[0] == PY else argv) + '\n')
             log.flush()
-            status = subprocess.run(argv, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT).returncode
+            status = subprocess.run(
+                argv, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=False).returncode
             log.write(f'[exit {status}]\n')
             if status:
                 break

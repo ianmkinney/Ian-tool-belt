@@ -30,7 +30,7 @@ This is not a gateway. Each exported client connects directly to the declared se
 
 `python3 belt.py use cursor --app path/to/app` writes `.cursor/mcp.json`, `.cursor/rules/*.mdc` and `.cursor/skills/`. Cursor resolves `${env:NAME}` from the environment it was launched with. Open **Customize** in Cursor to confirm that the MCP servers, rules and skills appear, then make a harmless call. `INSTRUCTIONS.md` is a combined copy for clients or chats that do not read `.cursor/`.
 
-Packages that are not MCP connections (zizmor, actionlint, shellcheck, gitleaks, pre-commit, osv-scanner, lychee, act, mcp-inspector, ollmcp, styling) are listed in `compatibility.json` and [belt.index.json](../belt.index.json) `skipped`; they are not copied into `.cursor/`. Link checking is [lychee](lychee.md). Optional local git hooks use [pre-commit](pre-commit.md); copy `templates/pre-commit/.pre-commit-config.yaml` and run `pre-commit install` when you want them. Optional local workflow dry-runs use [act](act.md); Docker must be running before a job will execute.
+Packages that are not MCP connections (zizmor, actionlint, shellcheck, ruff, gitleaks, pre-commit, osv-scanner, lychee, act, mcp-inspector, ollmcp, styling) are listed in `compatibility.json` and [belt.index.json](../belt.index.json) `skipped`; they are not copied into `.cursor/`. Python lint and format use [ruff](ruff.md). Link checking is [lychee](lychee.md). Optional local git hooks use [pre-commit](pre-commit.md); copy `templates/pre-commit/.pre-commit-config.yaml` and run `pre-commit install` when you want them. Optional local workflow dry-runs use [act](act.md); Docker must be running before a job will execute.
 
 ### Local agent clients
 

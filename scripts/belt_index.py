@@ -2,7 +2,7 @@
 import json
 import re
 from pathlib import Path
-from validate import ADAPTER_INFO, ADAPTERS, one_line, validate
+from validate import ADAPTER_INFO, one_line, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEX_PATH = ROOT / 'belt.index.json'
@@ -72,6 +72,8 @@ WORKFLOW_INFO = {
         'Syntax-lint GitHub workflows with the actionlint-py pin from belt.json.',
     '.github/workflows/shellcheck.yml':
         'Lint tracked shell scripts with the shellcheck-py pin via scripts/check_shell.py.',
+    '.github/workflows/ruff.yml':
+        'Lint and format belt.py, scripts, tests and tools with the ruff PyPI pin from belt.json.',
     '.github/workflows/gitleaks.yml':
         'Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json.',
     '.github/workflows/pre-commit.yml':
@@ -127,6 +129,7 @@ SKIPPED = [
     {'id': 'zizmor', 'reason': 'CI-only pin read by zizmor.yml; not an MCP server or export.'},
     {'id': 'actionlint', 'reason': 'CI-only pin read by actionlint.yml; not an MCP server or export.'},
     {'id': 'shellcheck', 'reason': 'CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.'},
+    {'id': 'ruff', 'reason': 'CI-only pin read by ruff.yml for Python lint and format; not an MCP server or export.'},
     {'id': 'gitleaks', 'reason': 'CI-only pin read by gitleaks.yml; not an MCP server or export.'},
     {'id': 'pre-commit', 'reason': 'CI and opt-in local hooks via pre-commit.yml; not an MCP server or export.'},
     {'id': 'osv-scanner', 'reason': 'CI-only pin read by osv-scanner.yml; not an MCP server or export.'},
