@@ -132,6 +132,11 @@ class CheckPinsTests(BeltCase):
         self.assertFalse(check_pins.is_newer('1.7.12.25', '1.7.12.25'))
         self.assertFalse(check_pins.is_newer('1.7.12', '1.7.12.25'))
         self.assertFalse(check_pins.is_newer('1.7.12.25-rc1', '1.7.12.24'))
+        self.assertTrue(check_pins.is_newer('0.37', '0.36'))
+        self.assertTrue(check_pins.is_newer('0.36.1', '0.36'))
+        self.assertFalse(check_pins.is_newer('0.36', '0.36'))
+        self.assertFalse(check_pins.is_newer('0.36', '0.36.0'))
+        self.assertFalse(check_pins.is_newer('0.36a1', '0.35'))
 
     def test_report_only_does_not_modify(self):
         before = self.manifest.read_text()
@@ -167,7 +172,7 @@ class CheckPinsTests(BeltCase):
         self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector', 'zizmor',
                                  'actionlint-py', 'shellcheck-py', 'ruff', 'gitleaks/gitleaks',
                                  'pre-commit', 'google/osv-scanner', 'lycheeverse/lychee',
-                                 'nektos/act', 'typos', 'ollmcp'])
+                                 'nektos/act', 'typos', 'ollmcp', 'llm'])
 
     def test_registry_urls(self):
         captured = []
