@@ -1,0 +1,20 @@
+{
+  // Defaults first. Only the rules below fight how these docs are already written.
+  "config": {
+    "default": true,
+    // MD013: prose, tables and commands already run past 80 columns.
+    "MD013": false,
+    // MD034: docs cite canonical URLs as bare links.
+    "MD034": false,
+    // MD041: README.md opens with the tool-belt banner fence, then the h1.
+    "MD041": false,
+    // Placeholders in tools/breakroom/products/_TEMPLATE.md, not HTML.
+    "MD033": {
+      "allowed_elements": ["App", "app", "bot"]
+    }
+  },
+  "globs": ["**/*.md"],
+  // Generated output: belt.py index, release-please, and the Pages build.
+  "ignores": ["AGENTS.md", "CHANGELOG.md", "site/**"],
+  "gitignore": true
+}

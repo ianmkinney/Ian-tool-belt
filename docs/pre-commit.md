@@ -1,6 +1,6 @@
 # Pre-commit hooks
 
-[pre-commit](https://github.com/pre-commit/pre-commit) (MIT, PyPI package `pre-commit`) runs configured checks before each `git commit`. The belt pins **4.6.2** (verified 2026-10-12 from [PyPI](https://pypi.org/project/pre-commit/) and [GitHub releases](https://github.com/pre-commit/pre-commit/releases)). It complements CI jobs for gitleaks, ShellCheck, Ruff, actionlint, zizmor and typos by catching the same classes of problems on a laptop or in a cloud agent workspace before changes are committed.
+[pre-commit](https://github.com/pre-commit/pre-commit) (MIT, PyPI package `pre-commit`) runs configured checks before each `git commit`. The belt pins **4.6.2** (verified 2026-10-12 from [PyPI](https://pypi.org/project/pre-commit/) and [GitHub releases](https://github.com/pre-commit/pre-commit/releases)). It complements CI jobs for gitleaks, ShellCheck, Ruff, actionlint, zizmor, typos and markdownlint-cli2 by catching the same classes of problems on a laptop or in a cloud agent workspace before changes are committed.
 
 ## What runs locally
 
@@ -15,8 +15,9 @@ The repo root [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) wires:
 | `woodruffw/zizmor-pre-commit` | `zizmor` package `1.30.1` | Workflow security on `.github/workflows` YAML |
 | `crate-ci/typos` | `typos` package `1.51.1` (`v1.51.1`) | Spell check on text files. `args: []` turns off the upstream `--write-changes` default so the hook only reports, matching `typos.yml` |
 | `astral-sh/ruff-pre-commit` | `ruff` package `0.17.0` (`v0.17.0`) | Ruff lint and format on Python files (respects `ruff.toml`; Markdown stays out) |
+| `DavidAnson/markdownlint-cli2` | `markdownlint-cli2` package `0.23.3` (`v0.23.3`) | Markdown structure. The hook does not pass `--fix`, so it only reports, matching `markdownlint.yml`. `language_version: system` needs Node 22 on `PATH` |
 
-CI still lint templates under `templates/` (actionlint) and runs full-repo gitleaks history; pre-commit zizmor skips `templates/` because adoption placeholders are not valid SHA pins until `belt_sync` runs. That split matches the CI zizmor job, which only audits `.github/workflows`. The typos hook and `typos.yml` both read [`typos.toml`](../typos.toml).
+CI still lint templates under `templates/` (actionlint) and runs full-repo gitleaks history; pre-commit zizmor skips `templates/` because adoption placeholders are not valid SHA pins until `belt_sync` runs. That split matches the CI zizmor job, which only audits `.github/workflows`. The typos hook and `typos.yml` both read [`typos.toml`](../typos.toml). The markdownlint-cli2 hook and `markdownlint.yml` both read [`.markdownlint-cli2.jsonc`](../.markdownlint-cli2.jsonc). The Pre-commit workflow installs Node 22 first because that package requires it.
 
 ## When bots should use it
 

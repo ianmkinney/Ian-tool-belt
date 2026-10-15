@@ -74,6 +74,7 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 - `lychee` — CI-only pin read by lychee.yml; not an MCP server or export.
 - `act` — Local GitHub Actions dry-run; Docker is required to run workflows. act.yml only checks the pinned binary version; not an MCP server or export.
 - `typos` — CI-only pin read by typos.yml; not an MCP server or export.
+- `markdownlint-cli2` — CI-only pin read by markdownlint.yml for Markdown structure; not an MCP server or export.
 - `mcp-inspector` — Used by scripts/mcp_smoke.py; not declared as a connection.
 - `ollmcp` — Optional client. Load the claude-code export with --servers-json; not a fifth adapter.
 - `playwright-mcp` — Consumed through the playwright server args, not copied as its own export.

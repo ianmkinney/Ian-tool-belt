@@ -17,6 +17,7 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Dependency vulnerability scan** (`osv-scanner.yml`) | push, pull request | Downloads the pinned OSV-Scanner release binary and scans lockfiles and SBOMs for known CVEs | read |
 | **Link check** (`lychee.yml`) | push, pull request | Downloads the pinned lychee release binary and checks links in docs, the README and site sources | read |
 | **Spell check** (`typos.yml`) | push, pull request | Installs the pinned typos package and fails when source or docs contain a misspelling | read |
+| **Markdown lint** (`markdownlint.yml`) | push, pull request | Installs the pinned markdownlint-cli2 package and lints Markdown structure | read |
 | **act version check** (`act.yml`) | push, pull request | Downloads the pinned nektos/act binary, checks its checksum, and runs `act --version` (does not execute workflows) | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
@@ -142,7 +143,7 @@ To remove gitleaks from a project that adopted this belt: delete the `gitleaks` 
 
 ## Pre-commit
 
-[pre-commit](https://github.com/pre-commit/pre-commit) (MIT) runs configured linters as git hooks. The belt pins the framework on PyPI (`pre-commit` package in `belt.json`, currently **4.6.2**). [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) reuses the same gitleaks, shellcheck-py, actionlint, zizmor, ruff, and typos versions as the CI workflows above, plus a few hooks from [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks). The Ruff hooks are `v0.17.0` on `astral-sh/ruff-pre-commit`.
+[pre-commit](https://github.com/pre-commit/pre-commit) (MIT) runs configured linters as git hooks. The belt pins the framework on PyPI (`pre-commit` package in `belt.json`, currently **4.6.2**). [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) reuses the same gitleaks, shellcheck-py, actionlint, zizmor, ruff, typos, and markdownlint-cli2 versions as the CI workflows above, plus a few hooks from [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks). The Ruff hooks are `v0.17.0` on `astral-sh/ruff-pre-commit`. The markdownlint-cli2 hook is `v0.23.3` on `DavidAnson/markdownlint-cli2` and does not pass `--fix`.
 
 Opt in locally (hooks are never installed without this):
 
@@ -222,6 +223,23 @@ Exit code 0 means no findings. A non-zero exit prints the file, the misspelling,
 
 To remove typos: delete the `typos` entry from `packages` in `belt.json`, remove `.github/workflows/typos.yml` and `typos.toml`, remove the `crate-ci/typos` hook from `.pre-commit-config.yaml` and `templates/pre-commit/.pre-commit-config.yaml`, delete `docs/typos.md`, and drop this section. Then run `python3 belt.py index`.
 
+## Markdown lint
+
+[markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2) (MIT) checks Markdown structure: headings, lists, fences and the other default rules. typos checks spelling. Lychee checks links. Neither checks structure.
+
+The version comes from the `markdownlint-cli2` npm package in `belt.json` (`markdownlint-cli2`, pinned at **0.23.3**, the same number as git tag `v0.23.3`, published 2026-09-20). There is no GitHub Release for that tag. The weekly pin check covers the npm package. The job installs Node 22 (the package requires `>=22`), installs that exact npm version, and runs `markdownlint-cli2`. [`.markdownlint-cli2.jsonc`](../.markdownlint-cli2.jsonc) keeps the defaults and turns off `MD013` (long lines), `MD034` (bare URLs) and `MD041` (the README banner). `MD033` allows only the `App`, `app` and `bot` placeholders in the breakroom product template. `AGENTS.md`, `CHANGELOG.md` and `site/**` are generated and excluded.
+
+Run it locally (the command matches CI):
+
+```sh
+npm install --global markdownlint-cli2@0.23.3
+markdownlint-cli2
+```
+
+Exit code 0 means no findings. A non-zero exit prints the file, the line and the rule code (for example `MD022`). See [markdownlint.md](markdownlint.md).
+
+To remove markdownlint-cli2: delete the `markdownlint-cli2` entry from `packages` in `belt.json`, remove `.github/workflows/markdownlint.yml` and `.markdownlint-cli2.jsonc`, remove the `DavidAnson/markdownlint-cli2` hook from `.pre-commit-config.yaml` and `templates/pre-commit/.pre-commit-config.yaml`, delete `docs/markdownlint.md`, and drop this section. Then run `python3 belt.py index`.
+
 ## Local workflow dry-run (act)
 
 [act](https://github.com/nektos/act) (MIT) runs GitHub Actions workflows on a laptop using Docker. The belt pins `nektos/act` **0.2.89**. actionlint, zizmor, ShellCheck and gitleaks still lint workflow files; act is how you see a job execute before a push. Full usage, job filters and removal steps are in [act.md](act.md).
@@ -249,4 +267,4 @@ The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, w
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-Belt checks, zizmor, actionlint, shellcheck, ruff, gitleaks, pre-commit, osv-scanner, lychee, typos and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
+Belt checks, zizmor, actionlint, shellcheck, ruff, gitleaks, pre-commit, osv-scanner, lychee, typos, markdownlint and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
