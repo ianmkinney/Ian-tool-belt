@@ -53,6 +53,7 @@ Then set `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY` in the client environment if 
 - **Opt-in pre-commit hooks (local lint before commit):** [docs/pre-commit.md](docs/pre-commit.md)
 - **Link check (lychee):** [docs/lychee.md](docs/lychee.md)
 - **Spell check (typos):** [docs/typos.md](docs/typos.md)
+- **Markdown lint (markdownlint-cli2):** [docs/markdownlint.md](docs/markdownlint.md)
 - **Local GitHub Actions dry-run (act, Docker required):** [docs/act.md](docs/act.md)
 - **Skills:** [skills/README.md](skills/README.md)
 - **Break room (team board for bots):** [docs/breakroom.md](docs/breakroom.md)

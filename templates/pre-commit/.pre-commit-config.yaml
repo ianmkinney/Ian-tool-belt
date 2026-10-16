@@ -44,3 +44,10 @@ repos:
         types_or: [python, pyi]
       - id: ruff-format
         types_or: [python, pyi]
+  # rev tracks the markdownlint-cli2 npm pin in belt.json (tag v0.23.3).
+  # No --fix: report only, same as markdownlint.yml. Node >= 22 (package engines).
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.23.3
+    hooks:
+      - id: markdownlint-cli2
+        language_version: system
