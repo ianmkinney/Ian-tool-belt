@@ -394,7 +394,14 @@ class BeltTests(BeltCase):
 
     def test_osv_scanner_workflow_uses_the_belt_pin(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'osv-scanner')
-        self.assertEqual((pin['kind'], pin['name']), ('github-release', 'google/osv-scanner'))
+        self.assertEqual((pin['kind'], pin['name'], pin['version']),
+                         ('github-release', 'google/osv-scanner', '2.7.0'))
+        docs = (ROOT / 'docs/automation.md').read_text()
+        self.assertIn('pinned at **v2.7.0**', docs)
+        self.assertIn('no newer candidate yet', docs)
+        self.assertIn('download/v2.7.0/osv-scanner_linux_amd64', docs)
+        self.assertNotIn('v2.6.0', docs)
+        self.assertNotIn('next upgrade candidate', docs)
         workflow = (ROOT / '.github/workflows/osv-scanner.yml').read_text()
         self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
         self.assertIn('persist-credentials: false', workflow)

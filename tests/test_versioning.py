@@ -88,6 +88,16 @@ class VersioningTests(unittest.TestCase):
                         if step.get('uses', '').startswith('actions/checkout@'):
                             self.assertIs(step['with']['persist-credentials'], False)
 
+    def test_setup_docs_pin_callers_to_a_belt_sha(self):
+        text = (ROOT / 'docs/setup.md').read_text()
+        versioning = text.split('Versioning templates', 1)[1]
+        self.assertIn('commit SHA', versioning)
+        self.assertIn('belt_sync', versioning)
+        self.assertIn('@__BELT_SHA__', versioning)
+        self.assertNotIn('@main', versioning)
+        for path in [ROOT / 'README.md', *sorted((ROOT / 'docs').glob('*.md'))]:
+            self.assertNotIn('Ian-tool-belt@main', path.read_text(), path.name)
+
     def test_template_callers_use_belt_sha_placeholders(self):
         paths = [
             VERSIONING / 'release.yml', VERSIONING / 'pr-title.yml',

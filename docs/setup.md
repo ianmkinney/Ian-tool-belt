@@ -65,4 +65,4 @@ This is separate from `belt.py use`, which drops MCP connections, skills and rul
 
 Weekly sync: `.github/workflows/belt-sync.yml` in the kit runs every Monday at 13:17 UTC, and on demand, through [`belt-sync-reusable.yml`](../.github/workflows/belt-sync-reusable.yml). When the app's `.tool-belt.json` is behind `belt.json` on our `main`, [`scripts/belt_sync.py`](../scripts/belt_sync.py) re-copies the managed files and opens or updates one draft PR on `tool-belt/sync`. See [automation](automation.md) and [tokens](../templates/versioning/README.md#optional-token).
 
-Versioning templates live in [`templates/versioning/`](../templates/versioning/README.md). The callers use reusable workflows at `ianmkinney/Ian-tool-belt@main`. This repo's version in `belt.json` is bumped only by release-please.
+Versioning templates live in [`templates/versioning/`](../templates/versioning/README.md). The callers pin reusable workflows to a belt commit SHA. Templates keep `@__BELT_SHA__` until `belt_sync` writes that SHA on adopt or sync. This repo's version in `belt.json` is bumped only by release-please.
