@@ -3,7 +3,7 @@
 - **Repository:** https://github.com/tt-a1i/archify
 - **License:** MIT (see upstream `archify/LICENSE`)
 - **Vendored commit:** `58ab0b98d2d0def8e49dced705c7b566936723ec` (main, 2026-10-12)
-- **Contents:** `skills/archify/SKILL.md` from upstream `archify/SKILL.md` (agent instructions only)
+- **Contents:** `skills/archify/SKILL.md` and the `references/` files it links, from upstream `archify/`. Renderer and example paths that are not vendored point at the pinned GitHub commit.
 
 **What it is:** Archify turns requirements, Mermaid, or repository evidence into validated interactive architecture/workflow/sequence/dataflow/lifecycle diagrams as standalone HTML (inline SVG) with optional export.
 
