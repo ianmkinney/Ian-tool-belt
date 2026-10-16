@@ -1,7 +1,7 @@
 {
   "formatVersion": "0.3-draft",
   "name": "our-tool-belt",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Portable MCP connections, skills and rules for APIs, data and browser-tested apps. Run python3 belt.py use to drop it into a project.",
   "rules": [
     "rules/working-agreement.md",
