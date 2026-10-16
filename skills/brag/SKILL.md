@@ -40,7 +40,7 @@ The user may invoke with natural language or flags:
 Parse these options:
 
 | Option | Values | Default |
-|---|---|---|
+| --- | --- | --- |
 | `--tone` | preset or freeform description | inferred |
 | `--format` | `landscape`, `vertical`, `square` | `landscape` |
 | `--duration` | seconds | auto (15-25s) |
@@ -141,7 +141,7 @@ Seven tone presets ship with `/brag`. Each changes scripting energy, pacing, typ
 Full definitions: [references/tones.md](references/tones.md)
 
 | Tone | Energy | One-liner |
-|---|---|---|
+| --- | --- | --- |
 | `default` | Playful, clean, postable | The good-vibes default |
 | `polished` | Serious, elegant | For projects that are not jokes |
 | `yc-parody` | Deadpan startup energy | Fake seriousness applied to absurd projects |

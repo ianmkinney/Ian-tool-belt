@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Step 2: Write the brag plan
 
 Write `<output-dir>/brag-plan.md`. One focused page. This is the creative north star for the entire video.

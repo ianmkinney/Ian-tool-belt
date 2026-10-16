@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Step 1: Inspect the project
 
 Read the project directory to understand what you're bragging about.

@@ -1,6 +1,6 @@
 # Typos spell checker
 
-[typos](https://github.com/crate-ci/typos) (MIT OR Apache-2.0) is a fast spell checker for source code and documentation. The belt pins **1.51.1**, which is the PyPI release of `typos` and the GitHub tag `v1.51.1` (published 2026-10-06). Nothing else in the belt checks spelling. It complements [lychee](lychee.md) (links) and ShellCheck / actionlint (syntax).
+[typos](https://github.com/crate-ci/typos) (MIT OR Apache-2.0) is a fast spell checker for source code and documentation. The belt pins **1.51.1**, which is the PyPI release of `typos` and the GitHub tag `v1.51.1` (published 2026-10-06). Nothing else in the belt checks spelling. It complements [lychee](lychee.md) (links), [markdownlint-cli2](markdownlint.md) (Markdown structure) and ShellCheck / actionlint (syntax).
 
 ## When to run
 

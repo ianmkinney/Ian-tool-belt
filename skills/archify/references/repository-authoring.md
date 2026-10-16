@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Repository-backed architecture authoring
 
 Use this reference when a diagram must explain a real repository. The source is

@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Step 3: Hand off to Hyperframes
 
 ## Create the composition brief

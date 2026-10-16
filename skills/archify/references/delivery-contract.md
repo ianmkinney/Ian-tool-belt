@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Delivery contract
 
 ## Failed finalize and candidate repair

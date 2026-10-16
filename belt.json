@@ -189,7 +189,7 @@
       "id": "osv-scanner",
       "kind": "github-release",
       "name": "google/osv-scanner",
-      "version": "2.6.0",
+      "version": "2.7.0",
       "description": "Pinned OSV-Scanner CLI (github-release). Use in CI via osv-scanner.yml to scan lockfiles and SBOMs for known CVEs; not an MCP server."
     },
     {
@@ -212,6 +212,13 @@
       "name": "typos",
       "version": "1.51.1",
       "description": "Pinned typos spell checker (PyPI). Use in CI via typos.yml to catch misspellings in source and docs; not an MCP server."
+    },
+    {
+      "id": "markdownlint-cli2",
+      "kind": "npm",
+      "name": "markdownlint-cli2",
+      "version": "0.23.3",
+      "description": "Pinned markdownlint-cli2 (npm). Use in CI via markdownlint.yml to check Markdown structure in docs, rules and skills; not an MCP server."
     },
     {
       "id": "ollmcp",

@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Step 4: Validate, render, and deliver
 
 ## Validate

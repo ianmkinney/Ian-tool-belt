@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Authoring defaults
 
 Read once before writing a fresh candidate. An existing frozen candidate going straight to `finalize` needs this only if repair changes its authorship.

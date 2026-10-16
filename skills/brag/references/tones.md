@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Tone reference
 
 Seven tones. Each changes scripting energy, pacing, typography personality, and transition style.

@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Audio reference
 
 All SFX are CC0 (Kenney.nl, public domain). Music and SFX should be used by default unless the user passes `--no-music`, `--no-sfx`, the required assets are missing, or the plan explicitly chooses silence as the strongest creative move.

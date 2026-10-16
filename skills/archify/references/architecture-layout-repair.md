@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Architecture layout repair
 
 Use this after actual visual review finds several tangled routes. A successful machine receipt does not settle composition. Work on the existing candidate, retaining all required components, relationships, labels, evidence, boundaries, and node sizes.

@@ -90,6 +90,8 @@ WORKFLOW_INFO = {
         'Check docs, README and site-source links with the lychee github-release pin from belt.json.',
     '.github/workflows/typos.yml':
         'Spell-check source and docs with the typos PyPI pin from belt.json.',
+    '.github/workflows/markdownlint.yml':
+        'Lint Markdown structure with the markdownlint-cli2 npm pin from belt.json.',
     '.github/workflows/act.yml':
         'Download the pinned nektos/act release and run act --version. Does not execute workflows.',
     '.github/workflows/release.yml':
@@ -146,6 +148,7 @@ SKIPPED = [
     {'id': 'lychee', 'reason': 'CI-only pin read by lychee.yml; not an MCP server or export.'},
     {'id': 'act', 'reason': 'Local GitHub Actions dry-run; Docker is required to run workflows. act.yml only checks the pinned binary version; not an MCP server or export.'},
     {'id': 'typos', 'reason': 'CI-only pin read by typos.yml; not an MCP server or export.'},
+    {'id': 'markdownlint-cli2', 'reason': 'CI-only pin read by markdownlint.yml for Markdown structure; not an MCP server or export.'},
     {'id': 'mcp-inspector', 'reason': 'Used by scripts/mcp_smoke.py; not declared as a connection.'},
     {'id': 'ollmcp', 'reason': 'Optional client. Load the claude-code export with --servers-json; not a fifth adapter.'},
     {'id': 'llm', 'reason': 'Optional CLI. Prompt the local-ai preset from a shell via scripts/llm_local.py; not an MCP server.'},

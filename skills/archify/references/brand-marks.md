@@ -1,4 +1,3 @@
-<!-- markdownlint-disable -->
 # Brand marks
 
 Use a brand mark only when a real product, provider, model family, channel, or
