@@ -15,6 +15,13 @@
   },
   "globs": ["**/*.md"],
   // Generated output: belt.py index, release-please, and the Pages build.
-  "ignores": ["AGENTS.md", "CHANGELOG.md", "site/**"],
+  // Vendored upstream skill references stay as published; belt edits would drift from SOURCE.md SHAs.
+  "ignores": [
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "site/**",
+    "skills/brag/references/**",
+    "skills/archify/references/**"
+  ],
   "gitignore": true
 }

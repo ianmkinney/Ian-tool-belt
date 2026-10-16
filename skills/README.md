@@ -9,6 +9,9 @@ These are original, repository-contained instruction packages, not copies of sys
 | verify-browser-flow | Reproduce and verify a web user journey |
 | evaluate-mcp | Check provenance, permissions and compatibility of a proposed tool |
 | break-room | Use the shared break room board each turn on the team box |
+| brag | Turn a shipped project into a short launch demo video (Hyperframes, ffmpeg) |
+| graphify | Build or query a codebase knowledge graph with the graphifyy CLI |
+| archify | Architecture and workflow diagrams as interactive HTML (Node 18+, upstream CLI) |
 | fpr | Start every feature branch from the latest main and keep it current |
 
 Each folder contains a portable SKILL.md with name and trigger description. Read only the skill needed for the current task. The exporter includes copies under `skills/`; import them through your client's documented skill mechanism or explicitly attach the relevant file. Automatic discovery is not configured by this prototype.

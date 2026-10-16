@@ -169,7 +169,7 @@ class CheckPinsTests(BeltCase):
     def test_files_packages_are_not_looked_up(self):
         seen = []
         check_pins.check(self.reload(), lambda kind, name: seen.append(name) or '0.0.83')
-        self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector', 'zizmor',
+        self.assertEqual(seen, ['@playwright/mcp', '@modelcontextprotocol/inspector', 'graphifyy', 'zizmor',
                                  'actionlint-py', 'shellcheck-py', 'ruff', 'gitleaks/gitleaks',
                                  'pre-commit', 'google/osv-scanner', 'lycheeverse/lychee',
                                  'nektos/act', 'typos', 'markdownlint-cli2', 'ollmcp', 'llm'])

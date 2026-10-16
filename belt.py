@@ -9,6 +9,7 @@
   python3 belt.py run TASK
   python3 belt.py index [--check]
   python3 belt.py breakroom …   team board CLI (passthrough)
+  python3 belt.py edit FILE.html [--port N]   in-place HTML editor (passthrough)
   python3 belt.py site [--check]  build the GitHub Pages site into site/
   python3 belt.py fpr new <branch> [--base <base>] | sync [--base <base>] [--rebase]
 """
@@ -261,6 +262,16 @@ def cmd_breakroom(args):
         return 1
 
 
+def cmd_edit(args):
+    script = ROOT / 'tools' / 'html-edit' / 'html_edit.py'
+    argv = [sys.executable, str(script), *args.edit_args]
+    try:
+        return subprocess.run(argv, check=False).returncode
+    except OSError as error:
+        print(f'edit failed: {error}', file=sys.stderr)
+        return 1
+
+
 def cmd_fpr(args):
     argv = [args.action]
     if args.branch:
@@ -355,6 +366,11 @@ def build_parser():
     breakroom.add_argument('breakroom_args', nargs=argparse.REMAINDER,
                            help='arguments passed to tools/breakroom/bin/breakroom')
     breakroom.set_defaults(func=cmd_breakroom)
+
+    edit = sub.add_parser('edit', help='serve an HTML file with the in-place html-edit tool')
+    edit.add_argument('edit_args', nargs=argparse.REMAINDER,
+                      help='arguments passed to tools/html-edit/html_edit.py')
+    edit.set_defaults(func=cmd_edit)
 
     site = sub.add_parser('site', help='build the static GitHub Pages site')
     site.add_argument('--out', type=Path, default=ROOT / 'site', help='output directory')

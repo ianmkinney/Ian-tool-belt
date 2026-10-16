@@ -5,8 +5,11 @@
 extend-ignore-re = [
   "\\(BA\\)",
   "\\(ba\\|ao\\|sf\\)",
+  "PNGs",
 ]
 
 [default.extend-words]
 # Command and skill name (fetch, pull, rebase). Not the word "for".
 fpr = "fpr"
+# Artist handle in vendored brag audio notes (ende.app).
+ende = "ende"

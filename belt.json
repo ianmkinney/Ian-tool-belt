@@ -13,6 +13,9 @@
     "skills/verify-browser-flow/SKILL.md",
     "skills/evaluate-mcp/SKILL.md",
     "skills/break-room/SKILL.md",
+    "skills/brag/SKILL.md",
+    "skills/graphify/SKILL.md",
+    "skills/archify/SKILL.md",
     "skills/fpr/SKILL.md"
   ],
   "servers": [
@@ -125,6 +128,20 @@
       "path": "tools/breakroom",
       "version": "2.0.0",
       "description": "Team board CLI with lobby notes, reactions, and weekly Bot of the Week; run via belt.py breakroom or bin/breakroom on PATH."
+    },
+    {
+      "id": "html-edit",
+      "kind": "files",
+      "path": "tools/html-edit",
+      "version": "0.1.0",
+      "description": "In-place HTML editor served on localhost; run via belt.py edit. Stdlib Python only; saves cleaned .edited.html beside the source."
+    },
+    {
+      "id": "graphifyy",
+      "kind": "pypi",
+      "name": "graphifyy",
+      "version": "0.9.86",
+      "description": "Pinned Graphify knowledge-graph CLI (graphify package). Use with skills/graphify; heavy native deps; optional Whisper/Neo4j; no belt-hosted paid keys."
     },
     {
       "id": "zizmor",

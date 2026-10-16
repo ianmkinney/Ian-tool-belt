@@ -29,7 +29,7 @@ The config starts from markdownlint defaults (`"default": true`). Three rules ar
 
 `MD033` stays on. `allowed_elements` is `App`, `app` and `bot` so the angle-bracket placeholders in `tools/breakroom/products/_TEMPLATE.md` are not treated as HTML.
 
-Generated files are excluded: `AGENTS.md` (from `python3 belt.py index`), `CHANGELOG.md` (release-please) and `site/**` (the Pages build). `gitignore: true` also skips anything `.gitignore` already ignores, including a local `site/` directory.
+Generated files are excluded: `AGENTS.md` (from `python3 belt.py index`), `CHANGELOG.md` (release-please) and `site/**` (the Pages build). Vendored upstream skill references are excluded too (`skills/brag/references/**` and `skills/archify/references/**`) so belt edits do not drift from the pinned SOURCE.md commits. `gitignore: true` also skips anything `.gitignore` already ignores, including a local `site/` directory.
 
 ## Reading results
 
