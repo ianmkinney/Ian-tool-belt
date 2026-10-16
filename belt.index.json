@@ -199,7 +199,7 @@
       "id": "osv-scanner",
       "kind": "github-release",
       "name": "google/osv-scanner",
-      "version": "2.6.0",
+      "version": "2.7.0",
       "description": "Pinned OSV-Scanner CLI (github-release). Use in CI via osv-scanner.yml to scan lockfiles and SBOMs for known CVEs; not an MCP server."
     },
     {
