@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 """Serve an HTML file with an in-place editor; save cleaned .edited.html copies."""
 import argparse
-import html
 import json
-import mimetypes
-import os
 import re
 import sys
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent
 MARKER = 'data-html-edit-injected'

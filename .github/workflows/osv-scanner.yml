@@ -1,0 +1,24 @@
+name: Dependency vulnerability scan
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  osv-scanner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read the osv-scanner pin from belt.json
+        id: pin
+        run: |
+          python3 -c "import json; print('version=' + next(p['version'] for p in json.load(open('belt.json'))['packages'] if p['id'] == 'osv-scanner'))" >> "$GITHUB_OUTPUT"
+      - name: Install and run osv-scanner
+        env:
+          OSV_SCANNER_VERSION: ${{ steps.pin.outputs.version }}
+        run: |
+          curl -sSL -o osv-scanner "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
+          chmod +x osv-scanner
+          ./osv-scanner scan source -r . --allow-no-lockfiles

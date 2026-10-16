@@ -11,7 +11,13 @@ Workflows live in `.github/workflows`. Every action is pinned to a full commit S
 | **Workflow security lint** (`zizmor.yml`) | push, pull request | Runs zizmor on `.github/workflows` and fails on findings, shown as annotations | read |
 | **Workflow syntax lint** (`actionlint.yml`) | push, pull request | Runs actionlint on `.github/workflows`, the app workflow templates, and the versioning caller templates, and fails on findings | read |
 | **Shell script lint** (`shellcheck.yml`) | push, pull request | Runs ShellCheck on tracked `*.sh` files and shell shebang scripts via `scripts/check_shell.py`, and fails on findings | read |
+| **Python lint** (`ruff.yml`) | push, pull request | Installs the pinned `ruff` package and runs `ruff check` and `ruff format --check` on `belt.py`, `scripts/`, `tests/` and `tools/` | read |
 | **Secret scan** (`gitleaks.yml`) | push, pull request | Downloads the pinned gitleaks release binary and scans the repository for leaked secrets | read |
+| **Pre-commit** (`pre-commit.yml`) | push, pull request | Installs the pinned `pre-commit` package and runs `pre-commit run --all-files` on the shared config | read |
+| **Dependency vulnerability scan** (`osv-scanner.yml`) | push, pull request | Downloads the pinned OSV-Scanner release binary and scans lockfiles and SBOMs for known CVEs | read |
+| **Link check** (`lychee.yml`) | push, pull request | Downloads the pinned lychee release binary and checks links in docs, the README and site sources | read |
+| **Spell check** (`typos.yml`) | push, pull request | Installs the pinned typos package and fails when source or docs contain a misspelling | read |
+| **act version check** (`act.yml`) | push, pull request | Downloads the pinned nektos/act binary, checks its checksum, and runs `act --version` (does not execute workflows) | read |
 | **release** (`release.yml`) | push to `main` | Runs release-please through `release-please-reusable.yml`: keeps the release PR current; merging it bumps `belt.json`, tags and publishes a release | contents and PRs: write |
 | **pr-title** (`pr-title.yml`) | pull request | Requires a Conventional Commit PR title through `pr-title-reusable.yml` | PRs: read |
 | **Deploy GitHub Pages** (`pages.yml`) | push to `main`, or manual | Builds the site with `scripts/build_site.py` and deploys to GitHub Pages | pages: write, `id-token`: write |
@@ -99,6 +105,24 @@ uvx --from shellcheck-py==0.11.0.1 shellcheck --version
 
 To remove ShellCheck from the belt, delete the `shellcheck` package from `belt.json`, remove `.github/workflows/shellcheck.yml`, drop the shellcheck pin step and package from `.github/workflows/actionlint.yml`, delete `scripts/check_shell.py`, and revert the documentation and test references in the same commit.
 
+## Python lint
+
+[Ruff](https://github.com/astral-sh/ruff) (MIT) lints and formats Python. ShellCheck covers shell scripts; Ruff covers `belt.py`, `scripts/`, `tests/` and `tools/`. The version comes from the `ruff` pypi package in `belt.json` (**0.17.0**, release tag `0.17.0`, published 2026-10-09). The weekly pin check covers that PyPI pin.
+
+The job installs the pin with pip and runs `ruff check` and `ruff format --check --force-exclude` on those paths. [`ruff.toml`](../ruff.toml) sets the target to Python 3.10, keeps the `E402` noqa on `belt.py`, ignores rules that already fire on this tree, and excludes the current Python files from the formatter so this pin does not rewrite them. `tools/breakroom/bin/breakroom` has no `.py` suffix, so Ruff's directory discovery skips it. Workflow `run:` blocks are still the actionlint job's concern; that job does not install pyflakes.
+
+Run it locally (commands match CI):
+
+```sh
+python3 -m pip install 'ruff==0.17.0'
+ruff check belt.py scripts tests tools
+ruff format --check --force-exclude belt.py scripts tests tools
+```
+
+Exit code 0 means the linter is clean and the formatter found nothing outside the exclude list. A check failure prints the file, rule code and line. See [ruff.md](ruff.md).
+
+To remove Ruff: delete the `ruff` package from `belt.json`, remove `.github/workflows/ruff.yml` and `ruff.toml`, drop the `astral-sh/ruff-pre-commit` hooks, delete [ruff.md](ruff.md), and drop this section. Then run `python3 belt.py index`.
+
 ## Secret scan
 
 [gitleaks](https://github.com/gitleaks/gitleaks) (MIT) is a static secret scanner for Git repositories. It flags API keys, tokens, passwords and other high-entropy credentials in tracked files and commit history. zizmor checks workflow security; gitleaks checks application and configuration content before it reaches GitHub.
@@ -116,10 +140,113 @@ On macOS, swap the archive name for `gitleaks_8.30.1_darwin_arm64.tar.gz` or `da
 
 To remove gitleaks from a project that adopted this belt: delete the `gitleaks` entry from `packages` in `belt.json`, remove `.github/workflows/gitleaks.yml`, and drop the Secret scan section from your automation docs.
 
+## Pre-commit
+
+[pre-commit](https://github.com/pre-commit/pre-commit) (MIT) runs configured linters as git hooks. The belt pins the framework on PyPI (`pre-commit` package in `belt.json`, currently **4.6.2**). [`.pre-commit-config.yaml`](../.pre-commit-config.yaml) reuses the same gitleaks, shellcheck-py, actionlint, zizmor, ruff, and typos versions as the CI workflows above, plus a few hooks from [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks). The Ruff hooks are `v0.17.0` on `astral-sh/ruff-pre-commit`.
+
+Opt in locally (hooks are never installed without this):
+
+```sh
+cp templates/pre-commit/.pre-commit-config.yaml .   # or copy from a belt checkout
+python3 -m pip install 'pre-commit==4.6.2'
+pre-commit install
+pre-commit run --all-files
+```
+
+Agents and contributors can run `pre-commit run --all-files` without installing hooks. The **Pre-commit** workflow runs the same command on every push and pull request so CI and laptops stay aligned.
+
+To remove pre-commit: run `pre-commit uninstall`, delete `.pre-commit-config.yaml`, remove `.github/workflows/pre-commit.yml`, delete the `pre-commit` package from `belt.json`, and drop [docs/pre-commit.md](pre-commit.md) from your docs. See [pre-commit.md](pre-commit.md) for hook details and bot guidance.
+
+## Dependency vulnerability scan
+
+[OSV-Scanner](https://github.com/google/osv-scanner) (Apache-2.0) scans project dependencies against the [OSV.dev](https://osv.dev/) database. It finds known CVEs in lockfiles (`package-lock.json`, `poetry.lock`, `go.sum`, and others), SBOMs and container images. gitleaks checks for leaked secrets; zizmor and actionlint check workflow files; OSV-Scanner closes the gap for **third-party dependency vulnerabilities** in application code the belt and adopted apps ship.
+
+The version comes from the `osv-scanner` `github-release` package in `belt.json` (`google/osv-scanner`, pinned at **v2.6.0** as of this proposal). The weekly pin check queries GitHub releases for newer stable tags (**v2.7.0** released 2026-10-12 is the next upgrade candidate once it has baked). The job downloads the official `linux_amd64` binary from the release (no third-party wrapper). The official [google/osv-scanner-action](https://github.com/google/osv-scanner-action) is an alternative for workflows that prefer a composite action; pin it by full commit SHA if you use it instead of the CLI download pattern here.
+
+Run it on every push and pull request when the repository has lockfiles or SBOMs to protect. Bots and maintainers can run the same command locally before opening a dependency bump. This belt repository has no lockfiles today; CI passes `--allow-no-lockfiles` so an empty tree does not fail the job. Projects that copy this workflow should drop that flag once they have dependency manifests to scan.
+
+Run it locally after installing the same release (paths match CI):
+
+```sh
+curl -sSL -o osv-scanner "https://github.com/google/osv-scanner/releases/download/v2.6.0/osv-scanner_linux_amd64"
+chmod +x osv-scanner
+./osv-scanner scan source -r . --allow-no-lockfiles
+```
+
+On macOS, download `osv-scanner_darwin_amd64` or `osv-scanner_darwin_arm64` instead. Release assets include `osv-scanner_SHA256SUMS` for checksum verification. You can also build with `go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.6.0`.
+
+Results list affected packages, CVE or GHSA ids, severity when OSV provides it, and fixed versions when known. Exit code 0 means no vulnerabilities (or no lockfiles when `--allow-no-lockfiles` is set). Non-zero means at least one finding worth triaging; read the table or pass `-f json` for automation.
+
+To remove OSV-Scanner from a project that adopted this belt: delete the `osv-scanner` entry from `packages` in `belt.json`, remove `.github/workflows/osv-scanner.yml`, and drop this section from your automation docs.
+
+## Link check
+
+[lychee](https://github.com/lycheeverse/lychee) (Apache-2.0 OR MIT) finds broken links in Markdown and HTML. The Pages site, `docs/` and the README had no link check. Lychee closes that gap for the files the site is built from.
+
+The version comes from the `lychee` `github-release` package in `belt.json` (`lycheeverse/lychee`, pinned at **0.24.2**, release tag `lychee-v0.24.2`, published 2026-05-01). The weekly pin check reads the trailing numeric version from tags shaped like `lychee-vX.Y.Z`, so a newer stable release can still open a bump PR. The job downloads `lychee-x86_64-unknown-linux-gnu.tar.gz` for `lychee-v` plus the pin, verifies the sibling `.sha256`, and extracts the `lychee` binary. It passes the workflow `GITHUB_TOKEN` (`contents: read`) through to lychee. [`lychee.toml`](../lychee.toml) skips loopback addresses and fails on broken links. GitHub `/blob/` file links are remapped to `raw.githubusercontent.com` because the HTML pages often return 503 under concurrent checks; a missing file is still a 404. No host is excluded. Add an `exclude` regex in that file only if some other host starts flapping.
+
+Run it locally after installing the same release (paths match CI):
+
+```sh
+archive="lychee-x86_64-unknown-linux-gnu.tar.gz"
+base="https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2"
+curl -fsSL -o "$archive" "${base}/${archive}"
+curl -fsSL -o "${archive}.sha256" "${base}/${archive}.sha256"
+sha256sum -c "${archive}.sha256"
+tar -xzf "$archive" --strip-components=1 "lychee-x86_64-unknown-linux-gnu/lychee"
+chmod +x lychee
+GITHUB_TOKEN="$(gh auth token)" ./lychee --config lychee.toml --no-progress --exclude-loopback \
+  README.md AGENTS.md CHANGELOG.md CONTRIBUTING.md \
+  docs rules skills connections templates styling branding \
+  tools/breakroom/README.md tools/breakroom/docs
+```
+
+On macOS, use `lychee-aarch64-apple-darwin.tar.gz` or `lychee-x86_64-apple-darwin.tar.gz`. Exit code 0 means the checked links returned an accepted status. A non-zero exit lists the file, URL and status code. See [lychee.md](lychee.md) for how to read that output.
+
+To remove lychee from a project that adopted this belt: delete the `lychee` entry from `packages` in `belt.json`, remove `.github/workflows/lychee.yml` and `lychee.toml`, delete `docs/lychee.md`, and drop this section from your automation docs. Then run `python3 belt.py index`.
+
+## Spell check
+
+[typos](https://github.com/crate-ci/typos) (MIT OR Apache-2.0) checks source and docs for misspellings. Lychee checks links. ShellCheck and actionlint check syntax. None of those check spelling.
+
+The version comes from the `typos` pypi package in `belt.json` (`typos`, pinned at **1.51.1**, the same number as GitHub tag `v1.51.1`, published 2026-10-06). The weekly pin check covers the PyPI package. The job installs that pin with pip and runs `typos` on the repository. [`typos.toml`](../typos.toml) ignores the breakroom office tag `(BA)` and the literal `(ba|ao|sf)` strip in the name resolver. A token outside those two patterns still fails.
+
+Run it locally (the command matches CI):
+
+```sh
+python3 -m pip install 'typos==1.51.1'
+typos
+```
+
+Exit code 0 means no findings. A non-zero exit prints the file, the misspelling, and a suggested correction. See [typos.md](typos.md).
+
+To remove typos: delete the `typos` entry from `packages` in `belt.json`, remove `.github/workflows/typos.yml` and `typos.toml`, remove the `crate-ci/typos` hook from `.pre-commit-config.yaml` and `templates/pre-commit/.pre-commit-config.yaml`, delete `docs/typos.md`, and drop this section. Then run `python3 belt.py index`.
+
+## Local workflow dry-run (act)
+
+[act](https://github.com/nektos/act) (MIT) runs GitHub Actions workflows on a laptop using Docker. The belt pins `nektos/act` **0.2.89**. actionlint, zizmor, ShellCheck and gitleaks still lint workflow files; act is how you see a job execute before a push. Full usage, job filters and removal steps are in [act.md](act.md).
+
+The version comes from the `act` `github-release` package in `belt.json`. The weekly pin check queries GitHub releases for newer stable tags. `.github/workflows/act.yml` downloads `act_Linux_x86_64.tar.gz` for that tag, verifies `checksums.txt`, and runs `act --version`. It does not run `act push` or any other event: executing workflows inside GitHub Actions needs Docker-in-Docker and is the wrong place for this tool.
+
+Run a real dry-run locally after installing the same release (Docker required for jobs):
+
+```sh
+curl -fsSL -o act_Linux_x86_64.tar.gz "https://github.com/nektos/act/releases/download/v0.2.89/act_Linux_x86_64.tar.gz"
+curl -fsSL -o checksums.txt "https://github.com/nektos/act/releases/download/v0.2.89/checksums.txt"
+grep -F ' act_Linux_x86_64.tar.gz' checksums.txt | sha256sum -c -
+tar -xzf act_Linux_x86_64.tar.gz act
+./act -l
+./act push -j <job-id>
+```
+
+`act -l` lists jobs. A job run prints each step and a summary; non-zero means a step failed. See [act.md](act.md) for reading that output and for macOS archives.
+
+To remove act: delete the `act` package from `belt.json`, remove `.github/workflows/act.yml`, delete [act.md](act.md), and drop this section.
+
 ## One-time repository setting
 
 The two PR-opening workflows use the built-in `GITHUB_TOKEN` and the `gh` CLI, with no third-party action. GitHub only lets them open pull requests if a maintainer enables **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**. Without it, the run validates and pushes the branch, then fails at the PR step.
 
 Pull requests opened with `GITHUB_TOKEN` do not trigger other workflows, so **Belt checks** will not start on them automatically. The workflow already ran validation and tests before opening the PR. To get the normal check, push a commit to the branch, or close and reopen the PR. A fine-grained personal access token or GitHub App token would avoid this, but it is a credential to manage, so it is not configured here.
 
-Belt checks, zizmor, actionlint, shellcheck and gitleaks run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.
+Belt checks, zizmor, actionlint, shellcheck, ruff, gitleaks, pre-commit, osv-scanner, lychee, typos and the act version check run on every push and pull request. Manual workflows (update a variable, bump pins, run a task) still need a maintainer to trigger them once after enabling the PR-creation setting above.

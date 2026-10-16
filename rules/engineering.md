@@ -10,6 +10,8 @@ Cover every changed behavior with meaningful automated tests, including relevant
 
 ## One pull request per work session
 
+Start every branch with fpr (`python3 belt.py fpr new <branch>` from `origin/<default>`).
+
 Before changing files, inspect the current branch and open pull requests. Reuse the open PR for this session's branch and task; push follow-up fixes to that same branch. Do not append work to an unrelated PR merely because one exists. If no matching PR exists, create a descriptive session branch and open one draft PR after the first coherent commit. Keep further changes in that PR. If it was merged or closed, create a new branch and PR rather than resurrecting it.
 
 ## PR titles and releases

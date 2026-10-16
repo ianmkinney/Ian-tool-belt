@@ -36,6 +36,8 @@ Then set `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY` in the client environment if 
 | `python3 belt.py add skill\|package ...` | Scaffold and register a skill or package |
 | `python3 belt.py set PATH VALUE` | Change one allowlisted `belt.json` field |
 | `python3 belt.py run TASK` | Allowlisted task (validate, tests, export, pins) |
+| `python3 belt.py fpr new <branch> [--base <base>]` | Start a branch from `origin/<base>` after fetch |
+| `python3 belt.py fpr sync [--base <base>]` | Merge or rebase onto that remote-tracking ref |
 
 `./belt` is the same CLI. The scripts under `scripts/` still work; `belt.py` wraps them.
 
@@ -43,10 +45,15 @@ Then set `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY` in the client environment if 
 
 - **Agents:** [`AGENTS.md`](AGENTS.md) and [`belt.index.json`](belt.index.json) (generated from `belt.json`; CI fails if they drift)
 - **Setup, credentials, what each client gets:** [docs/setup.md](docs/setup.md)
-- **Local Ollama / OpenCode / ollmcp:** [docs/local-ai.md](docs/local-ai.md)
+- **Local Ollama / OpenCode / ollmcp / llm:** [docs/local-ai.md](docs/local-ai.md) and [docs/llm.md](docs/llm.md)
 - **Connections and smoke tests:** [connections/README.md](connections/README.md)
 - **Format:** [docs/design.md](docs/design.md)
 - **GitHub Actions, pin checks, adoption kit:** [docs/automation.md](docs/automation.md)
+- **Python lint and format (ruff):** [docs/ruff.md](docs/ruff.md)
+- **Opt-in pre-commit hooks (local lint before commit):** [docs/pre-commit.md](docs/pre-commit.md)
+- **Link check (lychee):** [docs/lychee.md](docs/lychee.md)
+- **Spell check (typos):** [docs/typos.md](docs/typos.md)
+- **Local GitHub Actions dry-run (act, Docker required):** [docs/act.md](docs/act.md)
 - **Skills:** [skills/README.md](skills/README.md)
 - **Break room (team board for bots):** [docs/breakroom.md](docs/breakroom.md)
 - **Engineering contract:** [rules/engineering.md](rules/engineering.md)

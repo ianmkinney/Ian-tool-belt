@@ -2,7 +2,7 @@
 import json
 import re
 from pathlib import Path
-from validate import ADAPTER_INFO, ADAPTERS, one_line, validate
+from validate import ADAPTER_INFO, one_line, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEX_PATH = ROOT / 'belt.index.json'
@@ -31,13 +31,15 @@ COMMANDS = [
      'description': 'Serve an HTML file with the html-edit in-place editor (tools/html-edit/html_edit.py).'},
     {'id': 'site', 'run': 'python3 belt.py site',
      'description': 'Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check.'},
+    {'id': 'fpr', 'run': 'python3 belt.py fpr new <branch> [--base <base>] | sync [--base <base>]',
+     'description': 'Fetch origin and start or update a feature branch from origin/<base>. Never branch from a stale local main.'},
 ]
 
 RULE_INFO = {
     'rules/working-agreement.md':
         'Shared operating rules: small changes, secrets out of Git, honest verification. Always apply.',
     'rules/engineering.md':
-        'Clean code, tests, one PR per session, Conventional Commit titles, keep CI green. Follow on every code change.',
+        'Clean code, tests, one PR per session, Conventional Commit titles, keep CI green. Start every branch with fpr.',
 }
 
 SCRIPT_INFO = {
@@ -49,6 +51,7 @@ SCRIPT_INFO = {
     'scripts/check_pins.py': 'Look up newer stable npm/PyPI releases for pinned packages. Report-only unless --apply.',
     'scripts/tasks.py': 'Run one allowlisted belt task without a shell. belt.py run wraps this.',
     'scripts/local_ai_check.py': 'Contact the local OpenAI-compatible endpoint. Only script that does; belt.py doctor wraps it.',
+    'scripts/llm_local.py': 'Build the llm openai endpoint command for the local-ai preset. Does not contact the model or print API keys.',
     'scripts/mcp_smoke.py': 'Start one MCP server through the pinned Inspector and list (or call) a tool.',
     'scripts/belt_sync.py': 'Copy managed adoption-kit files into an app repo; substitutes @__BELT_SHA__ and belt-ref on adopt or sync.',
     'scripts/check_belt_workflow_pins.py': 'Fail CI if templates or workflows call Ian-tool-belt reusable workflows at @main.',
@@ -57,6 +60,7 @@ SCRIPT_INFO = {
     'scripts/build_tokens.py': 'Generate styling/tokens.css from tokens.json. --check confirms they match.',
     'scripts/belt_index.py': 'Build belt.index.json and the AGENTS.md map from belt.json. belt.py index wraps this.',
     'scripts/check_shell.py': 'Run shellcheck on git-tracked shell scripts. CI uses the belt shellcheck pin; not part of client export.',
+    'scripts/fpr.py': 'Fetch origin and create or update a feature branch from origin/<base>. belt.py fpr wraps this.',
 }
 
 WORKFLOW_INFO = {
@@ -74,8 +78,20 @@ WORKFLOW_INFO = {
         'Syntax-lint GitHub workflows with the actionlint-py pin from belt.json.',
     '.github/workflows/shellcheck.yml':
         'Lint tracked shell scripts with the shellcheck-py pin via scripts/check_shell.py.',
+    '.github/workflows/ruff.yml':
+        'Lint and format belt.py, scripts, tests and tools with the ruff PyPI pin from belt.json.',
     '.github/workflows/gitleaks.yml':
         'Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json.',
+    '.github/workflows/pre-commit.yml':
+        'Run the shared .pre-commit-config.yaml with the pre-commit PyPI pin from belt.json.',
+    '.github/workflows/osv-scanner.yml':
+        'Scan lockfiles and SBOMs for known CVEs with the osv-scanner github-release pin from belt.json.',
+    '.github/workflows/lychee.yml':
+        'Check docs, README and site-source links with the lychee github-release pin from belt.json.',
+    '.github/workflows/typos.yml':
+        'Spell-check source and docs with the typos PyPI pin from belt.json.',
+    '.github/workflows/act.yml':
+        'Download the pinned nektos/act release and run act --version. Does not execute workflows.',
     '.github/workflows/release.yml':
         'release-please on push to main; merging its PR bumps versions and tags.',
     '.github/workflows/pr-title.yml':
@@ -109,6 +125,10 @@ TEMPLATE_INFO = {
         'release-please config copied into an app repo (release-type, extra-files).',
     'templates/versioning/.release-please-manifest.json':
         'release-please manifest template; the app version starts at 0.0.0.',
+    'templates/pre-commit/.pre-commit-config.yaml':
+        'Opt-in pre-commit hook config; copy to the app root and run pre-commit install.',
+    'templates/pre-commit/README.md':
+        'Copy/install steps for the pre-commit template; hooks are never installed automatically.',
 }
 
 SKIPPED = [
@@ -119,9 +139,16 @@ SKIPPED = [
     {'id': 'zizmor', 'reason': 'CI-only pin read by zizmor.yml; not an MCP server or export.'},
     {'id': 'actionlint', 'reason': 'CI-only pin read by actionlint.yml; not an MCP server or export.'},
     {'id': 'shellcheck', 'reason': 'CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.'},
+    {'id': 'ruff', 'reason': 'CI-only pin read by ruff.yml for Python lint and format; not an MCP server or export.'},
     {'id': 'gitleaks', 'reason': 'CI-only pin read by gitleaks.yml; not an MCP server or export.'},
+    {'id': 'pre-commit', 'reason': 'CI and opt-in local hooks via pre-commit.yml; not an MCP server or export.'},
+    {'id': 'osv-scanner', 'reason': 'CI-only pin read by osv-scanner.yml; not an MCP server or export.'},
+    {'id': 'lychee', 'reason': 'CI-only pin read by lychee.yml; not an MCP server or export.'},
+    {'id': 'act', 'reason': 'Local GitHub Actions dry-run; Docker is required to run workflows. act.yml only checks the pinned binary version; not an MCP server or export.'},
+    {'id': 'typos', 'reason': 'CI-only pin read by typos.yml; not an MCP server or export.'},
     {'id': 'mcp-inspector', 'reason': 'Used by scripts/mcp_smoke.py; not declared as a connection.'},
     {'id': 'ollmcp', 'reason': 'Optional client. Load the claude-code export with --servers-json; not a fifth adapter.'},
+    {'id': 'llm', 'reason': 'Optional CLI. Prompt the local-ai preset from a shell via scripts/llm_local.py; not an MCP server.'},
     {'id': 'playwright-mcp', 'reason': 'Consumed through the playwright server args, not copied as its own export.'},
     {'id': 'personalServers', 'reason': 'Outside-work connections. Omitted from exports and this index unless --include-personal.'},
     {'id': 'chatgpt', 'reason': 'Not an export adapter. Needs a hosted integration this belt does not generate.'},
@@ -165,6 +192,7 @@ def build(manifest=None, include_personal=False, checkout=ROOT):
     require_catalog(RULE_INFO, belt['rules'], 'rule')
     require_catalog(TEMPLATE_INFO, templates, 'template')
     ollmcp = package_pin(belt, 'ollmcp')
+    llm_pin = package_pin(belt, 'llm')
     model = belt['models'][0]
     default = model['presets'][model['defaultPreset']]
     index = {
@@ -221,6 +249,10 @@ def build(manifest=None, include_personal=False, checkout=ROOT):
                          f'uvx ollmcp=={ollmcp["version"]} --servers-json dist/claude-code/.mcp.json '
                          f'--model {default["model"] or "MODEL"}'),
                  'then': 'Not an export adapter. HTTP header placeholders are not expanded; see docs/local-ai.md.'},
+                {'client': 'llm',
+                 'run': 'python3 scripts/llm_local.py "your question"',
+                 'then': (f'Optional shell prompt for the local-ai preset via llm {llm_pin["version"]} '
+                          'openai endpoint. Not an MCP server; see docs/llm.md.')},
             ],
         },
     }

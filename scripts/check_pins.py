@@ -7,14 +7,28 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 from beltfile import load, save_validated, set_package_version
 
+
+def github_release_version(body):
+    """Numeric pin from a GitHub release tag.
+
+    gitleaks and osv-scanner publish vX.Y.Z. lychee publishes lychee-vX.Y.Z.
+    A pre-release suffix is left in place so it is not treated as a stable bump.
+    """
+    tag = body['tag_name']
+    match = re.fullmatch(r'(?:[A-Za-z0-9_.-]+-)?v?(\d+\.\d+\.\d+(?:\.\d+)*)', tag)
+    if match:
+        return match.group(1)
+    return tag.removeprefix('v')
+
+
 REGISTRIES = {
     'npm': ('https://registry.npmjs.org/{name}/latest', lambda body: body['version']),
     'pypi': ('https://pypi.org/pypi/{name}/json', lambda body: body['info']['version']),
     'github-release': ('https://api.github.com/repos/{name}/releases/latest',
-                       lambda body: body['tag_name'].removeprefix('v')),
+                       github_release_version),
 }
-# At least X.Y.Z; extra numeric segments are allowed (for example actionlint-py 1.7.12.25).
-STABLE = r'\d+\.\d+\.\d+(?:\.\d+)*'
+# At least X.Y; extra numeric segments are allowed (0.36, 0.17.0, actionlint-py 1.7.12.25).
+STABLE = r'\d+\.\d+(?:\.\d+)*'
 
 
 def fetch_latest(kind, name, timeout=15):

@@ -53,6 +53,11 @@
       "id": "site",
       "run": "python3 belt.py site",
       "description": "Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check."
+    },
+    {
+      "id": "fpr",
+      "run": "python3 belt.py fpr new <branch> [--base <base>] | sync [--base <base>]",
+      "description": "Fetch origin and start or update a feature branch from origin/<base>. Never branch from a stale local main."
     }
   ],
   "servers": [
@@ -189,6 +194,13 @@
       "description": "Pinned ShellCheck (via shellcheck-py). Use in CI via shellcheck.yml and actionlint -shellcheck; not an MCP server."
     },
     {
+      "id": "ruff",
+      "kind": "pypi",
+      "name": "ruff",
+      "version": "0.17.0",
+      "description": "Pinned Ruff (PyPI). Lint and format Python in belt.py, scripts, tests and tools via ruff.yml; pairs with shellcheck. Not an MCP server."
+    },
+    {
       "id": "gitleaks",
       "kind": "github-release",
       "name": "gitleaks/gitleaks",
@@ -196,11 +208,53 @@
       "description": "Pinned gitleaks CLI (github-release). Use in CI via gitleaks.yml to scan the repo for secrets; not an MCP server."
     },
     {
+      "id": "pre-commit",
+      "kind": "pypi",
+      "name": "pre-commit",
+      "version": "4.6.2",
+      "description": "Pinned pre-commit framework (PyPI). Opt-in local git hooks via .pre-commit-config.yaml; CI via pre-commit.yml; not an MCP server."
+    },
+    {
+      "id": "osv-scanner",
+      "kind": "github-release",
+      "name": "google/osv-scanner",
+      "version": "2.6.0",
+      "description": "Pinned OSV-Scanner CLI (github-release). Use in CI via osv-scanner.yml to scan lockfiles and SBOMs for known CVEs; not an MCP server."
+    },
+    {
+      "id": "lychee",
+      "kind": "github-release",
+      "name": "lycheeverse/lychee",
+      "version": "0.24.2",
+      "description": "Pinned lychee CLI (github-release). Use in CI via lychee.yml to check docs, README and site-source links; not an MCP server."
+    },
+    {
+      "id": "act",
+      "kind": "github-release",
+      "name": "nektos/act",
+      "version": "0.2.89",
+      "description": "Pinned nektos/act CLI (github-release). Dry-run GitHub Actions locally; Docker is required to run workflows. Not an MCP server."
+    },
+    {
+      "id": "typos",
+      "kind": "pypi",
+      "name": "typos",
+      "version": "1.51.1",
+      "description": "Pinned typos spell checker (PyPI). Use in CI via typos.yml to catch misspellings in source and docs; not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
       "version": "0.35.1",
       "description": "Pinned Ollama-native MCP terminal client. Use with the Claude Code export's .mcp.json; not a fifth adapter."
+    },
+    {
+      "id": "llm",
+      "kind": "pypi",
+      "name": "llm",
+      "version": "0.36",
+      "description": "Pinned llm CLI (PyPI). Pipe a file or question to the local-ai preset from a shell; not an MCP server."
     }
   ],
   "skills": [
@@ -243,6 +297,11 @@
       "id": "archify",
       "path": "skills/archify/SKILL.md",
       "description": "Interactive architecture and workflow diagrams as HTML/SVG; needs Node 18+ and upstream archify CLI from GitHub. Use for system maps, sequences, Mermaid polish, or dataflow/lifecycle visuals (not charts)."
+    },
+    {
+      "id": "fpr",
+      "path": "skills/fpr/SKILL.md",
+      "description": "Fetch, pull, and rebase so a feature branch starts from the latest main and stays current. Use before creating any feature branch, before opening or updating a PR, and when a PR shows merge conflicts or is behind main."
     }
   ],
   "rules": [
@@ -254,7 +313,7 @@
     {
       "id": "engineering",
       "path": "rules/engineering.md",
-      "description": "Clean code, tests, one PR per session, Conventional Commit titles, keep CI green. Follow on every code change."
+      "description": "Clean code, tests, one PR per session, Conventional Commit titles, keep CI green. Start every branch with fpr."
     }
   ],
   "adapters": [
@@ -337,6 +396,14 @@
       "description": "Write one client export into a new directory. belt.py use wraps this and copies into a project."
     },
     {
+      "id": "scripts/fpr.py",
+      "description": "Fetch origin and create or update a feature branch from origin/<base>. belt.py fpr wraps this."
+    },
+    {
+      "id": "scripts/llm_local.py",
+      "description": "Build the llm openai endpoint command for the local-ai preset. Does not contact the model or print API keys."
+    },
+    {
       "id": "scripts/local_ai_check.py",
       "description": "Contact the local OpenAI-compatible endpoint. Only script that does; belt.py doctor wraps it."
     },
@@ -359,6 +426,10 @@
   ],
   "workflows": [
     {
+      "id": ".github/workflows/act.yml",
+      "description": "Download the pinned nektos/act release and run act --version. Does not execute workflows."
+    },
+    {
       "id": ".github/workflows/actionlint.yml",
       "description": "Syntax-lint GitHub workflows with the actionlint-py pin from belt.json."
     },
@@ -379,6 +450,14 @@
       "description": "Scan the repository for leaked secrets with the gitleaks github-release pin from belt.json."
     },
     {
+      "id": ".github/workflows/lychee.yml",
+      "description": "Check docs, README and site-source links with the lychee github-release pin from belt.json."
+    },
+    {
+      "id": ".github/workflows/osv-scanner.yml",
+      "description": "Scan lockfiles and SBOMs for known CVEs with the osv-scanner github-release pin from belt.json."
+    },
+    {
       "id": ".github/workflows/pages.yml",
       "description": "Build the blueprint site with scripts/build_site.py and deploy to GitHub Pages on push to main."
     },
@@ -391,6 +470,10 @@
       "description": "Require a Conventional Commit pull request title."
     },
     {
+      "id": ".github/workflows/pre-commit.yml",
+      "description": "Run the shared .pre-commit-config.yaml with the pre-commit PyPI pin from belt.json."
+    },
+    {
       "id": ".github/workflows/release-please-reusable.yml",
       "description": "Reusable release-please job for this repo and adopted apps."
     },
@@ -399,12 +482,20 @@
       "description": "release-please on push to main; merging its PR bumps versions and tags."
     },
     {
+      "id": ".github/workflows/ruff.yml",
+      "description": "Lint and format belt.py, scripts, tests and tools with the ruff PyPI pin from belt.json."
+    },
+    {
       "id": ".github/workflows/run-task.yml",
       "description": "Manually run one allowlisted belt task and upload its log."
     },
     {
       "id": ".github/workflows/shellcheck.yml",
       "description": "Lint tracked shell scripts with the shellcheck-py pin via scripts/check_shell.py."
+    },
+    {
+      "id": ".github/workflows/typos.yml",
+      "description": "Spell-check source and docs with the typos PyPI pin from belt.json."
     },
     {
       "id": ".github/workflows/update-variable.yml",
@@ -431,6 +522,14 @@
     {
       "id": "templates/app-adoption/AGENTS.md",
       "description": "App-repo agent instructions pointing at belt rules. Copied by belt_sync --adopt."
+    },
+    {
+      "id": "templates/pre-commit/.pre-commit-config.yaml",
+      "description": "Opt-in pre-commit hook config; copy to the app root and run pre-commit install."
+    },
+    {
+      "id": "templates/pre-commit/README.md",
+      "description": "Copy/install steps for the pre-commit template; hooks are never installed automatically."
     },
     {
       "id": "templates/versioning/.release-please-manifest.json",
@@ -483,8 +582,32 @@
       "reason": "CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export."
     },
     {
+      "id": "ruff",
+      "reason": "CI-only pin read by ruff.yml for Python lint and format; not an MCP server or export."
+    },
+    {
       "id": "gitleaks",
       "reason": "CI-only pin read by gitleaks.yml; not an MCP server or export."
+    },
+    {
+      "id": "pre-commit",
+      "reason": "CI and opt-in local hooks via pre-commit.yml; not an MCP server or export."
+    },
+    {
+      "id": "osv-scanner",
+      "reason": "CI-only pin read by osv-scanner.yml; not an MCP server or export."
+    },
+    {
+      "id": "lychee",
+      "reason": "CI-only pin read by lychee.yml; not an MCP server or export."
+    },
+    {
+      "id": "act",
+      "reason": "Local GitHub Actions dry-run; Docker is required to run workflows. act.yml only checks the pinned binary version; not an MCP server or export."
+    },
+    {
+      "id": "typos",
+      "reason": "CI-only pin read by typos.yml; not an MCP server or export."
     },
     {
       "id": "mcp-inspector",
@@ -493,6 +616,10 @@
     {
       "id": "ollmcp",
       "reason": "Optional client. Load the claude-code export with --servers-json; not a fifth adapter."
+    },
+    {
+      "id": "llm",
+      "reason": "Optional CLI. Prompt the local-ai preset from a shell via scripts/llm_local.py; not an MCP server."
     },
     {
       "id": "playwright-mcp",
@@ -544,6 +671,11 @@
         "client": "ollmcp",
         "run": "python3 belt.py use claude-code --out dist/claude-code && uvx ollmcp==0.35.1 --servers-json dist/claude-code/.mcp.json --model gemma4:e2b",
         "then": "Not an export adapter. HTTP header placeholders are not expanded; see docs/local-ai.md."
+      },
+      {
+        "client": "llm",
+        "run": "python3 scripts/llm_local.py \"your question\"",
+        "then": "Optional shell prompt for the local-ai preset via llm 0.36 openai endpoint. Not an MCP server; see docs/llm.md."
       }
     ]
   }

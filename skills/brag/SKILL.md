@@ -30,7 +30,7 @@ to the normal no-voice workflow.
 
 The user may invoke with natural language or flags:
 
-```
+```text
 /brag
 /brag --tone chaotic
 /brag --tone polished --format vertical
@@ -71,11 +71,12 @@ separate narration track.
 
 By default, output goes to `brag-output/`. To avoid overwriting previous runs, use a timestamped directory:
 
-```
+```text
 brag-output-2026-05-04-143022/
 ```
 
 Use a timestamp when:
+
 - The user explicitly asks for a new run without overriding previous results
 - A `brag-output/` directory already exists in the project
 
@@ -172,7 +173,8 @@ These apply to every brag video regardless of tone.
 **Funny earns its place.** Humor should come from the project's absurdity, not from trying to be funny.
 
 **Pattern:**
-```
+
+```text
 Hook (2-3s) → Reveal (2-4s) → 2-3 sharp highlights (5-12s) → Punchline/outro (2-4s)
 ```
 

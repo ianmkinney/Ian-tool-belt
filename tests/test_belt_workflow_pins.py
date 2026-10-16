@@ -5,8 +5,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
-import belt_sync
-import check_belt_workflow_pins as pins
+import belt_sync  # noqa: E402
+import check_belt_workflow_pins as pins  # noqa: E402
 
 
 class BeltWorkflowPinTests(unittest.TestCase):

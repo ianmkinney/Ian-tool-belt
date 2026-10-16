@@ -24,6 +24,7 @@ Machine-readable copy: [`belt.index.json`](belt.index.json).
 - `python3 belt.py breakroom …` — Passthrough to the breakroom team-board CLI (tools/breakroom/bin/breakroom).
 - `python3 belt.py edit FILE.html [--port N]` — Serve an HTML file with the html-edit in-place editor (tools/html-edit/html_edit.py).
 - `python3 belt.py site` — Build the blueprint GitHub Pages site into site/ from belt sources. CI runs site --check.
+- `python3 belt.py fpr new <branch> [--base <base>] | sync [--base <base>]` — Fetch origin and start or update a feature branch from origin/<base>. Never branch from a stale local main.
 
 ### Drop this belt into a project
 
@@ -49,10 +50,11 @@ Auto-detects Cursor, OpenCode, Claude Code or VS Code. Pass a target if several 
 - `brag` — Launch demo video via Hyperframes; needs Node.js, npx hyperframes, and ffmpeg. Use for /brag, launch videos, or showing off a shipped project.
 - `graphify` — Build or query a codebase knowledge graph (graphifyy CLI); needs Python 3.10+, tree-sitter/numpy stack, optional ffmpeg/Whisper and Neo4j. Use when graphify-out/ exists or architecture/path questions need the graph.
 - `archify` — Interactive architecture and workflow diagrams as HTML/SVG; needs Node 18+ and upstream archify CLI from GitHub. Use for system maps, sequences, Mermaid polish, or dataflow/lifecycle visuals (not charts).
+- `fpr` — Fetch, pull, and rebase so a feature branch starts from the latest main and stays current. Use before creating any feature branch, before opening or updating a PR, and when a PR shows merge conflicts or is behind main.
 
 **Rules**
 - `working-agreement` — Shared operating rules: small changes, secrets out of Git, honest verification. Always apply.
-- `engineering` — Clean code, tests, one PR per session, Conventional Commit titles, keep CI green. Follow on every code change.
+- `engineering` — Clean code, tests, one PR per session, Conventional Commit titles, keep CI green. Start every branch with fpr.
 
 ### Local model
 
@@ -61,6 +63,7 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 - **opencode:** `python3 belt.py use opencode` — OpenCode reads opencode.json, including the local-ai provider.
 - **claude-code:** `python3 belt.py use claude-code` — ollama launch claude in that project; attach INSTRUCTIONS.md and skills/.
 - **ollmcp:** `python3 belt.py use claude-code --out dist/claude-code && uvx ollmcp==0.35.1 --servers-json dist/claude-code/.mcp.json --model gemma4:e2b` — Not an export adapter. HTTP header placeholders are not expanded; see docs/local-ai.md.
+- **llm:** `python3 scripts/llm_local.py "your question"` — Optional shell prompt for the local-ai preset via llm 0.36 openai endpoint. Not an MCP server; see docs/llm.md.
 
 ### Not exported as connections
 
@@ -71,9 +74,16 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 - `zizmor` — CI-only pin read by zizmor.yml; not an MCP server or export.
 - `actionlint` — CI-only pin read by actionlint.yml; not an MCP server or export.
 - `shellcheck` — CI-only pin read by shellcheck.yml and actionlint -shellcheck; not an MCP server or export.
+- `ruff` — CI-only pin read by ruff.yml for Python lint and format; not an MCP server or export.
 - `gitleaks` — CI-only pin read by gitleaks.yml; not an MCP server or export.
+- `pre-commit` — CI and opt-in local hooks via pre-commit.yml; not an MCP server or export.
+- `osv-scanner` — CI-only pin read by osv-scanner.yml; not an MCP server or export.
+- `lychee` — CI-only pin read by lychee.yml; not an MCP server or export.
+- `act` — Local GitHub Actions dry-run; Docker is required to run workflows. act.yml only checks the pinned binary version; not an MCP server or export.
+- `typos` — CI-only pin read by typos.yml; not an MCP server or export.
 - `mcp-inspector` — Used by scripts/mcp_smoke.py; not declared as a connection.
 - `ollmcp` — Optional client. Load the claude-code export with --servers-json; not a fifth adapter.
+- `llm` — Optional CLI. Prompt the local-ai preset from a shell via scripts/llm_local.py; not an MCP server.
 - `playwright-mcp` — Consumed through the playwright server args, not copied as its own export.
 - `personalServers` — Outside-work connections. Omitted from exports and this index unless --include-personal.
 - `chatgpt` — Not an export adapter. Needs a hosted integration this belt does not generate.

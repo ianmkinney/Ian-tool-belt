@@ -1,6 +1,5 @@
 """Load html-edit tool tests into the belt unittest run."""
 import sys
-import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]

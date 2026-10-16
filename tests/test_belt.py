@@ -280,6 +280,7 @@ class BeltTests(BeltCase):
         cases = [
             lambda p: p[0].update(version='^0.0.83'),
             lambda p: p[0].update(version='latest'),
+            lambda p: p[0].update(version='0.36a1'),
             lambda p: p[0].update(kind='cargo'),
             lambda p: p[0].update(name='Not A Name'),
             lambda p: p[0].update(description=''),
@@ -354,6 +355,193 @@ class BeltTests(BeltCase):
         self.assertIn('GITLEAKS_VERSION', workflow)
         self.assertIn('gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz', workflow)
         self.assertNotIn(pin['version'], workflow)
+
+    def test_pre_commit_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'pre-commit')
+        self.assertEqual((pin['kind'], pin['name']), ('pypi', 'pre-commit'))
+        workflow = (ROOT / '.github/workflows/pre-commit.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertRegex(workflow, r'uses: actions/setup-python@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn("p['id'] == 'pre-commit'", workflow)
+        self.assertIn('pre-commit==$PRE_COMMIT_VERSION', workflow)
+        self.assertIn('pre-commit run --all-files', workflow)
+        self.assertNotIn(pin['version'], workflow)
+
+    def test_pre_commit_config_matches_belt_pins(self):
+        import yaml
+
+        belt = validate(ROOT / 'belt.json')
+        pins = {p['id']: p['version'] for p in belt['packages']}
+        config = yaml.safe_load((ROOT / '.pre-commit-config.yaml').read_text())
+        revs = {repo['repo'].rstrip('/').split('/')[-1]: repo['rev'] for repo in config['repos']}
+        self.assertEqual(revs['gitleaks'], f"v{pins['gitleaks']}")
+        self.assertEqual(revs['shellcheck-py'], f"v{pins['shellcheck']}")
+        self.assertEqual(revs['zizmor-pre-commit'], f"v{pins['zizmor']}")
+        self.assertEqual(revs['actionlint'], 'v1.7.12')
+        self.assertEqual(revs['typos'], f"v{pins['typos']}")
+        self.assertEqual(revs['ruff-pre-commit'], f"v{pins['ruff']}")
+        ruff_hooks = next(repo for repo in config['repos'] if repo['repo'].endswith('ruff-pre-commit'))
+        self.assertEqual([hook['id'] for hook in ruff_hooks['hooks']], ['ruff-check', 'ruff-format'])
+        self.assertTrue(all(hook['types_or'] == ['python', 'pyi'] for hook in ruff_hooks['hooks']))
+        template = (ROOT / 'templates/pre-commit/.pre-commit-config.yaml').read_text()
+        self.assertEqual(template, (ROOT / '.pre-commit-config.yaml').read_text())
+
+    def test_osv_scanner_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'osv-scanner')
+        self.assertEqual((pin['kind'], pin['name']), ('github-release', 'google/osv-scanner'))
+        workflow = (ROOT / '.github/workflows/osv-scanner.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn("p['id'] == 'osv-scanner'", workflow)
+        self.assertIn('OSV_SCANNER_VERSION', workflow)
+        self.assertIn('osv-scanner_linux_amd64', workflow)
+        self.assertIn('scan source -r . --allow-no-lockfiles', workflow)
+        self.assertNotIn(pin['version'], workflow)
+
+    def test_lychee_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'lychee')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']),
+                         ('github-release', 'lycheeverse/lychee', '0.24.2'))
+        workflow = (ROOT / '.github/workflows/lychee.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn('permissions:', workflow)
+        self.assertIn('contents: read', workflow)
+        self.assertIn("p['id'] == 'lychee'", workflow)
+        self.assertIn('LYCHEE_VERSION', workflow)
+        self.assertIn('lychee-v${LYCHEE_VERSION}', workflow)
+        self.assertIn('lychee-x86_64-unknown-linux-gnu.tar.gz', workflow)
+        self.assertIn('sha256sum -c', workflow)
+        self.assertIn('--strip-components=1', workflow)
+        self.assertIn('--config lychee.toml', workflow)
+        self.assertIn('--no-progress', workflow)
+        self.assertIn('--exclude-loopback', workflow)
+        self.assertIn('README.md', workflow)
+        self.assertIn('docs', workflow)
+        self.assertNotIn(pin['version'], workflow)
+        config = (ROOT / 'lychee.toml').read_text()
+        self.assertIn('raw.githubusercontent.com', config)
+        self.assertIn('exclude_loopback = true', config)
+        self.assertNotIn('exclude = ', config)
+
+    def test_act_pin_docs_and_version_check_workflow(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'act')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']),
+                         ('github-release', 'nektos/act', '0.2.89'))
+        self.assertIn('Docker', pin['description'])
+        workflow = (ROOT / '.github/workflows/act.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn("p['id'] == 'act'", workflow)
+        self.assertIn('ACT_VERSION', workflow)
+        self.assertIn('act_Linux_x86_64.tar.gz', workflow)
+        self.assertIn('checksums.txt', workflow)
+        self.assertIn('./act --version', workflow)
+        self.assertNotIn('act push', workflow)
+        self.assertNotIn(pin['version'], workflow)
+        docs = (ROOT / 'docs/act.md').read_text()
+        self.assertIn('0.2.89', docs)
+        self.assertIn('MIT', docs)
+        self.assertIn('Docker', docs)
+        self.assertIn('act -l', docs)
+        self.assertIn('act push', docs)
+        self.assertIn('## Remove', docs)
+        self.assertIn('nektos/act', docs)
+
+    def test_typos_workflow_uses_the_belt_pin(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'typos')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'typos', '1.51.1'))
+        self.assertIn('spell', pin['description'].lower())
+        self.assertIn('not an MCP server', pin['description'])
+        workflow = (ROOT / '.github/workflows/typos.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertRegex(workflow, r'uses: actions/setup-python@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn('permissions:', workflow)
+        self.assertIn('contents: read', workflow)
+        self.assertIn("p['id'] == 'typos'", workflow)
+        self.assertIn('TYPOS_VERSION', workflow)
+        self.assertIn('typos==$TYPOS_VERSION', workflow)
+        self.assertIn('\n          typos\n', workflow)
+        self.assertNotIn(pin['version'], workflow)
+        config = (ROOT / 'typos.toml').read_text()
+        # Joined so this file does not contain the office-tag spelling typos.toml ignores.
+        office = ''.join(('\\\\(', 'B', 'A', '\\\\)'))  # noqa: FLY002
+        strip = ''.join(('\\\\(', 'b', 'a', '\\\\|ao\\\\|sf\\\\)'))  # noqa: FLY002
+        self.assertIn(office, config)
+        self.assertIn(strip, config)
+        self.assertIn('office tag', config)
+        docs = (ROOT / 'docs/typos.md').read_text()
+        self.assertIn('1.51.1', docs)
+        self.assertIn('MIT OR Apache-2.0', docs)
+        self.assertIn('crate-ci/typos', docs)
+        self.assertIn('typos==1.51.1', docs)
+        self.assertIn('## Remove', docs)
+        self.assertIn('typos.toml', docs)
+
+    def test_ruff_pin_docs_and_workflow(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ruff')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'ruff', '0.17.0'))
+        self.assertIn('shellcheck', pin['description'])
+        workflow = (ROOT / '.github/workflows/ruff.yml').read_text()
+        self.assertRegex(workflow, r'uses: actions/checkout@[0-9a-f]{40} # v')
+        self.assertRegex(workflow, r'uses: actions/setup-python@[0-9a-f]{40} # v')
+        self.assertIn('persist-credentials: false', workflow)
+        self.assertIn('permissions:', workflow)
+        self.assertIn('contents: read', workflow)
+        self.assertIn("p['id'] == 'ruff'", workflow)
+        self.assertIn('RUFF_VERSION', workflow)
+        self.assertIn('ruff==$RUFF_VERSION', workflow)
+        self.assertIn('ruff check belt.py scripts tests tools', workflow)
+        self.assertIn('ruff format --check --force-exclude belt.py scripts tests tools', workflow)
+        self.assertNotIn(pin['version'], workflow)
+        docs = (ROOT / 'docs/ruff.md').read_text()
+        self.assertIn('0.17.0', docs)
+        self.assertIn('MIT', docs)
+        self.assertIn('astral-sh/ruff', docs)
+        self.assertIn('ruff check', docs)
+        self.assertIn('ruff format --check', docs)
+        self.assertIn('## Remove', docs)
+        config = (ROOT / 'ruff.toml').read_text()
+        self.assertIn('target-version = "py310"', config)
+        self.assertIn('extend-select = ["E402"]', config)
+        self.assertIn('tools/breakroom/bin/breakroom', config)
+        self.assertIn('"belt"', config)
+        self.assertIn('"scripts/**"', config)
+        self.assertIn('"tests/**"', config)
+        self.assertIn('"tools/**"', config)
+
+    def test_two_part_package_pin_is_exact(self):
+        pin = next(p for p in self.data['packages'] if p['kind'] == 'pypi')
+        pin['version'] = '0.36'
+        self.write()
+        validate(self.manifest)
+        pin['version'] = '0.36a1'
+        self.invalid()
+
+    def test_llm_pin_and_docs(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'llm')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'llm', '0.36'))
+        self.assertIn('local-ai', pin['description'])
+        self.assertIn('not an MCP server', pin['description'])
+        docs = (ROOT / 'docs/llm.md').read_text()
+        for snippet in ('0.36', 'Apache-2.0', 'simonw/llm', 'llm openai endpoint',
+                        'scripts/llm_local.py', 'LOCAL_AI_BASE_URL', 'LOCAL_AI_MODEL',
+                        'llm logs off', 'logs.db', '--no-log', '## Remove'):
+            self.assertIn(snippet, docs)
+        self.assertIn('docs/llm.md', (ROOT / 'README.md').read_text())
+        self.assertIn('llm.md', (ROOT / 'docs/setup.md').read_text())
+        local = (ROOT / 'docs/local-ai.md').read_text()
+        self.assertIn('scripts/llm_local.py', local)
+        self.assertIn('llm logs off', local)
+        self.assertIn('simonw/llm', (ROOT / 'connections/README.md').read_text())
+        self.assertIn('llm.md', (ROOT / 'docs/design.md').read_text())
+        index = json.loads((ROOT / 'belt.index.json').read_text())
+        listed = next(p for p in index['packages'] if p['id'] == 'llm')
+        self.assertEqual(listed['version'], '0.36')
+        self.assertIn('not an MCP server', next(s['reason'] for s in index['skipped'] if s['id'] == 'llm'))
+        self.assertIn('scripts/llm_local.py', (ROOT / 'AGENTS.md').read_text())
 
     def test_ollmcp_is_a_pinned_pypi_package(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ollmcp')

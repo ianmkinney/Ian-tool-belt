@@ -15,7 +15,8 @@
     "skills/break-room/SKILL.md",
     "skills/brag/SKILL.md",
     "skills/graphify/SKILL.md",
-    "skills/archify/SKILL.md"
+    "skills/archify/SKILL.md",
+    "skills/fpr/SKILL.md"
   ],
   "servers": [
     {
@@ -164,6 +165,13 @@
       "description": "Pinned ShellCheck (via shellcheck-py). Use in CI via shellcheck.yml and actionlint -shellcheck; not an MCP server."
     },
     {
+      "id": "ruff",
+      "kind": "pypi",
+      "name": "ruff",
+      "version": "0.17.0",
+      "description": "Pinned Ruff (PyPI). Lint and format Python in belt.py, scripts, tests and tools via ruff.yml; pairs with shellcheck. Not an MCP server."
+    },
+    {
       "id": "gitleaks",
       "kind": "github-release",
       "name": "gitleaks/gitleaks",
@@ -171,11 +179,53 @@
       "description": "Pinned gitleaks CLI (github-release). Use in CI via gitleaks.yml to scan the repo for secrets; not an MCP server."
     },
     {
+      "id": "pre-commit",
+      "kind": "pypi",
+      "name": "pre-commit",
+      "version": "4.6.2",
+      "description": "Pinned pre-commit framework (PyPI). Opt-in local git hooks via .pre-commit-config.yaml; CI via pre-commit.yml; not an MCP server."
+    },
+    {
+      "id": "osv-scanner",
+      "kind": "github-release",
+      "name": "google/osv-scanner",
+      "version": "2.6.0",
+      "description": "Pinned OSV-Scanner CLI (github-release). Use in CI via osv-scanner.yml to scan lockfiles and SBOMs for known CVEs; not an MCP server."
+    },
+    {
+      "id": "lychee",
+      "kind": "github-release",
+      "name": "lycheeverse/lychee",
+      "version": "0.24.2",
+      "description": "Pinned lychee CLI (github-release). Use in CI via lychee.yml to check docs, README and site-source links; not an MCP server."
+    },
+    {
+      "id": "act",
+      "kind": "github-release",
+      "name": "nektos/act",
+      "version": "0.2.89",
+      "description": "Pinned nektos/act CLI (github-release). Dry-run GitHub Actions locally; Docker is required to run workflows. Not an MCP server."
+    },
+    {
+      "id": "typos",
+      "kind": "pypi",
+      "name": "typos",
+      "version": "1.51.1",
+      "description": "Pinned typos spell checker (PyPI). Use in CI via typos.yml to catch misspellings in source and docs; not an MCP server."
+    },
+    {
       "id": "ollmcp",
       "kind": "pypi",
       "name": "ollmcp",
       "version": "0.35.1",
       "description": "Pinned Ollama-native MCP terminal client. Use with the Claude Code export's .mcp.json; not a fifth adapter."
+    },
+    {
+      "id": "llm",
+      "kind": "pypi",
+      "name": "llm",
+      "version": "0.36",
+      "description": "Pinned llm CLI (PyPI). Pipe a file or question to the local-ai preset from a shell; not an MCP server."
     }
   ],
   "adapters": [

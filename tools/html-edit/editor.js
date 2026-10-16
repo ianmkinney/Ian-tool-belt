@@ -103,6 +103,7 @@
 .pill-label { padding: 0 10px; font-size: 10px; color: var(--amber); }
 .hover-layer {
   position: fixed; z-index: 2147483644; pointer-events: none; display: none;
+  background: transparent; border: none; box-shadow: none;
 }
 .hover-layer.on { display: block; }
 .hover-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -178,7 +179,7 @@
   </div>
   <span class="pill-label" hidden id="pill">EDIT</span>
 </div>
-<div class="hover-layer panel" id="hover-layer">
+<div class="hover-layer" id="hover-layer">
   <svg class="hover-svg" id="hover-svg"></svg>
   <span class="hover-tag" id="hover-tag">P</span>
 </div>

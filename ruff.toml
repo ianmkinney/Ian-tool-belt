@@ -1,0 +1,38 @@
+# Ruff 0.17 assumes Python 3.11. Belt checks still run on Python 3.10.
+target-version = "py310"
+
+[lint]
+# belt.py imports scripts after sys.path.insert. The noqa comments name E402.
+extend-select = ["E402"]
+# Pre-commit passes this extensionless script by its Python shebang. It is a
+# compact stdlib CLI; rewriting it is a separate change. Directory discovery
+# in ruff.yml skips it because it has no .py suffix.
+exclude = ["tools/breakroom/bin/breakroom"]
+
+# Findings already in this tree. Automatic fixes would change behavior
+# (exception types, control flow) or restyle modules. Drop a code when that
+# cleanup lands. Other default rules still fail the job.
+ignore = [
+    "BLE001",
+    "FURB122",
+    "FURB167",
+    "I001",
+    "ISC004",
+    "PIE810",
+    "PLC3002",
+    "RUF012",
+    "RUF015",
+    "RUF034",
+    "RUF059",
+    "SIM103",
+    "SIM115",
+    "SIM117",
+    "TRY004",
+]
+
+[format]
+# `ruff format` would rewrite almost every Python file (quotes, wrapping,
+# docstring indentation). Keep that out of this pin. CI passes --force-exclude
+# so these globs stay out of `format --check`. Remove a glob in the change
+# that formats that path.
+exclude = ["belt", "belt.py", "scripts/**", "tests/**", "tools/**"]
