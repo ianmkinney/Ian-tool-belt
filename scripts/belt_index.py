@@ -49,6 +49,7 @@ SCRIPT_INFO = {
     'scripts/check_pins.py': 'Look up newer stable npm/PyPI releases for pinned packages. Report-only unless --apply.',
     'scripts/tasks.py': 'Run one allowlisted belt task without a shell. belt.py run wraps this.',
     'scripts/local_ai_check.py': 'Contact the local OpenAI-compatible endpoint. Only script that does; belt.py doctor wraps it.',
+    'scripts/llm_local.py': 'Build the llm openai endpoint command for the local-ai preset. Does not contact the model or print API keys.',
     'scripts/mcp_smoke.py': 'Start one MCP server through the pinned Inspector and list (or call) a tool.',
     'scripts/belt_sync.py': 'Copy managed adoption-kit files into an app repo; substitutes @__BELT_SHA__ and belt-ref on adopt or sync.',
     'scripts/check_belt_workflow_pins.py': 'Fail CI if templates or workflows call Ian-tool-belt reusable workflows at @main.',
@@ -146,6 +147,7 @@ SKIPPED = [
     {'id': 'markdownlint-cli2', 'reason': 'CI-only pin read by markdownlint.yml for Markdown structure; not an MCP server or export.'},
     {'id': 'mcp-inspector', 'reason': 'Used by scripts/mcp_smoke.py; not declared as a connection.'},
     {'id': 'ollmcp', 'reason': 'Optional client. Load the claude-code export with --servers-json; not a fifth adapter.'},
+    {'id': 'llm', 'reason': 'Optional CLI. Prompt the local-ai preset from a shell via scripts/llm_local.py; not an MCP server.'},
     {'id': 'playwright-mcp', 'reason': 'Consumed through the playwright server args, not copied as its own export.'},
     {'id': 'personalServers', 'reason': 'Outside-work connections. Omitted from exports and this index unless --include-personal.'},
     {'id': 'chatgpt', 'reason': 'Not an export adapter. Needs a hosted integration this belt does not generate.'},
@@ -189,6 +191,7 @@ def build(manifest=None, include_personal=False, checkout=ROOT):
     require_catalog(RULE_INFO, belt['rules'], 'rule')
     require_catalog(TEMPLATE_INFO, templates, 'template')
     ollmcp = package_pin(belt, 'ollmcp')
+    llm_pin = package_pin(belt, 'llm')
     model = belt['models'][0]
     default = model['presets'][model['defaultPreset']]
     index = {
@@ -245,6 +248,10 @@ def build(manifest=None, include_personal=False, checkout=ROOT):
                          f'uvx ollmcp=={ollmcp["version"]} --servers-json dist/claude-code/.mcp.json '
                          f'--model {default["model"] or "MODEL"}'),
                  'then': 'Not an export adapter. HTTP header placeholders are not expanded; see docs/local-ai.md.'},
+                {'client': 'llm',
+                 'run': 'python3 scripts/llm_local.py "your question"',
+                 'then': (f'Optional shell prompt for the local-ai preset via llm {llm_pin["version"]} '
+                          'openai endpoint. Not an MCP server; see docs/llm.md.')},
             ],
         },
     }

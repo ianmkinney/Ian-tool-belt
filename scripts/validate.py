@@ -38,7 +38,8 @@ STATUSES = ('needs-credentials', 'needs-local-setup', 'untested')
 LOOPBACK = ('localhost', '127.0.0.1', '::1')
 ID = r'[a-z][a-z0-9-]*'
 ENV = r'[A-Z][A-Z0-9_]*'
-PIN = r'\d+\.\d+\.\d+([-+.][0-9A-Za-z.-]+)?'
+# At least major.minor. llm publishes 0.36; actionlint-py publishes 1.7.12.25.
+PIN = r'\d+\.\d+(?:\.\d+)*(?:[-+][0-9A-Za-z.-]+)?'
 PACKAGE_NAMES = {'npm': r'(@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*',
                  'pypi': r'[A-Za-z0-9][A-Za-z0-9._-]*',
                  'github-release': r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+'}

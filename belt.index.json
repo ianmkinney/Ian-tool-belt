@@ -236,6 +236,13 @@
       "name": "ollmcp",
       "version": "0.35.1",
       "description": "Pinned Ollama-native MCP terminal client. Use with the Claude Code export's .mcp.json; not a fifth adapter."
+    },
+    {
+      "id": "llm",
+      "kind": "pypi",
+      "name": "llm",
+      "version": "0.36",
+      "description": "Pinned llm CLI (PyPI). Pipe a file or question to the local-ai preset from a shell; not an MCP server."
     }
   ],
   "skills": [
@@ -364,6 +371,10 @@
     {
       "id": "scripts/fpr.py",
       "description": "Fetch origin and create or update a feature branch from origin/<base>. belt.py fpr wraps this."
+    },
+    {
+      "id": "scripts/llm_local.py",
+      "description": "Build the llm openai endpoint command for the local-ai preset. Does not contact the model or print API keys."
     },
     {
       "id": "scripts/local_ai_check.py",
@@ -580,6 +591,10 @@
       "reason": "Optional client. Load the claude-code export with --servers-json; not a fifth adapter."
     },
     {
+      "id": "llm",
+      "reason": "Optional CLI. Prompt the local-ai preset from a shell via scripts/llm_local.py; not an MCP server."
+    },
+    {
       "id": "playwright-mcp",
       "reason": "Consumed through the playwright server args, not copied as its own export."
     },
@@ -629,6 +644,11 @@
         "client": "ollmcp",
         "run": "python3 belt.py use claude-code --out dist/claude-code && uvx ollmcp==0.35.1 --servers-json dist/claude-code/.mcp.json --model gemma4:e2b",
         "then": "Not an export adapter. HTTP header placeholders are not expanded; see docs/local-ai.md."
+      },
+      {
+        "client": "llm",
+        "run": "python3 scripts/llm_local.py \"your question\"",
+        "then": "Optional shell prompt for the local-ai preset via llm 0.36 openai endpoint. Not an MCP server; see docs/llm.md."
       }
     ]
   }

@@ -27,8 +27,8 @@ REGISTRIES = {
     'github-release': ('https://api.github.com/repos/{name}/releases/latest',
                        github_release_version),
 }
-# At least X.Y.Z; extra numeric segments are allowed (for example actionlint-py 1.7.12.25).
-STABLE = r'\d+\.\d+\.\d+(?:\.\d+)*'
+# At least X.Y; extra numeric segments are allowed (0.36, 0.17.0, actionlint-py 1.7.12.25).
+STABLE = r'\d+\.\d+(?:\.\d+)*'
 
 
 def fetch_latest(kind, name, timeout=15):

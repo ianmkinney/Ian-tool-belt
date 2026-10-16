@@ -104,9 +104,24 @@ reply = client.chat.completions.create(
 print(reply.choices[0].message.content)
 ```
 
+## Prompt it from the shell with llm
+
+[llm](llm.md) is the one-prompt CLI for this same endpoint. The belt pins PyPI package `llm` at **0.36** (Apache-2.0, GitHub tag `0.36`, published 2026-09-22). It is not an MCP server. CI does not install it and does not need a running model.
+
+`scripts/llm_local.py` reads `LOCAL_AI_BASE_URL`, `LOCAL_AI_MODEL` and `LOCAL_AI_API_KEY`, and falls back to the preset above (default `ollama`, `http://localhost:11434/v1`, `gemma4:e2b`). It runs `llm openai endpoint`, which talks to any OpenAI-compatible URL. The optional `llm-ollama` plugin is not required. The helper does not print an API key.
+
+```sh
+python3 -m pip install 'llm==0.36'
+python3 scripts/llm_local.py "Reply with the single word: ready"
+python3 scripts/llm_local.py -s "Summarize this file in a few bullets" < notes.md
+git diff | python3 scripts/llm_local.py -s "Summarize this diff for a reviewer"
+```
+
+`llm openai endpoint` does not log the prompt or the response. Other `llm` commands log to SQLite (`llm logs path`; on macOS `~/Library/Application Support/io.datasette.llm/logs.db`). Turn that off with `llm logs off`, or skip one prompt with `--no-log`. Install, presets, examples and removal steps are in [llm.md](llm.md).
+
 ## Hand the belt to the local model
 
-A model alone cannot read files or call MCP tools. An **agent client** does that and uses the local model as its brain. The belt is loaded into the client, which then gives the model the belt's rules, skills and MCP connections. Ollama documents OpenCode and Claude Code, and the belt exports for both. [ollmcp](https://github.com/jonigl/mcp-client-for-ollama) is an additional Ollama-native terminal client that can load the belt's MCP servers.
+A model alone cannot read files or call MCP tools. An **agent client** does that and uses the local model as its brain. The belt is loaded into the client, which then gives the model the belt's rules, skills and MCP connections. Ollama documents OpenCode and Claude Code, and the belt exports for both. [ollmcp](https://github.com/jonigl/mcp-client-for-ollama) is an additional Ollama-native terminal client that can load the belt's MCP servers. [llm](llm.md) is the separate one-prompt CLI; it does not load those tools.
 
 ### OpenCode (recommended for a fully local setup)
 

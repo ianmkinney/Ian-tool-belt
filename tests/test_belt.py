@@ -280,6 +280,7 @@ class BeltTests(BeltCase):
         cases = [
             lambda p: p[0].update(version='^0.0.83'),
             lambda p: p[0].update(version='latest'),
+            lambda p: p[0].update(version='0.36a1'),
             lambda p: p[0].update(kind='cargo'),
             lambda p: p[0].update(name='Not A Name'),
             lambda p: p[0].update(description=''),
@@ -558,6 +559,37 @@ class BeltTests(BeltCase):
         self.assertIn('MD034', docs)
         self.assertIn('MD041', docs)
         self.assertIn('--fix', docs)
+
+    def test_two_part_package_pin_is_exact(self):
+        pin = next(p for p in self.data['packages'] if p['kind'] == 'pypi')
+        pin['version'] = '0.36'
+        self.write()
+        validate(self.manifest)
+        pin['version'] = '0.36a1'
+        self.invalid()
+
+    def test_llm_pin_and_docs(self):
+        pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'llm')
+        self.assertEqual((pin['kind'], pin['name'], pin['version']), ('pypi', 'llm', '0.36'))
+        self.assertIn('local-ai', pin['description'])
+        self.assertIn('not an MCP server', pin['description'])
+        docs = (ROOT / 'docs/llm.md').read_text()
+        for snippet in ('0.36', 'Apache-2.0', 'simonw/llm', 'llm openai endpoint',
+                        'scripts/llm_local.py', 'LOCAL_AI_BASE_URL', 'LOCAL_AI_MODEL',
+                        'llm logs off', 'logs.db', '--no-log', '## Remove'):
+            self.assertIn(snippet, docs)
+        self.assertIn('docs/llm.md', (ROOT / 'README.md').read_text())
+        self.assertIn('llm.md', (ROOT / 'docs/setup.md').read_text())
+        local = (ROOT / 'docs/local-ai.md').read_text()
+        self.assertIn('scripts/llm_local.py', local)
+        self.assertIn('llm logs off', local)
+        self.assertIn('simonw/llm', (ROOT / 'connections/README.md').read_text())
+        self.assertIn('llm.md', (ROOT / 'docs/design.md').read_text())
+        index = json.loads((ROOT / 'belt.index.json').read_text())
+        listed = next(p for p in index['packages'] if p['id'] == 'llm')
+        self.assertEqual(listed['version'], '0.36')
+        self.assertIn('not an MCP server', next(s['reason'] for s in index['skipped'] if s['id'] == 'llm'))
+        self.assertIn('scripts/llm_local.py', (ROOT / 'AGENTS.md').read_text())
 
     def test_ollmcp_is_a_pinned_pypi_package(self):
         pin = next(p for p in validate(ROOT / 'belt.json')['packages'] if p['id'] == 'ollmcp')

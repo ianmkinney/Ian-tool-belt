@@ -209,6 +209,13 @@
       "name": "ollmcp",
       "version": "0.35.1",
       "description": "Pinned Ollama-native MCP terminal client. Use with the Claude Code export's .mcp.json; not a fifth adapter."
+    },
+    {
+      "id": "llm",
+      "kind": "pypi",
+      "name": "llm",
+      "version": "0.36",
+      "description": "Pinned llm CLI (PyPI). Pipe a file or question to the local-ai preset from a shell; not an MCP server."
     }
   ],
   "adapters": [
