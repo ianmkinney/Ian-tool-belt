@@ -131,4 +131,3 @@ Don't read:
 ## Rule: nothing secret leaves this step
 
 Everything read in this step can end up on screen in a video the user posts publicly. Never carry secrets, API keys, tokens, internal hostnames or URLs, real customer or user names, email addresses, or any personal data into `brag-plan.md`, `composition-brief.md`, the composition, the rendered video, or share copy. If the product's real UI contains such data, substitute plausible fictional stand-ins and say so in the plan.
-

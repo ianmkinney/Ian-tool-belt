@@ -29,7 +29,7 @@ What word, image, or motion earns the next 20 seconds?]
 
 ## Key moments (the middle)
 [2-3 sharp highlights from the product.
-Bullet points. Specific. "The altitude meter counting up." 
+Bullet points. Specific. "The altitude meter counting up."
 Not "feature callouts."]
 
 ## Outro / punchline
@@ -232,4 +232,3 @@ Match transitions to tone:
 | `deadpan` | Slow crossfade, long hold |
 | `cinematic` | Dramatic wipe, crossfade |
 | `app-store` | Slide, smooth wipe |
-
