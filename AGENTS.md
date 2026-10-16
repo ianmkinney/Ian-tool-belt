@@ -59,6 +59,7 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 - **opencode:** `python3 belt.py use opencode` — OpenCode reads opencode.json, including the local-ai provider.
 - **claude-code:** `python3 belt.py use claude-code` — ollama launch claude in that project; attach INSTRUCTIONS.md and skills/.
 - **ollmcp:** `python3 belt.py use claude-code --out dist/claude-code && uvx ollmcp==0.35.1 --servers-json dist/claude-code/.mcp.json --model gemma4:e2b` — Not an export adapter. HTTP header placeholders are not expanded; see docs/local-ai.md.
+- **llm:** `python3 scripts/llm_local.py "your question"` — Optional shell prompt for the local-ai preset via llm 0.36 openai endpoint. Not an MCP server; see docs/llm.md.
 
 ### Not exported as connections
 
@@ -76,6 +77,7 @@ Optional `local-ai` (default preset `ollama`, model `gemma4:e2b`). Check with `p
 - `typos` — CI-only pin read by typos.yml; not an MCP server or export.
 - `mcp-inspector` — Used by scripts/mcp_smoke.py; not declared as a connection.
 - `ollmcp` — Optional client. Load the claude-code export with --servers-json; not a fifth adapter.
+- `llm` — Optional CLI. Prompt the local-ai preset from a shell via scripts/llm_local.py; not an MCP server.
 - `playwright-mcp` — Consumed through the playwright server args, not copied as its own export.
 - `personalServers` — Outside-work connections. Omitted from exports and this index unless --include-personal.
 - `chatgpt` — Not an export adapter. Needs a hosted integration this belt does not generate.

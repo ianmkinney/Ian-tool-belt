@@ -30,11 +30,11 @@ This is not a gateway. Each exported client connects directly to the declared se
 
 `python3 belt.py use cursor --app path/to/app` writes `.cursor/mcp.json`, `.cursor/rules/*.mdc` and `.cursor/skills/`. Cursor resolves `${env:NAME}` from the environment it was launched with. Open **Customize** in Cursor to confirm that the MCP servers, rules and skills appear, then make a harmless call. `INSTRUCTIONS.md` is a combined copy for clients or chats that do not read `.cursor/`.
 
-Packages that are not MCP connections (zizmor, actionlint, shellcheck, ruff, gitleaks, pre-commit, osv-scanner, lychee, act, typos, mcp-inspector, ollmcp, styling) are listed in `compatibility.json` and [belt.index.json](../belt.index.json) `skipped`; they are not copied into `.cursor/`. Python lint and format use [ruff](ruff.md). Link checking is [lychee](lychee.md). Spell checking is [typos](typos.md). Optional local git hooks use [pre-commit](pre-commit.md); copy `templates/pre-commit/.pre-commit-config.yaml` and run `pre-commit install` when you want them. Optional local workflow dry-runs use [act](act.md); Docker must be running before a job will execute.
+Packages that are not MCP connections (zizmor, actionlint, shellcheck, ruff, gitleaks, pre-commit, osv-scanner, lychee, act, typos, mcp-inspector, ollmcp, llm, styling) are listed in `compatibility.json` and [belt.index.json](../belt.index.json) `skipped`; they are not copied into `.cursor/`. Python lint and format use [ruff](ruff.md). Link checking is [lychee](lychee.md). Spell checking is [typos](typos.md). Optional local git hooks use [pre-commit](pre-commit.md); copy `templates/pre-commit/.pre-commit-config.yaml` and run `pre-commit install` when you want them. Optional local workflow dry-runs use [act](act.md); Docker must be running before a job will execute. The optional [llm](llm.md) CLI sends one prompt to the local-ai preset and is not started by CI.
 
 ### Local agent clients
 
-To give the belt to a local model through OpenCode, Claude Code or ollmcp, see [local AI](local-ai.md#hand-the-belt-to-the-local-model). ollmcp reads the Claude Code export's `.mcp.json` via `--servers-json`; it is not a fifth export adapter.
+To give the belt to a local model through OpenCode, Claude Code or ollmcp, see [local AI](local-ai.md#hand-the-belt-to-the-local-model). ollmcp reads the Claude Code export's `.mcp.json` via `--servers-json`; it is not a fifth export adapter. To pipe a file or a question into that model from a shell, see [llm](llm.md).
 
 ## Credentials
 

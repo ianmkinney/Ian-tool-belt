@@ -45,7 +45,7 @@ Then set `GITHUB_MCP_TOKEN` and `CONTEXT7_API_KEY` in the client environment if 
 
 - **Agents:** [`AGENTS.md`](AGENTS.md) and [`belt.index.json`](belt.index.json) (generated from `belt.json`; CI fails if they drift)
 - **Setup, credentials, what each client gets:** [docs/setup.md](docs/setup.md)
-- **Local Ollama / OpenCode / ollmcp:** [docs/local-ai.md](docs/local-ai.md)
+- **Local Ollama / OpenCode / ollmcp / llm:** [docs/local-ai.md](docs/local-ai.md) and [docs/llm.md](docs/llm.md)
 - **Connections and smoke tests:** [connections/README.md](connections/README.md)
 - **Format:** [docs/design.md](docs/design.md)
 - **GitHub Actions, pin checks, adoption kit:** [docs/automation.md](docs/automation.md)
